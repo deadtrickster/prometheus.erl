@@ -56,3 +56,8 @@ Build
 -----
 
     $ rebar3 compile
+
+License
+-----
+
+MIT

@@ -1,7 +1,8 @@
 {application, prometheus,
- [{description, "An OTP library"},
+ [{description, "Prometheus.io client in Erlang"},
   {vsn, "0.1.0"},
   {registered, []},
+  {mod, { prometheus, []}},
   {applications,
    [kernel,
     stdlib

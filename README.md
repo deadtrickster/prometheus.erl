@@ -1,7 +1,7 @@
-prometheus
+Prometheus.io client in Erlang
 =====
 
-An OTP library
+
 
 Build
 -----

@@ -1,8 +1,7 @@
 -module(prometheus_counter).
-
--include("prometheus.hrl").
--export([new/2,
-				 new/3,
+-export([register/0,
+         register/1,
+         register/2,
          inc/1,
          inc/2,
          inc/3,
@@ -12,66 +11,75 @@
          reset/3,
          value/1,
          value/2,
-         value/3]).
+         value/3,
+         collect_mf/5,
+         collect_metrics/3]).
 
-new(Name, Labels) ->
-		new(Name, Labels, default).
+-include("prometheus.hrl").
+-compile({no_auto_import,[register/2]}).
+-behaviour(prometheus_collector).
 
-new(Name, Labels, Registry) ->
-		prometheus_metric:insert_mf({{Registry, counter, Name, length(Labels)}, Labels, "HELP STRING"}),
-    {Registry, counter, Name, Labels}.
+register() ->
+  erlang:error(invalid_register_call).
 
-inc({Registry, Name, LabelValues}) ->
-    inc(Registry, Name, LabelValues, 1);
+register(Spec) ->
+  register(Spec, default).
+
+register(Spec, Registry) ->
+  Name = proplists:get_value(name, Spec),
+  Labels = proplists:get_value(labels, Spec, []),
+  Help = proplists:get_value(help, Spec, ""),
+  %Value = proplists:get_value(value, Spec),
+  ok = prometheus_registry:register_collector(Registry, prometheus_counter, Name, Labels, Help).
+
 inc(Name) ->
-    inc(default, Name, [], 1).
+  inc(default, Name, [], 1).
 
-inc({Registry, Name, LabelValues}, Value) ->
-    inc(Registry, Name, LabelValues, Value);
-inc(Name, LabelValues) when is_list(LabelValues) ->
-    inc(default, Name, LabelValues, 1);
-inc(Name, Value) ->
-    inc(default, Name, [], Value).
+inc(Name, LabelValues) ->
+  inc(default, Name, LabelValues, 1).
 
 inc(Name, LabelValues, Value) ->
-    inc(default, Name, LabelValues, Value).
+  inc(default, Name, LabelValues, Value).
 
 inc(Registry, Name, LabelValues, Value) ->
-    inc(?PROMETHEUS_COUNTER_TABLE, Registry, Name, LabelValues, Value).
+  inc(?PROMETHEUS_COUNTER_TABLE, Registry, Name, LabelValues, Value).
 
 inc(Table, Registry, Name, LabelValues, Value) ->
-    try ets:update_counter(Table, {Registry, Name, LabelValues}, Value)
-    catch error:badarg ->
-            ok = prometheus_metric:check_mf_exists(Registry, counter, Name, length(LabelValues)),
-            case ets:insert_new(Table, {{Registry, Name, LabelValues}, Value}) of
-                false -> %% some sneaky process already inserted
-                    inc(Table, Registry, Name, LabelValues, Value);
-                true ->
-                    ok
-            end
-    end,
-    ok.
+  try ets:update_counter(Table, {Registry, Name, LabelValues}, Value)
+  catch error:badarg ->
+      ok = prometheus_metric:check_mf_exists(Registry, prometheus_counter, Name, length(LabelValues)),
+      case ets:insert_new(Table, {{Registry, Name, LabelValues}, Value}) of
+        false -> %% some sneaky process already inserted
+          inc(Table, Registry, Name, LabelValues, Value);
+        true ->
+          ok
+      end
+  end,
+  ok.
 
-reset({Registry, Name, LabelValues}) ->
-    reset(Registry, Name, LabelValues);
 reset(Name) ->
-    reset(default, Name, []).
+  reset(default, Name, []).
 
 reset(Name, LabelValues) ->
-    reset(default, Name, LabelValues).
+  reset(default, Name, LabelValues).
 
 reset(Registry, Name, LabelValues) ->
-    ok = prometheus_metric:check_mf_exists(Registry, counter, Name, length(LabelValues)),
-    ets:update_counter(?PROMETHEUS_COUNTER_TABLE, {Registry, Name, LabelValues}, [{2, 1, 0, 0}]).
+  ok = prometheus_metric:check_mf_exists(Registry, counter, Name, length(LabelValues)),
+  ets:update_counter(?PROMETHEUS_COUNTER_TABLE, {Registry, Name, LabelValues}, [{2, 1, 0, 0}]).
 
-value({Registry, Name, LabelValues}) ->
-    value(Registry, Name, LabelValues);
 value(Name) ->
-    value(default, Name, []).
+  value(default, Name, []).
 
 value(Name, LabelValues) ->
-    value(default, Name, LabelValues).
+  value(default, Name, LabelValues).
 
 value(Registry, Name, LabelValues) ->
-    [{_Key, Value}] = ets:lookup(?PROMETHEUS_COUNTER_TABLE, {Registry, Name, LabelValues}),
-    Value.
+  [{_Key, Value}] = ets:lookup(?PROMETHEUS_COUNTER_TABLE, {Registry, Name, LabelValues}),
+  Value.
+
+collect_mf(Callback, Registry, Name, Labels, Help) ->
+  Callback(counter, Name, Labels, Help, ets:match(?PROMETHEUS_COUNTER_TABLE, {{Registry, Name, '$1'}, '$3'})).
+
+collect_metrics(_Name, Callback, Values) ->
+  [Callback(LabelValues, Value) || [LabelValues, Value] <- Values].
+  

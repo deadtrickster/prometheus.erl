@@ -1,14 +1,15 @@
 -module(prometheus_vm_memory_collector).
--export([collect_mf/1,
+-export([collect_mf/5,
          collect_metrics/3,
          register/0,
-         register/1]).
+         register/1,
+         register/2]).
 
--behaviour(prometheus_custom_collector).
-
+-compile({no_auto_import,[register/2]}).
+-behaviour(prometheus_collector).
 -include("prometheus.hrl").
 
-collect_mf(Callback) ->
+collect_mf(Callback, _Registry, _Name, _Labels, _Help) ->
   Memory = erlang:memory(),
   Callback(gauge, erlang_vm_memory_bytes_total, [kind], "The total amount of memory currently allocated. This is the same as the sum of the memory size for processes and system.", Memory),
   Callback(gauge, erlang_vm_memory_processes_bytes_total, [usage], "The total amount of memory currently allocated for the Erlang processes.", Memory),
@@ -38,8 +39,11 @@ collect_metrics(erlang_vm_ets_tables, Callback, _MFData) ->
 collect_metrics(erlang_vm_dets_tables, Callback, _MFData) ->
   Callback([], length(dets:all())).
 
+register() ->
+  register(default).
+
 register(Registry) ->
   ok = prometheus_registry:register_collector(Registry, ?MODULE).
 
-register() ->
-  register(default).
+register(_Spec, _Registry) ->
+  erlang:error(invalid_register_call).

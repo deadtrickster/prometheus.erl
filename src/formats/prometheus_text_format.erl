@@ -2,7 +2,7 @@
 -export([content_type/0,
          format/0,
          format/1,
-         registry_collect_callback/5,
+         registry_collect_callback/6,
          collector_metrics_callback/5]).
 
 -include("prometheus.hrl").
@@ -18,7 +18,7 @@ format() ->
 format(Registry) ->
   {ok, Fd} = ram_file:open("", [write,read,binary]),
   prometheus_registry:collect(Registry, fun (Type, Name, Labels, Help) ->
-                                            registry_collect_callback(Fd, Type, Name, Labels, Help)
+                                            registry_collect_callback(Fd, Registry, Type, Name, Labels, Help)
                                         end),
   file:write(Fd, io_lib:format("\n", [])),
   {ok, Size} = ram_file:get_size(Fd),
@@ -29,29 +29,17 @@ format(Registry) ->
 emit_mf_prologue(Fd, Type, Name, Help) ->
   file:write(Fd, io_lib:format("# TYPE ~s ~s\n# HELP ~s ~s\n", [Name, Type, Name, escape_metric_help(Help)])).
 
-registry_collect_callback(Fd, Type, Name, Labels, Help) ->
-  case Type of
-    collector ->
-      collect_custom_collector(Fd, Name);
-    _ ->
-      emit_mf_prologue(Fd, Type, Name, Help),
-      prometheus_metric:mf_metrics({default, Type, Name, Labels},
-                                   fun (Name1, Labels1, LabelValues1, Value1) ->
-                                       collector_metrics_callback(Fd, Name1, Labels1, LabelValues1, Value1)
-                                   end)
-  end.
-
-collect_custom_collector(Fd, CustomCollectorName) ->
-  apply(CustomCollectorName, collect_mf,
-        [fun (Type, MFName, Labels, Help, MFData) ->
-             emit_mf_prologue(Fd, Type, MFName, Help),
-             apply(CustomCollectorName, collect_metrics,
-                   [MFName,
-                    fun (LabelValues, Value) ->
-                        collector_metrics_callback(Fd, MFName, Labels, LabelValues, Value)
-                    end,
-                    MFData])
-         end]).
+registry_collect_callback(Fd, Registry, Type, Name, Labels, Help) -> 
+  Type:collect_mf(
+    fun (Type1, MFName, Labels1, Help1, MFData) ->
+        emit_mf_prologue(Fd, Type1, MFName, Help1),
+        Type:collect_metrics(MFName,
+                             fun (LabelValues, Value) ->
+                                 collector_metrics_callback(Fd, MFName, Labels1, LabelValues, Value)
+                             end,
+                             MFData)
+    end,
+    Registry, Name, Labels, Help).
 
 labels_string(Labels, LabelValues) ->
   case length(Labels) of

@@ -1,8 +1,7 @@
 -module(prometheus_gauge).
-
--include("prometheus.hrl").
--export([new/2,
-				 new/3,
+-export([register/0,
+         register/1,
+         register/2,
          set/2,
          set/3,
          set/4,
@@ -11,14 +10,26 @@
          reset/3,
          value/1,
          value/2,
-         value/3]).
+         value/3,
+         collect_mf/5,
+         collect_metrics/3]).
 
-new(Name, Labels) ->
-		new(Name, Labels, default).
+-include("prometheus.hrl").
+-compile({no_auto_import,[register/2]}).
+-behaviour(prometheus_collector).
 
-new(Name, Labels, Registry) ->
-		prometheus_metric:insert_mf({{Registry, gauge, Name, length(Labels)}, Labels, "HELP STRING"}),
-    {Registry, gauge, Name, Labels}.
+register() ->
+  erlang:error(invalid_register_call).
+
+register(Spec) ->
+  register(Spec, default).
+
+register(Spec, Registry) ->
+  Name = proplists:get_value(name, Spec),
+  Labels = proplists:get_value(labels, Spec, []),
+  Help = proplists:get_value(help, Spec, ""),
+  %Value = proplists:get_value(value, Spec),
+  ok = prometheus_registry:register_collector(Registry, prometheus_gauge, Name, Labels, Help).
 
 set({Registry, Name, LabelValues}, Value) ->
     set(Registry, Name, LabelValues, Value);
@@ -36,7 +47,7 @@ set(Registry, Name, LabelValues, Value) ->
 set(Table, Registry, Name, LabelValues, Value) ->
     case ets:update_element(Table, {Registry, Name, LabelValues}, {1, Value}) of
         false ->
-            ok = prometheus_metric:check_mf_exists(Registry, gauge, Name, length(LabelValues)),
+            ok = prometheus_metric:check_mf_exists(Registry, prometheus_gauge, Name, length(LabelValues)),
             case ets:insert_new(Table, {{Registry, Name, LabelValues}, Value}) of
                 false -> %% some sneaky process already inserted
                     set(Table, Registry, Name, LabelValues, Value);
@@ -48,8 +59,6 @@ set(Table, Registry, Name, LabelValues, Value) ->
     end,
     ok.
 
-reset({Registry, Name, LabelValues}) ->
-    reset(Registry, Name, LabelValues);
 reset(Name) ->
     reset(default, Name, []).
 
@@ -59,8 +68,6 @@ reset(Name, LabelValues) ->
 reset(Registry, Name, LabelValues) ->
     set(Registry, Name, LabelValues, 0).
 
-value({Registry, Name, LabelValues}) ->
-    value(Registry, Name, LabelValues);
 value(Name) ->
     value(default, Name, []).
 
@@ -70,3 +77,9 @@ value(Name, LabelValues) ->
 value(Registry, Name, LabelValues) ->
     [{_Key, Value}] = ets:lookup(?PROMETHEUS_GAUGE_TABLE, {Registry, Name, LabelValues}),
     Value.
+
+collect_mf(Callback, Registry, Name, Labels, Help) ->
+  Callback(gauge, Name, Labels, Help, ets:match(?PROMETHEUS_GAUGE_TABLE, {{Registry, Name, '$1'}, '$3'})).
+
+collect_metrics(_Name, Callback, Values) ->
+  [Callback(LabelValues, Value) || [LabelValues, Value] <- Values].

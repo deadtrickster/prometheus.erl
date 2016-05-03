@@ -1,21 +1,28 @@
 -module(prometheus_vm_statistics_collector).
--export([collect_mf/1,
+-export([collect_mf/5,
          collect_metrics/3,
          register/0,
-         register/1]).
+         register/1,
+         register/2]).
 
+-compile({no_auto_import,[register/2]}).
 -include("prometheus.hrl").
 
-collect_mf(Callback) ->
+-behaviour(prometheus_collector).
+
+collect_mf(Callback, _Registry, _Name, _Labels, _Help) ->
   [call_if_statistics_exists(MFName, fun(Stat) ->
                                          add_metric_family(MFName, Stat, Callback)
                                      end) || MFName <- enabled_statistics_metrics()].
 
+register() ->
+  register(default).
+
 register(Registry) ->
   ok = prometheus_registry:register_collector(Registry, ?MODULE).
 
-register() ->
-  register(default).
+register(_Spec, _Registry) ->
+  erlang:error(invalid_register_call).
 
 add_metric_family(context_switches, Stat, Callback) ->
   Callback(counter, erlang_vm_statistics_context_switches, [], "Total number of context switches since the system started", Stat);

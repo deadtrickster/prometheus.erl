@@ -45,7 +45,7 @@ set(Registry, Name, LabelValues, Value) ->
     set(?PROMETHEUS_GAUGE_TABLE, Registry, Name, LabelValues, Value).
 
 set(Table, Registry, Name, LabelValues, Value) ->
-    case ets:update_element(Table, {Registry, Name, LabelValues}, {1, Value}) of
+    case ets:update_element(Table, {Registry, Name, LabelValues}, {2, Value}) of
         false ->
             ok = prometheus_metric:check_mf_exists(Registry, prometheus_gauge, Name, length(LabelValues)),
             case ets:insert_new(Table, {{Registry, Name, LabelValues}, Value}) of
@@ -66,7 +66,8 @@ reset(Name, LabelValues) ->
     reset(default, Name, LabelValues).
 
 reset(Registry, Name, LabelValues) ->
-    set(Registry, Name, LabelValues, 0).
+  ok = prometheus_metric:check_mf_exists(Registry, prometheus_gauge, Name, length(LabelValues)),
+  ets:update_element(?PROMETHEUS_GAUGE_TABLE, {Registry, Name, LabelValues}, {2, 0}).
 
 value(Name) ->
     value(default, Name, []).

@@ -64,6 +64,7 @@ reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
 reset(Registry, Name, LabelValues) ->
+  ok = prometheus_metric:check_mf_exists(Registry, prometheus_summary, Name, length(LabelValues)),
   ets:update_element(?PROMETHEUS_SUMMARY_TABLE, {Registry, Name, LabelValues}, [{2, 0}, {3, 0}]).
 
 value(Name) ->

@@ -65,7 +65,7 @@ reset(Name, LabelValues) ->
 
 reset(Registry, Name, LabelValues) ->
   ok = prometheus_metric:check_mf_exists(Registry, counter, Name, length(LabelValues)),
-  ets:update_counter(?PROMETHEUS_COUNTER_TABLE, {Registry, Name, LabelValues}, [{2, 1, 0, 0}]).
+  ets:update_element(?PROMETHEUS_COUNTER_TABLE, {Registry, Name, LabelValues}, [{2, 0}]).
 
 value(Name) ->
   value(default, Name, []).

@@ -15,11 +15,14 @@ Register metrics:
 ```erlang
 prometheus_gauge:register([{name, pool_size}, {help, "MongoDB Connections pool size"}]),
 prometheus_counter:register([{name, http_requests_total}, {help, "Http request count"}]).
+prometheus_summary:register([{name, orders_summary}, {help, "Track orders count/total sum"}]).
 ```
 Use metrics:
 ```erlang
 prometheus_gauge:set(pool_size, 365),
 prometheus_counter:inc(http_requests_total).
+prometheus_summary:observe(orders_summary,  10).
+prometheus_summary:observe(orders_summary,  15).
 ```
 
 Export metrics as text:
@@ -28,17 +31,22 @@ io:format(prometheus_text_format:format()).
 ```
 ->
 ```
-# TYPE http_requests_total counter
-# HELP http_requests_total Http request count
-http_requests_total 1
 # TYPE pool_size gauge
 # HELP pool_size MongoDB Connections pool size
 pool_size 365
+# TYPE orders_summary counter
+# HELP orders_summary Track orders count/total sum
+orders_summary_count 2
+orders_summary_sum 25
+# TYPE http_requests_total counter
+# HELP http_requests_total Http request count
+http_requests_total 1
+
 ```
 Implemented Metrics
  - [x] Counter
  - [x] Gauge
- - [ ] Summary
+ - [x] Summary
  - [ ] Histogram
 
 Custom Collectors

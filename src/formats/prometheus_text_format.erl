@@ -34,8 +34,13 @@ registry_collect_callback(Fd, Registry, Type, Name, Labels, Help) ->
     fun (Type1, MFName, Labels1, Help1, MFData) ->
         emit_mf_prologue(Fd, Type1, MFName, Help1),
         Type:collect_metrics(MFName,
-                             fun (LabelValues, Value) ->
-                                 collector_metrics_callback(Fd, MFName, Labels1, LabelValues, Value)
+                             fun (Series, Value) ->
+                                 case Series of
+                                   {Name1, LabelValues} ->
+                                     collector_metrics_callback(Fd, Name1, Labels1, LabelValues, Value);
+                                   LabelValues ->
+                                     collector_metrics_callback(Fd, MFName, Labels1, LabelValues, Value)
+                                   end
                              end,
                              MFData)
     end,

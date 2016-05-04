@@ -2,7 +2,6 @@
 -export([register/0,
          register/1,
          register/2,
-         observe/1,
          observe/2,
          observe/3,
          observe/4,
@@ -32,11 +31,8 @@ register(Spec, Registry) ->
                                                 %Value = proplists:get_value(value, Spec),
   ok = prometheus_registry:register_collector(Registry, prometheus_summary, Name, Labels, Help).
 
-observe(Name) ->
-  observe(default, Name, [], 1).
-
-observe(Name, LabelValues) ->
-  observe(default, Name, LabelValues, 1).
+observe(Name, Value) ->
+  observe(default, Name, [], Value).
 
 observe(Name, LabelValues, Value) ->
   observe(default, Name, LabelValues, Value).

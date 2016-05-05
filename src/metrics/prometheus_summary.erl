@@ -28,7 +28,7 @@ register(Spec, Registry) ->
   Name = proplists:get_value(name, Spec),
   Labels = proplists:get_value(labels, Spec, []),
   Help = proplists:get_value(help, Spec, ""),
-                                                %Value = proplists:get_value(value, Spec),
+  %Value = proplists:get_value(value, Spec),
   ok = prometheus_registry:register_collector(Registry, prometheus_summary, Name, Labels, Help).
 
 observe(Name, Value) ->
@@ -49,7 +49,7 @@ update_summary_counter(Table, Registry, Name, LabelValues, Value) ->
     ets:update_counter(Table, {Registry, Name, LabelValues}, {2, Value}),
     ets:update_counter(Table, {Registry, Name, LabelValues}, {3, 1})
   catch error:badarg ->
-      ok = prometheus_metric:check_mf_exists(Registry, prometheus_summary, Name, length(LabelValues)),
+      {ok, _} = prometheus_metric:check_mf_exists(Registry, prometheus_summary, Name, LabelValues),
       case ets:insert_new(Table, {{Registry, Name, LabelValues}, Value, 1}) of
         false -> %% some sneaky process already inserted
           update_summary_counter(Table, Registry, Name, LabelValues, Value);
@@ -64,7 +64,7 @@ reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
 reset(Registry, Name, LabelValues) ->
-  ok = prometheus_metric:check_mf_exists(Registry, prometheus_summary, Name, length(LabelValues)),
+  ok = prometheus_metric:check_mf_exists(Registry, prometheus_summary, Name, LabelValues),
   ets:update_element(?PROMETHEUS_SUMMARY_TABLE, {Registry, Name, LabelValues}, [{2, 0}, {3, 0}]).
 
 value(Name) ->

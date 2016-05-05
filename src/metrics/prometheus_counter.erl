@@ -47,7 +47,7 @@ inc(Registry, Name, LabelValues, Value) ->
 inc(Table, Registry, Name, LabelValues, Value) ->
   try ets:update_counter(Table, {Registry, Name, LabelValues}, Value)
   catch error:badarg ->
-      ok = prometheus_metric:check_mf_exists(Registry, prometheus_counter, Name, length(LabelValues)),
+      {ok, _} = prometheus_metric:check_mf_exists(Registry, prometheus_counter, Name, LabelValues),
       case ets:insert_new(Table, {{Registry, Name, LabelValues}, Value}) of
         false -> %% some sneaky process already inserted
           inc(Table, Registry, Name, LabelValues, Value);
@@ -64,7 +64,7 @@ reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
 reset(Registry, Name, LabelValues) ->
-  ok = prometheus_metric:check_mf_exists(Registry, counter, Name, length(LabelValues)),
+  ok = prometheus_metric:check_mf_exists(Registry, counter, Name, LabelValues),
   ets:update_element(?PROMETHEUS_COUNTER_TABLE, {Registry, Name, LabelValues}, [{2, 0}]).
 
 value(Name) ->
@@ -82,4 +82,3 @@ collect_mf(Callback, Registry, Name, Labels, Help) ->
 
 collect_metrics(_Name, Callback, Values) ->
   [Callback(LabelValues, Value) || [LabelValues, Value] <- Values].
-  

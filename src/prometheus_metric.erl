@@ -14,6 +14,5 @@ metric_table(counter) ->
 insert_mf(MF) ->
     ets:insert_new(?PROMETHEUS_TABLE, MF).
 
-check_mf_exists(Registry, Type,  Name, LabelsCount) ->
-    [_MF] = ets:lookup(?PROMETHEUS_TABLE, {Registry, Type, Name, LabelsCount}),
-    ok.
+check_mf_exists(Registry, Type,  Name, LabelValues) ->
+  prometheus_registry:collector_registeredp(Registry, Type, Name, LabelValues).

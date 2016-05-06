@@ -1,5 +1,19 @@
-Prometheus.io client in Erlang
-=====
+# Prometheus.erl
+
+[Prometheus](https://prometheus.io) monitoring system and time series database client in Erlang.
+
+### Metrics
+#### Standard
+ - [x] Counter
+ - [x] Gauge
+ - [x] Summary
+ - [x] Histogram
+
+#### Custom Collectors
+  - `erlang_vm_memory_collector` - Collects information about Erlang VM memory usage mainly using `erlang:memory/0`
+  - `erlang_vm_statistics_collector` - Collects Erlang VM statistics using `erlang:statistics/1`
+
+You can write custom collector/exporter for any library/app you'd like. For example here is [RabbitMQ Exporter](https://github.com/deadtrickster/prometheus_rabbitmq_exporter)
 
 Example Console Session
 -----
@@ -80,11 +94,6 @@ http_request_duration_milliseconds_count{method="get"} 9
 http_request_duration_milliseconds_sum{method="get"} 2622
 
 ```
-Implemented Metrics
- - [x] Counter
- - [x] Gauge
- - [x] Summary
- - [x] Histogram
 
 Implementation Note
 -----
@@ -92,16 +101,10 @@ Current implementation is based on `ets:update_counter`. While this is expected 
 
 ETS-based metrics are optimistic - for basic metrics such as counters/gauges it first tries to increment and iff series doesn't exist it queries ETS to check if metric actually registered and if so it inserts series. For histograms at least one lookup is required - we need buckets to compute bucket counter position.
 
-
-Custom Collectors
------
-  - `erlang_vm_memory_collector` - Collects information about Erlang VM memory usage mainly using `erlang:memory/0`
-  - `erlang_vm_statistics_collector` - Collects Erlang VM statistics using `erlang:statistics/1`
-
 Configuration
 -----
 Prometheus.erl supports standard Erlang app configuration.
-  - `default_collectors` - List of custom collectors modules to be registered automatically. Defaults to `?PROMETHEUS_DEFAULT_COLLECTORS`
+  - `default_collectors` - List of custom collectors modules to be registered automatically. If undefined list of all modules implementing `prometheus_collector` behaviour will be used.
   - `default_metrics` - List of metrics to be registered during app startup. Metric format: `{Registry, Metric, Spec}` where `Registry` is registry name, `Metric` is metric type (prometheus_counter, prometheus_gauge ... etc), `Spec` is a list to be passed to `Metric:register/2`.
 
 

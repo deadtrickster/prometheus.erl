@@ -78,7 +78,7 @@ value(Registry, Name, LabelValues) ->
   {Sum, Count}.
 
 collect_mf(Callback, Registry, Name, Labels, Help) ->
-  Callback(counter, Name, Labels, Help, ets:match(?PROMETHEUS_SUMMARY_TABLE, {{Registry, Name, '$1'}, '$2', '$3'})).
+  Callback(summary, Name, Labels, Help, ets:match(?PROMETHEUS_SUMMARY_TABLE, {{Registry, Name, '$1'}, '$2', '$3'})).
 
 collect_metrics(Name, Callback, Values) ->
   [emit_summary_stat(Name, LabelValues, Sum, Count, Callback) || [LabelValues, Sum, Count] <- Values].

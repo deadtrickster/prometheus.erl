@@ -103,13 +103,15 @@ Configuration
 Prometheus.erl supports standard Erlang app configuration.
   - `default_collectors` - List of custom collectors modules to be registered automatically. Defaults to `?PROMETHEUS_DEFAULT_COLLECTORS`
   - `default_metrics` - List of metrics to be registered during app startup. Metric format: `{Registry, Metric, Spec}` where `Registry` is registry name, `Metric` is metric type (prometheus_counter, prometheus_gauge ... etc), `Spec` is a list to be passed to `Metric:register/2`.
-  - 
+
+
 TODO
 -----
  - [ ] Floats support
  - [ ] Tests
  - [ ] Protobuf format
  - [ ] Extend custom collectors collection?
+
 
 Build
 -----

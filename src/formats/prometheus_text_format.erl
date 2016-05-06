@@ -38,6 +38,8 @@ registry_collect_callback(Fd, Registry, Type, Name, Labels, Help) ->
                                  case Series of
                                    {Name1, LabelValues} ->
                                      collector_metrics_callback(Fd, Name1, Labels1, LabelValues, Value);
+                                   {Name1, NewLabels, LabelValues} ->
+                                     collector_metrics_callback(Fd, Name1, Labels1 ++ NewLabels, LabelValues, Value);
                                    LabelValues ->
                                      collector_metrics_callback(Fd, MFName, Labels1, LabelValues, Value)
                                    end
@@ -73,8 +75,12 @@ collector_metrics_callback(Fd, Name, Labels, LabelValues, Value) ->
 escape_metric_help(Help) ->
   sub(sub(Help, "\\", "\\\\"), "\n", "\\n").
 
+escape_label_value(LValue) when is_list(LValue)->
+  sub(sub(sub(LValue, "\\", "\\\\"), "\n", "\\n"), "\"", "\\\"");
+escape_label_value('+Inf') ->
+  "+Inf";
 escape_label_value(LValue) ->
-  sub(sub(sub(LValue, "\\", "\\\\"), "\n", "\\n"), "\"", "\\\"").
+  escape_label_value(io_lib:format("~p", [LValue])).
 
 sub(Str, Old, New) when is_atom(Str) ->
   sub(atom_to_list(Str), Old, New);

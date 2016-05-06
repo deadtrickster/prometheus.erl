@@ -84,7 +84,14 @@ Implemented Metrics
  - [x] Counter
  - [x] Gauge
  - [x] Summary
- - [ ] Histogram
+ - [x] Histogram
+
+Implementation Note
+-----
+Current implementation is based on `ets:update_counter`. While this is expected to be much faster than using processes for synchronization it restricts us to integers-only while Prometheus expects series values to be double.
+
+ETS-based metrics are optimistic - for basic metrics such as counters/gauges it first tries to increment and iff series doesn't exist it queries ETS to check if metric actually registered and if so it inserts series. For histograms at least one lookup is required - we need buckets to compute bucket counter position.
+
 
 Custom Collectors
 -----
@@ -96,6 +103,13 @@ Configuration
 Prometheus.erl supports standard Erlang app configuration.
   - `default_collectors` - List of custom collectors modules to be registered automatically. Defaults to `?PROMETHEUS_DEFAULT_COLLECTORS`
   - `default_metrics` - List of metrics to be registered during app startup. Metric format: `{Registry, Metric, Spec}` where `Registry` is registry name, `Metric` is metric type (prometheus_counter, prometheus_gauge ... etc), `Spec` is a list to be passed to `Metric:register/2`.
+  - 
+TODO
+-----
+ - [ ] Floats support
+ - [ ] Tests
+ - [ ] Protobuf format
+ - [ ] Extend custom collectors collection?
 
 Build
 -----

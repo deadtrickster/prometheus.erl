@@ -31,6 +31,8 @@ start_link() ->
 %% Child :: {Id,StartFunc,Restart,Shutdown,Type,Modules}
 init([]) ->
   create_tables(),
+  register_collectors(),
+  register_metrics(),
   {ok, { {one_for_all, 0, 1}, []} }.
 
 %%====================================================================
@@ -46,9 +48,25 @@ create_tables() ->
             {?PROMETHEUS_HISTOGRAM_TABLE, [set, named_table, public, {write_concurrency, true}]}
            ],
   [maybe_create_table(ets:info(Name), Name, Opts) || {Name, Opts} <- Tables],
-  [Collector:register() || Collector <- application:get_env(prometheus, default_collectors, ?PROMETHEUS_DEFAULT_COLLECTORS)],
-  [Metric:new(Spec, Registry) || {Registry, Metric, Spec} <- application:get_env(prometheus, default_metrics, [])],
   ok.
+
+register_collectors() ->
+  [Collector:register() || Collector <- enabled_collectors()].
+
+register_metrics() ->
+  [Metric:register(Spec, Registry) || {Registry, Metric, Spec} <- application:get_env(prometheus, default_metrics, [])].
+
+enabled_collectors() ->
+  case application:get_env(prometheus, default_collectors) of
+    undefined -> all_known_collectors();
+    Collectors -> Collectors
+  end.
+
+all_known_collectors() ->
+  [Module || {_App, Module, Behaviours} <-
+               rabbit_misc:all_module_attributes(behaviour),
+             not lists:member(Module, ?PROMETHEUS_STANDARD_METRICS),
+             lists:member(prometheus_collector, Behaviours)].
 
 maybe_create_table(undefined, Name, Opts) ->
   ets:new(Name, Opts);

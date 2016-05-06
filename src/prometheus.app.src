@@ -10,7 +10,7 @@
   {env,[]},
   {modules, []},
 
-  {maintainers, []},
-  {licenses, []},
-  {links, []}
+  {maintainers, ["Ilya Khaprov"]},
+  {licenses, ["MIT"]},
+  {links, [{"Github", "https://github.com/deadtrickster/prometheus.erl"}]}
  ]}.

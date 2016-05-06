@@ -11,8 +11,7 @@ collect(Name, Callback) ->
   [apply(Callback, MF) || MF <-  ets:match(?PROMETHEUS_TABLE, {{Name, '$1', '$2', '_'}, '$3', '$4', '_'})].
 
 register_collector(Registry, Collector) ->
-  ets:insert_new(?PROMETHEUS_TABLE, {{Registry, Collector, Collector, 0}, [], ""}),
-  ok.
+  register_collector(Registry, Collector, Collector, [], "").
 
 register_collector(Registry, Type, Name, Labels, Help) ->
   register_collector(Registry, Type, Name, Labels, Help, undefined).

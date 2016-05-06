@@ -87,20 +87,34 @@ value(Registry, Name, LabelValues) ->
   {BoundValues, element(3 + length(Bounds), Metric)}.
 
 collect_mf(Callback, Registry, Name, Labels, Help) ->
-  Callback(counter, Name, Labels, Help, ets:match(?PROMETHEUS_HISTOGRAM_TABLE, {{Registry, Name, '$1'}, '$2', '$3'})).
+  {ok, MF} = prometheus_metric:check_mf_exists(Registry, prometheus_histogram, Name, Labels),
+  MFBounds = element(4, MF),
+  BoundPlaceholders = gen_query_bound_placeholders(MFBounds),
+  SumPlaceholder = gen_query_placeholder(3 + length(MFBounds)),
+  QuerySpec = [{Registry, Name, '$1'}, '$2'] ++ BoundPlaceholders ++ [SumPlaceholder],
+  Callback(histogram, Name, Labels, Help, ets:match(?PROMETHEUS_HISTOGRAM_TABLE, list_to_tuple(QuerySpec))).
 
 collect_metrics(Name, Callback, Values) ->
-  [emit_summary_stat(Name, LabelValues, Sum, Count, Callback) || [LabelValues, Sum, Count] <- Values].
+  [emit_histogram_stat(Callback, Name, Value) || Value <- Values].
 
-emit_summary_stat(Name, LabelValues, Sum, Count, Callback) ->
-  Callback({atom_to_list(Name) ++ "_count" , LabelValues}, Count),
-  Callback({atom_to_list(Name) ++ "_sum" , LabelValues}, Sum).
+emit_histogram_stat(Callback, Name, [LabelValues, Bounds | Stat]) ->
+  BoundValues = lists:sublist(Stat, 1, length(Bounds)),
+  BCounters = augment_counters(BoundValues),
+  lists:zipwith(fun(Bound, BCounter) ->
+                    emit_histogram_bound_stat(Callback, Name, LabelValues, Bound, BCounter)
+                end,
+                Bounds, BCounters),
+  Callback({atom_to_list(Name) ++ "_count", LabelValues}, lists:last(BCounters)),
+  Callback({atom_to_list(Name) ++ "_sum", LabelValues}, lists:last(Stat)).
+
+emit_histogram_bound_stat(Callback, Name, LabelValues, Bound, BCounter) ->
+  Callback({atom_to_list(Name) ++ "_bucket", [le], LabelValues ++ [Bound]}, BCounter).
 
 validate_histogram_bounds(undefined) ->
   erlang:error(histogram_no_bounds);
 validate_histogram_bounds(Bounds) when is_list(Bounds) ->
   %% TODO: validate list elements
-  Bounds ++ [infinity];
+  Bounds ++ ['+Inf'];
 validate_histogram_bounds(_Bounds) ->
   erlang:error(histogram_invalid_bounds).
 
@@ -125,3 +139,19 @@ sub_tuple_to_list(_Tuple,_Pos,_Size) -> [].
 
 generate_update_spec(BoundsStart, BoundsCount) ->
   [{Index, 0} || Index <- lists:seq(BoundsStart, BoundsCount + 3)].
+
+gen_query_placeholder(Index) ->
+  list_to_atom("$" ++ integer_to_list(Index)).
+
+gen_query_bound_placeholders(Bounds) ->
+  [gen_query_placeholder(Index) || Index <- lists:seq(3, 2 + length(Bounds))].
+
+augment_counters([]) ->
+  0;
+augment_counters([Start | Counters]) ->
+  augment_counters(Counters, [Start], Start).
+
+augment_counters([], LAcc, _CAcc) ->
+  LAcc;
+augment_counters([Counter | Counters], LAcc, CAcc) ->
+  augment_counters(Counters, LAcc ++ [CAcc + Counter], CAcc + Counter).

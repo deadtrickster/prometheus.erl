@@ -41,7 +41,7 @@ init([]) ->
 
 create_tables() ->
   Tables = [
-            {?PROMETHEUS_TABLE, [set, named_table, public, {read_concurrency, true}]},
+            {?PROMETHEUS_TABLE, [bag, named_table, public, {read_concurrency, true}]},
             {?PROMETHEUS_COUNTER_TABLE, [set, named_table, public, {write_concurrency, true}]},
             {?PROMETHEUS_GAUGE_TABLE, [set, named_table, public, {write_concurrency, true}]},
             {?PROMETHEUS_SUMMARY_TABLE, [set, named_table, public, {write_concurrency, true}]},
@@ -65,7 +65,7 @@ enabled_collectors() ->
 all_known_collectors() ->
   [Module || {_App, Module, Behaviours} <-
                prometheus_misc:all_module_attributes(behaviour),
-             not lists:member(Module, ?PROMETHEUS_STANDARD_METRICS),
+             not lists:member(prometheus_metric, Behaviours),
              lists:member(prometheus_collector, Behaviours)].
 
 maybe_create_table(undefined, Name, Opts) ->

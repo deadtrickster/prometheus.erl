@@ -1,7 +1,8 @@
 -module(prometheus_histogram).
 -export([register/0,
          register/1,
-         register/2,
+         new/1,
+         new/2,
          observe/2,
          observe/3,
          observe/4,
@@ -11,26 +12,30 @@
          value/1,
          value/2,
          value/3,
-         collect_mf/5,
+         collect_mf/2,
          collect_metrics/3]).
 
 -include("prometheus.hrl").
--compile({no_auto_import,[register/2]}).
 -behaviour(prometheus_collector).
+-behaviour(prometheus_metric).
 
 register() ->
-  erlang:error(invalid_register_call).
+  register(default).
 
-register(Spec) ->
-  register(Spec, default).
+register(Registry) ->
+  ok = prometheus_registry:register_collector(Registry, ?MODULE).
 
-register(Spec, Registry) ->
+new(Spec) ->
+  new(Spec, default).
+
+new(Spec, Registry) ->
   Name = proplists:get_value(name, Spec),
   Labels = proplists:get_value(labels, Spec, []),
   Help = proplists:get_value(help, Spec, ""),
   Bounds = validate_histogram_bounds(proplists:get_value(bounds, Spec)),
   %Value = proplists:get_value(value, Spec),
-  ok = prometheus_registry:register_collector(Registry, prometheus_histogram, Name, Labels, Help, Bounds).
+  register(Registry),
+  prometheus_metric:insert_mf(?PROMETHEUS_HISTOGRAM_TABLE, Registry, Name, Labels, Help, Bounds).
 
 observe(Name, Value) ->
   observe(default, Name, [], Value).
@@ -55,8 +60,8 @@ update_histogram(Table, Registry, Name, LabelValues, Value) ->
                                   end),
       ets:update_counter(Table, {Registry, Name, LabelValues}, {Position + 2, 1});
     []->
-      {ok, MF} = prometheus_metric:check_mf_exists(Registry, prometheus_histogram, Name, LabelValues),
-      MFBounds = element(4, MF),
+      MF = prometheus_metric:check_mf_exists(?PROMETHEUS_HISTOGRAM_TABLE, Registry, Name, LabelValues),
+      MFBounds = prometheus_metric:mf_data(MF),
       BoundCounters = lists:duplicate(length(MFBounds), 0),
       MetricSpec = [{Registry, Name, LabelValues}, MFBounds] ++ BoundCounters ++ [0],
       ets:insert(?PROMETHEUS_HISTOGRAM_TABLE, list_to_tuple(MetricSpec)),
@@ -69,8 +74,8 @@ reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
 reset(Registry, Name, LabelValues) ->
-  [Metric] = ets:lookup(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}),
-  Bounds = element(2, Metric),
+  MF = prometheus_metric:check_mf_exists(?PROMETHEUS_HISTOGRAM_TABLE, Registry, Name, LabelValues),
+  Bounds = prometheus_metric:mf_data(MF),
   UpdateSpec = generate_update_spec(3, length(Bounds)),
   ets:update_element(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}, UpdateSpec).
 
@@ -86,16 +91,14 @@ value(Registry, Name, LabelValues) ->
   BoundValues = sub_tuple_to_list(Metric, 3, 3 + length(Bounds)),
   {BoundValues, element(3 + length(Bounds), Metric)}.
 
-collect_mf(Callback, Registry, Name, Labels, Help) ->
-  {ok, MF} = prometheus_metric:check_mf_exists(Registry, prometheus_histogram, Name, Labels),
-  MFBounds = element(4, MF),
-  BoundPlaceholders = gen_query_bound_placeholders(MFBounds),
-  SumPlaceholder = gen_query_placeholder(3 + length(MFBounds)),
-  QuerySpec = [{Registry, Name, '$1'}, '$2'] ++ BoundPlaceholders ++ [SumPlaceholder],
-  Callback(histogram, Name, Labels, Help, ets:match(?PROMETHEUS_HISTOGRAM_TABLE, list_to_tuple(QuerySpec))).
+collect_mf(Callback, Registry) ->
+  [Callback(counter, Name, Labels, Help, [Registry, Bounds]) || [Name, Labels, Help, Bounds] <- prometheus_metric:metrics_with_data(?PROMETHEUS_HISTOGRAM_TABLE, Registry)].
 
-collect_metrics(Name, Callback, Values) ->
-  [emit_histogram_stat(Callback, Name, Value) || Value <- Values].
+collect_metrics(Name, Callback, [Registry, Bounds]) ->
+  BoundPlaceholders = gen_query_bound_placeholders(Bounds),
+  SumPlaceholder = gen_query_placeholder(3 + length(Bounds)),
+  QuerySpec = [{Registry, Name, '$1'}, '$2'] ++ BoundPlaceholders ++ [SumPlaceholder],
+  [emit_histogram_stat(Callback, Name, Value) || Value <- ets:match(?PROMETHEUS_HISTOGRAM_TABLE, list_to_tuple(QuerySpec))].
 
 emit_histogram_stat(Callback, Name, [LabelValues, Bounds | Stat]) ->
   BoundValues = lists:sublist(Stat, 1, length(Bounds)),

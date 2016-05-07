@@ -47,15 +47,12 @@ inc(Name, LabelValues, Value) ->
   inc(default, Name, LabelValues, Value).
 
 inc(Registry, Name, LabelValues, Value) ->
-  inc(?PROMETHEUS_COUNTER_TABLE, Registry, Name, LabelValues, Value).
-
-inc(Table, Registry, Name, LabelValues, Value) ->
-  try ets:update_counter(Table, {Registry, Name, LabelValues}, Value)
+  try ets:update_counter(?PROMETHEUS_COUNTER_TABLE, {Registry, Name, LabelValues}, Value)
   catch error:badarg ->
       prometheus_metric:check_mf_exists(?PROMETHEUS_COUNTER_TABLE, Registry, Name, LabelValues),
-      case ets:insert_new(Table, {{Registry, Name, LabelValues}, Value}) of
+      case ets:insert_new(?PROMETHEUS_COUNTER_TABLE, {{Registry, Name, LabelValues}, Value}) of
         false -> %% some sneaky process already inserted
-          inc(Table, Registry, Name, LabelValues, Value);
+          inc(Registry, Name, LabelValues, Value);
         true ->
           ok
       end

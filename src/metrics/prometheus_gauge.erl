@@ -47,15 +47,12 @@ set(Name, LabelValues, Value) ->
   set(default, Name, LabelValues, Value).
 
 set(Registry, Name, LabelValues, Value) ->
-  set(?PROMETHEUS_GAUGE_TABLE, Registry, Name, LabelValues, Value).
-
-set(Table, Registry, Name, LabelValues, Value) ->
-  case ets:update_element(Table, {Registry, Name, LabelValues}, {2, Value}) of
+  case ets:update_element(?PROMETHEUS_GAUGE_TABLE, {Registry, Name, LabelValues}, {2, Value}) of
     false ->
       prometheus_metric:check_mf_exists(?PROMETHEUS_GAUGE_TABLE, Registry, Name, LabelValues),
-      case ets:insert_new(Table, {{Registry, Name, LabelValues}, Value}) of
+      case ets:insert_new(?PROMETHEUS_GAUGE_TABLE, {{Registry, Name, LabelValues}, Value}) of
         false -> %% some sneaky process already inserted
-          set(Table, Registry, Name, LabelValues, Value);
+          set(Registry, Name, LabelValues, Value);
         true ->
           ok
       end;

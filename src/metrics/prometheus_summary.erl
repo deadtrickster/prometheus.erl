@@ -43,21 +43,14 @@ observe(Name, LabelValues, Value) ->
   observe(default, Name, LabelValues, Value).
 
 observe(Registry, Name, LabelValues, Value) ->
-  observe(?PROMETHEUS_SUMMARY_TABLE, Registry, Name, LabelValues, Value).
-
-observe(Table, Registry, Name, LabelValues, Value) ->
-  update_summary_counter(Table, Registry, Name, LabelValues, Value),
-  ok.
-
-update_summary_counter(Table, Registry, Name, LabelValues, Value) ->
   try
-    ets:update_counter(Table, {Registry, Name, LabelValues}, {2, Value}),
-    ets:update_counter(Table, {Registry, Name, LabelValues}, {3, 1})
+    ets:update_counter(?PROMETHEUS_GAUGE_TABLE, {Registry, Name, LabelValues}, {2, Value}),
+    ets:update_counter(?PROMETHEUS_GAUGE_TABLE, {Registry, Name, LabelValues}, {3, 1})
   catch error:badarg ->
       prometheus_metric:check_mf_exists(?PROMETHEUS_SUMMARY_TABLE, Registry, Name, LabelValues),
-      case ets:insert_new(Table, {{Registry, Name, LabelValues}, Value, 1}) of
+      case ets:insert_new(?PROMETHEUS_GAUGE_TABLE, {{Registry, Name, LabelValues}, Value, 1}) of
         false -> %% some sneaky process already inserted
-          update_summary_counter(Table, Registry, Name, LabelValues, Value);
+          observe(Registry, Name, LabelValues, Value);
         true ->
           ok
       end

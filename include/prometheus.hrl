@@ -14,5 +14,7 @@
                                    runtime,
                                    wall_clock]).
 
--define(PROMETHEUS_DEFAULT_COLLECTORS, [prometheus_vm_memory_collector,
-                                        prometheus_vm_statistics_collector]).
+-define(PROMETHEUS_STANDARD_METRICS, [prometheus_counter,
+                                      prometheus_gauge,
+                                      prometheus_summary,
+                                      prometheus_histogram]).

@@ -64,7 +64,7 @@ enabled_collectors() ->
 
 all_known_collectors() ->
   [Module || {_App, Module, Behaviours} <-
-               rabbit_misc:all_module_attributes(behaviour),
+               prometheus_misc:all_module_attributes(behaviour),
              not lists:member(Module, ?PROMETHEUS_STANDARD_METRICS),
              lists:member(prometheus_collector, Behaviours)].
 

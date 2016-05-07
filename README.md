@@ -27,10 +27,10 @@ prometheus:start().
 ```
 Register metrics:
 ```erlang
-prometheus_gauge:register([{name, pool_size}, {help, "MongoDB Connections pool size"}]),
-prometheus_counter:register([{name, http_requests_total}, {help, "Http request count"}]).
-prometheus_summary:register([{name, orders_summary}, {help, "Track orders count/total sum"}]).
-prometheus_histogram:register([{name, http_request_duration_milliseconds},
+prometheus_gauge:new([{name, pool_size}, {help, "MongoDB Connections pool size"}]),
+prometheus_counter:new([{name, http_requests_total}, {help, "Http request count"}]).
+prometheus_summary:new([{name, orders_summary}, {help, "Track orders count/total sum"}]).
+prometheus_histogram:new([{name, http_request_duration_milliseconds},
                                {labels, [method]},
                                {bounds, [100, 300, 500, 750, 1000]},
                                {help, "Http Request execution time"}]).

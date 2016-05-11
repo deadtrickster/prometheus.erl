@@ -6,6 +6,9 @@
          observe/2,
          observe/3,
          observe/4,
+         dobserve/2,
+         dobserve/3,
+         dobserve/4,
          reset/1,
          reset/2,
          reset/3,
@@ -14,6 +17,12 @@
          value/3,
          collect_mf/2,
          collect_metrics/3]).
+
+-export([start_link/0]).
+
+%%% gen_server
+-export([init/1, handle_call/3, handle_cast/2, handle_info/2,
+         terminate/2, code_change/3]).
 
 -include("prometheus.hrl").
 -behaviour(prometheus_collector).
@@ -33,7 +42,7 @@ new(Spec, Registry) ->
   Labels = proplists:get_value(labels, Spec, []),
   Help = proplists:get_value(help, Spec, ""),
   Bounds = validate_histogram_bounds(proplists:get_value(bounds, Spec)),
-  %Value = proplists:get_value(value, Spec),
+                                                %Value = proplists:get_value(value, Spec),
   register(Registry),
   prometheus_metric:insert_mf(?PROMETHEUS_HISTOGRAM_TABLE, Registry, Name, Labels, Help, Bounds).
 
@@ -60,6 +69,15 @@ observe(Registry, Name, LabelValues, Value) ->
       ets:insert(?PROMETHEUS_HISTOGRAM_TABLE, list_to_tuple(MetricSpec)),
       observe(Registry, Name, LabelValues, Value)
   end.
+
+dobserve(Name, Value) ->
+  dobserve(default, Name, [], Value).
+
+dobserve(Name, LabelValues, Value) ->
+  dobserve(default, Name, LabelValues, Value).
+
+dobserve(Registry, Name, LabelValues, Value) ->
+  gen_server:cast(prometheus_histogram, {observe, {Registry, Name, LabelValues, Value}}).
 
 reset(Name) ->
   reset(default, Name, []).
@@ -151,3 +169,44 @@ augment_counters([], LAcc, _CAcc) ->
   LAcc;
 augment_counters([Counter | Counters], LAcc, CAcc) ->
   augment_counters(Counters, LAcc ++ [CAcc + Counter], CAcc + Counter).
+
+
+start_link() ->
+  gen_server:start_link({local, prometheus_histogram}, prometheus_histogram, [], []).
+
+init(_Args) ->
+  {ok, []}.
+
+handle_call(_Call, _From, State) ->
+  {noreply, State}.
+
+handle_cast({observe, {Registry, Name, LabelValues, Value}}, State) ->
+  dobserve_impl(Registry, Name, LabelValues, Value),
+  {noreply, State}.
+
+dobserve_impl(Registry, Name, LabelValues, Value) ->
+  case ets:lookup(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}) of
+    [Metric]->
+      Bounds = element(2, Metric),
+      ets:update_element(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}, [{length(Bounds) + 3, element(length(Bounds) + 3, Metric) + Value}]),
+      Position = position(Bounds, fun(Bound) ->
+                                      Value =< Bound
+                                  end),
+      ets:update_counter(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}, {Position + 2, 1});
+    []->
+      MF = prometheus_metric:check_mf_exists(?PROMETHEUS_HISTOGRAM_TABLE, Registry, Name, LabelValues),
+      MFBounds = prometheus_metric:mf_data(MF),
+      BoundCounters = lists:duplicate(length(MFBounds), 0),
+      MetricSpec = [{Registry, Name, LabelValues}, MFBounds] ++ BoundCounters ++ [0],
+      ets:insert(?PROMETHEUS_HISTOGRAM_TABLE, list_to_tuple(MetricSpec)),
+      dobserve_impl(Registry, Name, LabelValues, Value)
+  end.
+
+handle_info(_Info, State) ->
+  {noreply, State}.
+
+terminate(_Reason, _State) ->
+  ok.
+
+code_change(_OldVsn, State, _Extra) ->
+  {ok, State}.

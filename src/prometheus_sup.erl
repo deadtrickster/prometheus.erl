@@ -44,7 +44,13 @@ init([]) ->
                                permanent,
                                5000,
                                worker,
-                               [prometheus_summary]}]}}.
+                               [prometheus_summary]},
+                              {prometheus_histogram,
+                               {prometheus_histogram, start_link, []},
+                               permanent,
+                               5000,
+                               worker,
+                               [prometheus_histogram]}]}}.
 
 %%====================================================================
 %% Internal functions

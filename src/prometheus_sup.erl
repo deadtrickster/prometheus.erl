@@ -33,7 +33,18 @@ init([]) ->
   create_tables(),
   register_collectors(),
   register_metrics(),
-  {ok, { {one_for_all, 0, 1}, []} }.
+  {ok, {{one_for_one, 5, 1}, [{prometheus_counter,
+                               {prometheus_counter, start_link, []},
+                               permanent,
+                               5000,
+                               worker,
+                               [prometheus_counter]},
+                              {prometheus_summary,
+                               {prometheus_summary, start_link, []},
+                               permanent,
+                               5000,
+                               worker,
+                               [prometheus_summary]}]}}.
 
 %%====================================================================
 %% Internal functions

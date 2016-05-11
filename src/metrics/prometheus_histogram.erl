@@ -47,11 +47,11 @@ observe(Registry, Name, LabelValues, Value) ->
   case ets:lookup(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}) of
     [Metric]->
       Bounds = element(2, Metric),
-      ets:update_counter(?PROMETHEUS_GAUGE_TABLE, {Registry, Name, LabelValues}, {length(Bounds) + 3, Value}),
+      ets:update_counter(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}, {length(Bounds) + 3, Value}),
       Position = position(Bounds, fun(Bound) ->
                                       Value =< Bound
                                   end),
-      ets:update_counter(?PROMETHEUS_GAUGE_TABLE, {Registry, Name, LabelValues}, {Position + 2, 1});
+      ets:update_counter(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}, {Position + 2, 1});
     []->
       MF = prometheus_metric:check_mf_exists(?PROMETHEUS_HISTOGRAM_TABLE, Registry, Name, LabelValues),
       MFBounds = prometheus_metric:mf_data(MF),
@@ -85,7 +85,7 @@ value(Registry, Name, LabelValues) ->
   {BoundValues, element(3 + length(Bounds), Metric)}.
 
 collect_mf(Callback, Registry) ->
-  [Callback(counter, Name, Labels, Help, [Registry, Bounds]) || [Name, Labels, Help, Bounds] <- prometheus_metric:metrics_with_data(?PROMETHEUS_HISTOGRAM_TABLE, Registry)].
+  [Callback(histogram, Name, Labels, Help, [Registry, Bounds]) || [Name, Labels, Help, Bounds] <- prometheus_metric:metrics(?PROMETHEUS_HISTOGRAM_TABLE, Registry)].
 
 collect_metrics(Name, Callback, [Registry, Bounds]) ->
   BoundPlaceholders = gen_query_bound_placeholders(Bounds),

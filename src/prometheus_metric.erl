@@ -3,8 +3,7 @@
          insert_mf/6,
          check_mf_exists/4,
          mf_data/1,
-         metrics/2,
-         metrics_with_data/2]).
+         metrics/2]).
 
 -include("prometheus.hrl").
 
@@ -44,7 +43,4 @@ mf_data(MF) ->
   element(4, MF).
 
 metrics(Table, Registry) ->
-  ets:match(Table, {{Registry, mf, '$1'}, '$2', '$3'}).
-
-metrics_with_data(Table, Registry) ->  
   ets:match(Table, {{Registry, mf, '$1'}, '$2', '$3', '$4'}).

@@ -36,10 +36,6 @@ new(Spec, Registry) ->
   register(Registry),
   prometheus_metric:insert_mf(?PROMETHEUS_GAUGE_TABLE, Registry, Name, Labels, Help).
 
-set({Registry, Name, LabelValues}, Value) ->
-  set(Registry, Name, LabelValues, Value);
-set(Name, LabelValues) when is_list(LabelValues) ->
-  set(default, Name, LabelValues, 1);
 set(Name, Value) ->
   set(default, Name, [], Value).
 
@@ -82,7 +78,7 @@ value(Registry, Name, LabelValues) ->
   Value.
 
 collect_mf(Callback, Registry) ->
-  [Callback(gauge, Name, Labels, Help, [Registry]) || [Name, Labels, Help] <- prometheus_metric:metrics(?PROMETHEUS_GAUGE_TABLE, Registry)].
+  [Callback(gauge, Name, Labels, Help, [Registry]) || [Name, Labels, Help, _] <- prometheus_metric:metrics(?PROMETHEUS_GAUGE_TABLE, Registry)].
 
 collect_metrics(Name, Callback, [Registry]) ->
   [Callback(LabelValues, Value) || [LabelValues, Value] <- ets:match(?PROMETHEUS_GAUGE_TABLE, {{Registry, Name, '$1'}, '$2'})].

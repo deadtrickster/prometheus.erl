@@ -97,9 +97,12 @@ http_request_duration_milliseconds_sum{method="get"} 2622
 
 Implementation Note
 -----
-Current implementation is based on `ets:update_counter`. While this is expected to be much faster than using processes for synchronization it restricts us to integers-only while Prometheus expects series values to be double.
-
+Prometheus.erl exports two API sets. 
+ - For Integers: `prometheus_coutner:inc`, `prometheus_summary:observe` and `prometheus_histogram:observe`. Implementation is based on `ets:update_counter`. While this is expected to be much faster than using processes for synchronization it restricts us to integers-only while Prometheus expects series values to be double.
 ETS-based metrics are optimistic - for basic metrics such as counters/gauges it first tries to increment and iff series doesn't exist it queries ETS to check if metric actually registered and if so it inserts series. For histograms at least one lookup is required - we need buckets to compute bucket counter position.
+ - For Floats: `prometheus_coutner:dinc`, `prometheus_summary:dobserve` and `prometheus_histogram:dobserve`. Implementation is based on `gen_server` which is used for synchronizations (ets doesn't support float atomic increments).
+ 
+***NOTE***: you can use float APIs after integer but not vice-versa. 
 
 Configuration
 -----

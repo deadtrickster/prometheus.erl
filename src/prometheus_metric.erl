@@ -3,7 +3,15 @@
          insert_mf/6,
          check_mf_exists/4,
          mf_data/1,
-         metrics/2]).
+         metrics/2,
+         extract_common_params/1,
+         extract_key_or_raise_missing/2]).
+
+-ifdef(TEST).
+-export([validate_metric_name/1,
+         validate_metric_label_names/1,
+         validate_metric_help/1]).
+-endif.
 
 -include("prometheus.hrl").
 
@@ -44,3 +52,82 @@ mf_data(MF) ->
 
 metrics(Table, Registry) ->
   ets:match(Table, {{Registry, mf, '$1'}, '$2', '$3', '$4'}).
+
+extract_common_params(Spec) ->
+  RawName = extract_key_or_raise_missing(name, Spec),
+  Name = validate_metric_name(RawName),
+
+  RawLabels = extract_key_or_default(labels, Spec, []),
+  Labels = validate_metric_label_names(RawLabels),
+
+  RawHelp = extract_key_or_raise_missing(help, Spec),
+  Help = validate_metric_help(RawHelp),
+
+  {Name, Labels, Help}.
+
+extract_key_or_raise_missing(Key, Spec) ->
+  case proplists:get_value(Key, Spec) of
+    undefined ->
+      erlang:error({missing_metric_spec_key, Key, Spec});
+    RawValue ->
+      RawValue
+  end.
+
+extract_key_or_default(Key, Spec, Default) ->
+  proplists:get_value(Key, Spec, Default).
+
+validate_metric_name(RawName) when is_atom(RawName) ->
+  validate_metric_name(atom_to_list(RawName));
+validate_metric_name(RawName) when is_binary(RawName) ->
+  validate_metric_name(binary_to_list(RawName));
+validate_metric_name(RawName) when is_list(RawName) ->
+  case io_lib:printable_unicode_list(RawName) of
+    true ->
+      case re:run(RawName, "^[a-zA-Z_:][a-zA-Z0-9_:]*$") of
+        {match, _} -> list_to_atom(RawName);
+        nomatch -> erlang:error({invalid_metric_name, RawName, "metric name doesn't match regex [a-zA-Z_:][a-zA-Z0-9_:]*"})
+      end;
+    false ->
+      erlang:error({invalid_metric_name, RawName, "metric name is invalid string"})
+  end;
+validate_metric_name(RawName) ->
+  erlang:error({invalid_metric_name, RawName, "metric name is not a string"}).
+
+validate_metric_label_names(RawLabels) when is_list(RawLabels) ->
+  lists:map(fun validate_metric_label_name/1, RawLabels);
+validate_metric_label_names(RawLabels) ->
+  erlang:error({invalid_metric_labels, RawLabels, "not list"}).
+
+validate_metric_label_name(RawName) when is_atom(RawName) ->
+  validate_metric_label_name(atom_to_list(RawName));
+validate_metric_label_name(RawName) when is_binary(RawName) ->
+  validate_metric_label_name(binary_to_list(RawName));
+validate_metric_label_name(RawName) when is_list(RawName) ->
+  case io_lib:printable_unicode_list(RawName) of
+    true ->
+      validate_metric_label_name_content(RawName);
+    false ->
+      erlang:error({invalid_metric_label_name, RawName, "metric label is invalid string"})
+  end;
+validate_metric_label_name(RawName) ->
+  erlang:error({invalid_metric_label_name, RawName, "metric label is not a string"}).
+
+validate_metric_label_name_content("__"  ++ _Rest = RawName) ->
+  erlang:error({invalid_metric_label_name, RawName, "metric label can't start with __"});
+validate_metric_label_name_content(RawName) ->
+  case re:run(RawName, "^[a-zA-Z_][a-zA-Z0-9_]*$") of
+    {match, _} -> RawName;
+    nomatch -> erlang:error({invalid_metric_label_name, RawName, "metric label doesn't match regex [a-zA-Z_][a-zA-Z0-9_]*"})
+  end.
+
+validate_metric_help(RawHelp) when is_binary(RawHelp) ->
+  validate_metric_help(binary_to_list(RawHelp));
+validate_metric_help(RawHelp) when is_list(RawHelp) ->
+  case io_lib:printable_unicode_list(RawHelp) of
+    true ->
+      RawHelp;
+    false ->
+      erlang:error({invalid_metric_help, RawHelp, "metric help is invalid string"})
+  end;
+validate_metric_help(RawHelp) ->
+  erlang:error({invalid_metric_help, RawHelp, "metric help is not a string"}).

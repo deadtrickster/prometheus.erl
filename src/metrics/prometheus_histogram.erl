@@ -38,11 +38,9 @@ new(Spec) ->
   new(Spec, default).
 
 new(Spec, Registry) ->
-  Name = proplists:get_value(name, Spec),
-  Labels = proplists:get_value(labels, Spec, []),
-  Help = proplists:get_value(help, Spec, ""),
-  Bounds = validate_histogram_bounds(proplists:get_value(bounds, Spec)),
-                                                %Value = proplists:get_value(value, Spec),
+  {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
+  Bounds = validate_histogram_bounds(prometheus_metric:extract_key_or_raise_missing(bounds, Spec)),
+  %% Value = proplists:get_value(value, Spec),
   register(Registry),
   prometheus_metric:insert_mf(?PROMETHEUS_HISTOGRAM_TABLE, Registry, Name, Labels, Help, Bounds).
 

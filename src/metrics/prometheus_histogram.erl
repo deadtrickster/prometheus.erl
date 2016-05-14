@@ -39,10 +39,19 @@ new(Spec) ->
 
 new(Spec, Registry) ->
   {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
+  validate_histogram_labels(Labels),
   Bounds = validate_histogram_bounds(prometheus_metric:extract_key_or_raise_missing(bounds, Spec)),
   %% Value = proplists:get_value(value, Spec),
   register(Registry),
   prometheus_metric:insert_mf(?PROMETHEUS_HISTOGRAM_TABLE, Registry, Name, Labels, Help, Bounds).
+
+validate_histogram_labels(Labels) ->
+  [raise_error_if_le_label_found(Label) || Label <- Labels].
+
+raise_error_if_le_label_found("le") ->
+  erlang:error({invalid_metric_label_name, "le", "histogram cannot have a label named \"le\""});
+raise_error_if_le_label_found(Label) ->
+  Label.
 
 observe(Name, Value) ->
   observe(default, Name, [], Value).

@@ -29,7 +29,8 @@ stop(DefaultCollectors) ->
 
 test_format() ->
   prometheus_gauge:new([{name, pool_size}, {help, "MongoDB Connections pool size"}]),
-  prometheus_counter:new([{name, http_requests_total}, {help, "Http request count"}]),
+  prometheus_counter:new([{name, http_requests_total}, {help, "Http request count"}]),  
+  prometheus_counter:new([{name, dtest}, {help, "qwe"}]),
   prometheus_summary:new([{name, orders_summary}, {help, "Track orders count/total sum"}]),
   prometheus_histogram:new([{name, http_request_duration_milliseconds},
                             {labels, [method]},
@@ -54,5 +55,38 @@ test_format() ->
   prometheus_histogram:observe(http_request_duration_milliseconds, [post], 850),
   prometheus_histogram:observe(http_request_duration_milliseconds, [post], 750),
   prometheus_histogram:observe(http_request_duration_milliseconds, [post], 1650),
-  ?_assertEqual("# TYPE pool_size gauge\n# HELP pool_size MongoDB Connections pool size\npool_size 365\n# TYPE http_requests_total counter\n# HELP http_requests_total Http request count\nhttp_requests_total 1\n# TYPE orders_summary summary\n# HELP orders_summary Track orders count/total sum\norders_summary_count 2\norders_summary_sum 25\n# TYPE http_request_duration_milliseconds histogram\n# HELP http_request_duration_milliseconds Http Request execution time\nhttp_request_duration_milliseconds_bucket{method=\"get\",le=\"100\"} 3\nhttp_request_duration_milliseconds_bucket{method=\"get\",le=\"300\"} 6\nhttp_request_duration_milliseconds_bucket{method=\"get\",le=\"500\"} 7\nhttp_request_duration_milliseconds_bucket{method=\"get\",le=\"750\"} 8\nhttp_request_duration_milliseconds_bucket{method=\"get\",le=\"1000\"} 9\nhttp_request_duration_milliseconds_bucket{method=\"get\",le=\"+Inf\"} 9\nhttp_request_duration_milliseconds_count{method=\"get\"} 9\nhttp_request_duration_milliseconds_sum{method=\"get\"} 2622\nhttp_request_duration_milliseconds_bucket{method=\"post\",le=\"100\"} 0\nhttp_request_duration_milliseconds_bucket{method=\"post\",le=\"300\"} 1\nhttp_request_duration_milliseconds_bucket{method=\"post\",le=\"500\"} 3\nhttp_request_duration_milliseconds_bucket{method=\"post\",le=\"750\"} 4\nhttp_request_duration_milliseconds_bucket{method=\"post\",le=\"1000\"} 5\nhttp_request_duration_milliseconds_bucket{method=\"post\",le=\"+Inf\"} 6\nhttp_request_duration_milliseconds_count{method=\"post\"} 6\nhttp_request_duration_milliseconds_sum{method=\"post\"} 4350\n\n",
+  prometheus_counter:dinc(dtest, 1.5),
+  prometheus_counter:dinc(dtest, 3.5),
+  prometheus_counter:dinc(dtest, 1.5),
+  ?_assertEqual("# TYPE pool_size gauge
+# HELP pool_size MongoDB Connections pool size
+pool_size 365
+# TYPE http_requests_total counter
+# HELP http_requests_total Http request count
+http_requests_total 1
+# TYPE dtest counter
+# HELP dtest qwe
+dtest 6.5
+# TYPE orders_summary summary
+# HELP orders_summary Track orders count/total sum
+orders_summary_count 2
+orders_summary_sum 25
+# TYPE http_request_duration_milliseconds histogram
+# HELP http_request_duration_milliseconds Http Request execution time
+http_request_duration_milliseconds_bucket{method=\"get\",le=\"100\"} 3
+http_request_duration_milliseconds_bucket{method=\"get\",le=\"300\"} 6
+http_request_duration_milliseconds_bucket{method=\"get\",le=\"500\"} 7
+http_request_duration_milliseconds_bucket{method=\"get\",le=\"750\"} 8
+http_request_duration_milliseconds_bucket{method=\"get\",le=\"1000\"} 9
+http_request_duration_milliseconds_bucket{method=\"get\",le=\"+Inf\"} 9
+http_request_duration_milliseconds_count{method=\"get\"} 9
+http_request_duration_milliseconds_sum{method=\"get\"} 2622
+http_request_duration_milliseconds_bucket{method=\"post\",le=\"100\"} 0
+http_request_duration_milliseconds_bucket{method=\"post\",le=\"300\"} 1
+http_request_duration_milliseconds_bucket{method=\"post\",le=\"500\"} 3
+http_request_duration_milliseconds_bucket{method=\"post\",le=\"750\"} 4
+http_request_duration_milliseconds_bucket{method=\"post\",le=\"1000\"} 5
+http_request_duration_milliseconds_bucket{method=\"post\",le=\"+Inf\"} 6
+http_request_duration_milliseconds_count{method=\"post\"} 6
+http_request_duration_milliseconds_sum{method=\"post\"} 4350\n\n",
                 binary_to_list(prometheus_text_format:format())).

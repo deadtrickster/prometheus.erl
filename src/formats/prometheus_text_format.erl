@@ -5,6 +5,11 @@
          registry_collect_callback/3,
          collector_metrics_callback/5]).
 
+-ifdef(TEST).
+-export([escape_metric_help/1,
+         escape_label_value/1]).
+-endif.
+
 -include("prometheus.hrl").
 
 -behaviour(prometheus_format).
@@ -73,10 +78,10 @@ collector_metrics_callback(Fd, Name, Labels, LabelValues, Value) ->
   file:write(Fd, io_lib:format("~s" ++ LString ++ " ~p\n", [Name, Value])).
 
 escape_metric_help(Help) ->
-  sub(sub(Help, "\\", "\\\\"), "\n", "\\n").
+  sub(sub(Help, "\\", "\\\\\\\\"), "\n", "\\\\n").
 
 escape_label_value(LValue) when is_list(LValue)->
-  sub(sub(sub(LValue, "\\", "\\\\"), "\n", "\\n"), "\"", "\\\"");
+  sub(sub(sub(LValue, "\\", "\\\\\\\\"), "\n", "\\\\n"), "\"", "\\\\\"");
 escape_label_value('+Inf') ->
   "+Inf";
 escape_label_value(LValue) ->

@@ -46,14 +46,17 @@ set(Name, Value) ->
 set(Name, LabelValues, Value) ->
   set(default, Name, LabelValues, Value).
 
-set(Registry, Name, LabelValues, Value) ->
+set(Registry, Name, LabelValues, Value) when is_number(Value) ->
   case ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?GAUGE_POS, Value}) of
     false ->
       insert_metric(Registry, Name, LabelValues, Value, fun set/4);
     true ->
       ok
   end,
-  ok.
+  ok;
+set(_Registry, _Name, _LabelValues, Value) ->
+  erlang:error({invalid_value, Value, "set accepts only numbers"}).
+
 
 reset(Name) ->
   reset(default, Name, []).

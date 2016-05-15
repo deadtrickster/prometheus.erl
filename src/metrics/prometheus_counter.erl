@@ -21,6 +21,7 @@
 %%% collector
 -export([register/0,
          register/1,
+         deregister/1,
          collect_mf/2,
          collect_metrics/3]).
 
@@ -115,6 +116,10 @@ register() ->
 
 register(Registry) ->
   ok = prometheus_registry:register_collector(Registry, ?MODULE).
+
+deregister(Registry) ->
+  prometheus_metric:deregister_mf(?PROMETHEUS_COUNTER_TABLE, Registry),
+  ets:match_delete(?PROMETHEUS_COUNTER_TABLE, {{Registry, '_', '_'}, '_'}).
 
 collect_mf(Callback, Registry) ->
   [Callback(counter, Name, Labels, Help, [Registry]) ||

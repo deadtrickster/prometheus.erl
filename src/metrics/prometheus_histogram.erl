@@ -19,6 +19,7 @@
 %%% collector
 -export([register/0,
          register/1,
+         deregister/1,
          collect_mf/2,
          collect_metrics/3]).
 
@@ -115,6 +116,11 @@ register() ->
 
 register(Registry) ->
   ok = prometheus_registry:register_collector(Registry, ?MODULE).
+
+deregister(Registry) ->
+  [delete_metrics(Registry, Bounds)
+   || [_, _, _, Bounds] <- prometheus_metric:metrics(?PROMETHEUS_HISTOGRAM_TABLE, Registry)],
+  prometheus_metric:deregister_mf(?PROMETHEUS_HISTOGRAM_TABLE, Registry).
 
 collect_mf(Callback, Registry) ->
   [Callback(histogram, Name, Labels, Help, [Registry, Bounds])
@@ -235,6 +241,11 @@ emit_histogram_stat(Callback, Name, [LabelValues, Bounds | Stat]) ->
 
 emit_histogram_bound_stat(Callback, Name, LabelValues, Bound, BCounter) ->
   Callback({atom_to_list(Name) ++ "_bucket", [le], LabelValues ++ [Bound]}, BCounter).
+
+delete_metrics(Registry, Bounds) ->
+  BoundCounters = lists:duplicate(length(Bounds), '_'),
+  MetricSpec = [{Registry, '_', '_'}, '_'] ++ BoundCounters ++ ['_'],
+  ets:match_delete(?PROMETHEUS_HISTOGRAM_TABLE, list_to_tuple(MetricSpec)).
 
 sub_tuple_to_list(Tuple, Pos, Size) when Pos < Size ->
   [element(Pos,Tuple) | sub_tuple_to_list(Tuple, Pos+1, Size)];

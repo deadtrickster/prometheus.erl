@@ -1,6 +1,7 @@
 -module(prometheus_metric).
 -export([insert_mf/5,
          insert_mf/6,
+         deregister_mf/2,
          check_mf_exists/4,
          mf_data/1,
          metrics/2,
@@ -32,6 +33,9 @@ insert_mf(Table, Registry, Name, Labels, Help) ->
 
 insert_mf(Table, Registry, Name, Labels, Help, Data) ->
   true = ets:insert_new(Table, {{Registry, mf, Name}, Labels, Help, Data}).
+
+deregister_mf(Table, Registry) ->
+  ets:match_delete(Table, {{Registry, mf, '_'}, '_', '_', '_'}).
 
 check_mf_exists(Table, Registry, Name, LabelValues) ->
   case ets:lookup(Table, {Registry, mf, Name}) of

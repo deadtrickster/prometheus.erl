@@ -2,7 +2,8 @@
 -export([collect_mf/2,
          collect_metrics/3,
          register/0,
-         register/1]).
+         register/1,
+         deregister/1]).
 
 -include("prometheus.hrl").
 
@@ -18,6 +19,8 @@ register() ->
 
 register(Registry) ->
   ok = prometheus_registry:register_collector(Registry, ?MODULE).
+
+deregister(_) -> ok.
 
 add_metric_family(context_switches, Stat, Callback) ->
   Callback(counter, erlang_vm_statistics_context_switches, [], "Total number of context switches since the system started", Stat);

@@ -2,7 +2,8 @@
 -export([collect_mf/2,
          collect_metrics/3,
          register/0,
-         register/1]).
+         register/1,
+         deregister/1]).
 
 -behaviour(prometheus_collector).
 -include("prometheus.hrl").
@@ -42,3 +43,5 @@ register() ->
 
 register(Registry) ->
   ok = prometheus_registry:register_collector(Registry, ?MODULE).
+
+deregister(_) -> ok.

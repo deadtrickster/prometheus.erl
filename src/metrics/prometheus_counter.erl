@@ -39,6 +39,7 @@
 -behaviour(prometheus_metric).
 -behaviour(gen_server).
 
+-define(TABLE, ?PROMETHEUS_COUNTER_TABLE).
 -define(SUM_POS, 2).
 
 %%====================================================================
@@ -52,7 +53,7 @@ new(Spec, Registry) ->
   {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
   %% Value = proplists:get_value(value, Spec),
   register(Registry),
-  prometheus_metric:insert_mf(?PROMETHEUS_COUNTER_TABLE, Registry, Name, Labels, Help).
+  prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
 
 inc(Name) ->
   inc(default, Name, [], 1).
@@ -66,7 +67,7 @@ inc(Name, LabelValues, Value) ->
   inc(default, Name, LabelValues, Value).
 
 inc(Registry, Name, LabelValues, Value) ->
-  try ets:update_counter(?PROMETHEUS_COUNTER_TABLE, {Registry, Name, LabelValues}, {?SUM_POS, Value})
+  try ets:update_counter(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, Value})
   catch error:badarg ->
       insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
   end,
@@ -94,8 +95,8 @@ reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
 reset(Registry, Name, LabelValues) ->
-  prometheus_metric:check_mf_exists(?PROMETHEUS_COUNTER_TABLE, Registry, Name, LabelValues),
-  ets:update_element(?PROMETHEUS_COUNTER_TABLE, {Registry, Name, LabelValues}, {?SUM_POS, 0}).
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, 0}).
 
 value(Name) ->
   value(default, Name, []).
@@ -104,7 +105,7 @@ value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
 value(Registry, Name, LabelValues) ->
-  [{_Key, Value}] = ets:lookup(?PROMETHEUS_COUNTER_TABLE, {Registry, Name, LabelValues}),
+  [{_Key, Value}] = ets:lookup(?TABLE, {Registry, Name, LabelValues}),
   Value.
 
 %%====================================================================
@@ -118,16 +119,16 @@ register(Registry) ->
   ok = prometheus_registry:register_collector(Registry, ?MODULE).
 
 deregister(Registry) ->
-  prometheus_metric:deregister_mf(?PROMETHEUS_COUNTER_TABLE, Registry),
-  ets:match_delete(?PROMETHEUS_COUNTER_TABLE, {{Registry, '_', '_'}, '_'}).
+  prometheus_metric:deregister_mf(?TABLE, Registry),
+  ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_'}).
 
 collect_mf(Callback, Registry) ->
   [Callback(counter, Name, Labels, Help, [Registry]) ||
-    [Name, Labels, Help, _] <- prometheus_metric:metrics(?PROMETHEUS_COUNTER_TABLE, Registry)].
+    [Name, Labels, Help, _] <- prometheus_metric:metrics(?TABLE, Registry)].
 
 collect_metrics(Name, Callback, [Registry]) ->
   [Callback(LabelValues, Value) ||
-    [LabelValues, Value] <- ets:match(?PROMETHEUS_COUNTER_TABLE, {{Registry, Name, '$1'}, '$2'})].
+    [LabelValues, Value] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'})].
 
 %%====================================================================
 %% Gen_server API
@@ -160,16 +161,16 @@ start_link() ->
 %%====================================================================
 
 dinc_impl(Registry, Name, LabelValues, Value) ->
-  case ets:lookup(?PROMETHEUS_COUNTER_TABLE, {Registry, Name, LabelValues}) of
+  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
     [{_key, OldValue}] ->
-      ets:update_element(?PROMETHEUS_COUNTER_TABLE, {Registry, Name, LabelValues}, {?SUM_POS, Value + OldValue});
+      ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, Value + OldValue});
     [] ->
       insert_metric(Registry, Name, LabelValues, Value, fun dinc_impl/4)
   end.
 
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
-  prometheus_metric:check_mf_exists(?PROMETHEUS_COUNTER_TABLE, Registry, Name, LabelValues),
-  case ets:insert_new(?PROMETHEUS_COUNTER_TABLE, {{Registry, Name, LabelValues}, Value}) of
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  case ets:insert_new(?TABLE, {{Registry, Name, LabelValues}, Value}) of
     false -> %% some sneaky process already inserted
       ConflictCB(Registry, Name, LabelValues, Value);
     true ->

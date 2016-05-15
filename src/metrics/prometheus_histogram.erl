@@ -36,6 +36,7 @@
 -behaviour(prometheus_collector).
 -behaviour(prometheus_metric).
 
+-define(TABLE, ?PROMETHEUS_HISTOGRAM_TABLE).
 -define(BOUNDS_POS, 2).
 -define(BUCKETS_START, 3).
 
@@ -52,7 +53,7 @@ new(Spec, Registry) ->
   Bounds = validate_histogram_bounds(prometheus_metric:extract_key_or_raise_missing(bounds, Spec)),
   %% Value = proplists:get_value(value, Spec),
   register(Registry),
-  prometheus_metric:insert_mf(?PROMETHEUS_HISTOGRAM_TABLE, Registry, Name, Labels, Help, Bounds).
+  prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help, Bounds).
 
 validate_histogram_labels(Labels) ->
   [raise_error_if_le_label_found(Label) || Label <- Labels].
@@ -69,10 +70,10 @@ observe(Name, LabelValues, Value) ->
   observe(default, Name, LabelValues, Value).
 
 observe(Registry, Name, LabelValues, Value) ->
-  case ets:lookup(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}) of
+  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
     [Metric]->
       {BucketPosition, SumPosition} = calculate_histogram_update_positions(Metric, Value),
-      ets:update_counter(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}, [{BucketPosition, 1}, {SumPosition, Value}]);
+      ets:update_counter(?TABLE, {Registry, Name, LabelValues}, [{BucketPosition, 1}, {SumPosition, Value}]);
     []->
       insert_metric(Registry, Name, LabelValues, Value, fun observe/4)
   end.
@@ -92,10 +93,10 @@ reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
 reset(Registry, Name, LabelValues) ->
-  MF = prometheus_metric:check_mf_exists(?PROMETHEUS_HISTOGRAM_TABLE, Registry, Name, LabelValues),
+  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   Bounds = prometheus_metric:mf_data(MF),
   UpdateSpec = generate_update_spec(?BUCKETS_START, length(Bounds)),
-  ets:update_element(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}, UpdateSpec).
+  ets:update_element(?TABLE, {Registry, Name, LabelValues}, UpdateSpec).
 
 value(Name) ->
   value(default, Name, []).
@@ -104,7 +105,7 @@ value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
 value(Registry, Name, LabelValues) ->
-  [Metric] = ets:lookup(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}),
+  [Metric] = ets:lookup(?TABLE, {Registry, Name, LabelValues}),
   {buckets(Metric), sum(Metric)}.
 
 %%====================================================================
@@ -119,18 +120,18 @@ register(Registry) ->
 
 deregister(Registry) ->
   [delete_metrics(Registry, Bounds)
-   || [_, _, _, Bounds] <- prometheus_metric:metrics(?PROMETHEUS_HISTOGRAM_TABLE, Registry)],
-  prometheus_metric:deregister_mf(?PROMETHEUS_HISTOGRAM_TABLE, Registry).
+   || [_, _, _, Bounds] <- prometheus_metric:metrics(?TABLE, Registry)],
+  prometheus_metric:deregister_mf(?TABLE, Registry).
 
 collect_mf(Callback, Registry) ->
   [Callback(histogram, Name, Labels, Help, [Registry, Bounds])
-   || [Name, Labels, Help, Bounds] <- prometheus_metric:metrics(?PROMETHEUS_HISTOGRAM_TABLE, Registry)].
+   || [Name, Labels, Help, Bounds] <- prometheus_metric:metrics(?TABLE, Registry)].
 
 collect_metrics(Name, Callback, [Registry, Bounds]) ->
   BoundPlaceholders = gen_query_bound_placeholders(Bounds),
   SumPlaceholder = gen_query_placeholder(sum_position(Bounds)),
   QuerySpec = [{Registry, Name, '$1'}, '$2'] ++ BoundPlaceholders ++ [SumPlaceholder],
-  [emit_histogram_stat(Callback, Name, Value) || Value <- ets:match(?PROMETHEUS_HISTOGRAM_TABLE, list_to_tuple(QuerySpec))].
+  [emit_histogram_stat(Callback, Name, Value) || Value <- ets:match(?TABLE, list_to_tuple(QuerySpec))].
 
 %%====================================================================
 %% Gen_server API
@@ -171,21 +172,21 @@ validate_histogram_bounds(_Bounds) ->
   erlang:error(histogram_invalid_bounds).
 
 dobserve_impl(Registry, Name, LabelValues, Value) ->
-  case ets:lookup(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}) of
+  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
     [Metric]->
       {BucketPosition, SumPosition} = calculate_histogram_update_positions(Metric, Value),
-      ets:update_element(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}, {SumPosition, sum(Metric) + Value}),
-      ets:update_counter(?PROMETHEUS_HISTOGRAM_TABLE, {Registry, Name, LabelValues}, {BucketPosition, 1});
+      ets:update_element(?TABLE, {Registry, Name, LabelValues}, {SumPosition, sum(Metric) + Value}),
+      ets:update_counter(?TABLE, {Registry, Name, LabelValues}, {BucketPosition, 1});
     []->
       insert_metric(Registry, Name, LabelValues, Value, fun dobserve_impl/4)
   end.
 
 insert_metric(Registry, Name, LabelValues, Value, CB) ->
-  MF = prometheus_metric:check_mf_exists(?PROMETHEUS_HISTOGRAM_TABLE, Registry, Name, LabelValues),
+  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   MFBounds = prometheus_metric:mf_data(MF),
   BoundCounters = lists:duplicate(length(MFBounds), 0),
   MetricSpec = [{Registry, Name, LabelValues}, MFBounds] ++ BoundCounters ++ [0],
-  ets:insert(?PROMETHEUS_HISTOGRAM_TABLE, list_to_tuple(MetricSpec)),
+  ets:insert(?TABLE, list_to_tuple(MetricSpec)),
   CB(Registry, Name, LabelValues, Value).
 
 calculate_histogram_update_positions(Metric, Value) ->
@@ -245,7 +246,7 @@ emit_histogram_bound_stat(Callback, Name, LabelValues, Bound, BCounter) ->
 delete_metrics(Registry, Bounds) ->
   BoundCounters = lists:duplicate(length(Bounds), '_'),
   MetricSpec = [{Registry, '_', '_'}, '_'] ++ BoundCounters ++ ['_'],
-  ets:match_delete(?PROMETHEUS_HISTOGRAM_TABLE, list_to_tuple(MetricSpec)).
+  ets:match_delete(?TABLE, list_to_tuple(MetricSpec)).
 
 sub_tuple_to_list(Tuple, Pos, Size) when Pos < Size ->
   [element(Pos,Tuple) | sub_tuple_to_list(Tuple, Pos+1, Size)];

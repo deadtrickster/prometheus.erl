@@ -58,7 +58,7 @@ init([]) ->
 
 create_tables() ->
   Tables = [
-            {?PROMETHEUS_TABLE, [bag, named_table, public, {read_concurrency, true}]},
+            {?PROMETHEUS_REGISTRY_TABLE, [bag, named_table, public, {read_concurrency, true}]},
             {?PROMETHEUS_COUNTER_TABLE, [set, named_table, public, {write_concurrency, true}]},
             {?PROMETHEUS_GAUGE_TABLE, [set, named_table, public, {write_concurrency, true}]},
             {?PROMETHEUS_SUMMARY_TABLE, [set, named_table, public, {write_concurrency, true}]},

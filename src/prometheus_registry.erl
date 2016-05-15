@@ -8,24 +8,26 @@
 
 -include("prometheus.hrl").
 
+-define(TABLE, ?PROMETHEUS_REGISTRY_TABLE).
+
 collect(Registry, Callback) ->
-  [Callback(Registry, Collector) || {_, Collector} <- ets:lookup(?PROMETHEUS_TABLE, Registry)].
+  [Callback(Registry, Collector) || {_, Collector} <- ets:lookup(?TABLE, Registry)].
 
 collectors(Registry) ->
-  [Collector || {_, Collector} <- ets:lookup(?PROMETHEUS_TABLE, Registry)].
+  [Collector || {_, Collector} <- ets:lookup(?TABLE, Registry)].
 
 register_collector(Registry, Collector) ->
-  ets:insert(?PROMETHEUS_TABLE, {Registry, Collector}),
+  ets:insert(?TABLE, {Registry, Collector}),
   ok.
 
 clear() ->
   clear(default).
 
 clear(Registry) ->
-  [Collector:deregister(Registry) || {_, Collector} <- ets:take(?PROMETHEUS_TABLE, Registry)].
+  [Collector:deregister(Registry) || {_, Collector} <- ets:take(?TABLE, Registry)].
 
 collector_registeredp(Registry, Collector) ->
-  case ets:match(?PROMETHEUS_TABLE, {Registry, Collector}) of
+  case ets:match(?TABLE, {Registry, Collector}) of
     [] -> false;
     _ -> true
   end.

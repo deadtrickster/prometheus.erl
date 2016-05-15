@@ -37,6 +37,7 @@
 -behaviour(prometheus_metric).
 -behaviour(gen_server).
 
+-define(TABLE, ?PROMETHEUS_SUMMARY_TABLE).
 -define(SUM_POS, 3).
 -define(COUNTER_POS, 2).
 
@@ -51,7 +52,7 @@ new(Spec, Registry) ->
   {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
   %% Value = proplists:get_value(value, Spec),
   register(Registry),
-  prometheus_metric:insert_mf(?PROMETHEUS_SUMMARY_TABLE, Registry, Name, Labels, Help).
+  prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
 
 observe(Name, Value) ->
   observe(default, Name, [], Value).
@@ -61,7 +62,7 @@ observe(Name, LabelValues, Value) ->
 
 observe(Registry, Name, LabelValues, Value) ->
   try
-    ets:update_counter(?PROMETHEUS_SUMMARY_TABLE, {Registry, Name, LabelValues}, [{?COUNTER_POS, 1}, {?SUM_POS, Value}])
+    ets:update_counter(?TABLE, {Registry, Name, LabelValues}, [{?COUNTER_POS, 1}, {?SUM_POS, Value}])
   catch error:badarg ->
       insert_metric(Registry, Name, LabelValues, Value, fun observe/4)
   end.
@@ -81,8 +82,8 @@ reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
 reset(Registry, Name, LabelValues) ->
-  prometheus_metric:check_mf_exists(?PROMETHEUS_SUMMARY_TABLE, Registry, Name, LabelValues),
-  ets:update_element(?PROMETHEUS_SUMMARY_TABLE, {Registry, Name, LabelValues}, [{?COUNTER_POS, 0}, {?SUM_POS, 0}]).
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  ets:update_element(?TABLE, {Registry, Name, LabelValues}, [{?COUNTER_POS, 0}, {?SUM_POS, 0}]).
 
 value(Name) ->
   value(default, Name, []).
@@ -91,7 +92,7 @@ value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
 value(Registry, Name, LabelValues) ->
-  [{_Key, Count, Sum}] = ets:lookup(?PROMETHEUS_SUMMARY_TABLE, {Registry, Name, LabelValues}),
+  [{_Key, Count, Sum}] = ets:lookup(?TABLE, {Registry, Name, LabelValues}),
   {Count, Sum}.
 
 %%====================================================================
@@ -106,16 +107,16 @@ register(Registry) ->
 
 
 deregister(Registry) ->
-  prometheus_metric:deregister_mf(?PROMETHEUS_SUMMARY_TABLE, Registry),
-  ets:match_delete(?PROMETHEUS_SUMMARY_TABLE, {{Registry, '_', '_'}, '_', '_'}).
+  prometheus_metric:deregister_mf(?TABLE, Registry),
+  ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_', '_'}).
 
 collect_mf(Callback, Registry) ->
   [Callback(summary, Name, Labels, Help, [Registry]) ||
-    [Name, Labels, Help, _] <- prometheus_metric:metrics(?PROMETHEUS_SUMMARY_TABLE, Registry)].
+    [Name, Labels, Help, _] <- prometheus_metric:metrics(?TABLE, Registry)].
 
 collect_metrics(Name, Callback, [Registry]) ->
   [emit_summary_stat(Name, LabelValues, Count, Sum, Callback) ||
-    [LabelValues, Count, Sum] <- ets:match(?PROMETHEUS_SUMMARY_TABLE, {{Registry, Name, '$1'}, '$2', '$3'})].
+    [LabelValues, Count, Sum] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2', '$3'})].
 
 %%====================================================================
 %% Gen_server API
@@ -148,17 +149,17 @@ start_link() ->
 %%====================================================================
 
 dobserve_impl(Registry, Name, LabelValues, Value) ->
-  case ets:lookup(?PROMETHEUS_SUMMARY_TABLE, {Registry, Name, LabelValues}) of
+  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
     [Metric] ->
-      ets:update_element(?PROMETHEUS_SUMMARY_TABLE, {Registry, Name, LabelValues}, {?SUM_POS, sum(Metric) + Value}),
-      ets:update_counter(?PROMETHEUS_SUMMARY_TABLE, {Registry, Name, LabelValues}, {?COUNTER_POS, 1});
+      ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, sum(Metric) + Value}),
+      ets:update_counter(?TABLE, {Registry, Name, LabelValues}, {?COUNTER_POS, 1});
     [] ->
       insert_metric(Registry, Name, LabelValues, Value, fun dobserve_impl/4)
   end.
 
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
-  prometheus_metric:check_mf_exists(?PROMETHEUS_SUMMARY_TABLE, Registry, Name, LabelValues),
-  case ets:insert_new(?PROMETHEUS_SUMMARY_TABLE, {{Registry, Name, LabelValues}, 1, Value}) of
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  case ets:insert_new(?TABLE, {{Registry, Name, LabelValues}, 1, Value}) of
     false -> %% some sneaky process already inserted
       ConflictCB(Registry, Name, LabelValues, Value);
     true ->

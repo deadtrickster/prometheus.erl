@@ -1,12 +1,20 @@
 -module(prometheus_vm_memory_collector).
--export([collect_mf/2,
-         collect_metrics/3,
-         register/0,
+-export([register/0,
          register/1,
-         deregister/1]).
+         deregister/1,
+         collect_mf/2,
+         collect_metrics/3]).
 
 -behaviour(prometheus_collector).
 -include("prometheus.hrl").
+
+register() ->
+  register(default).
+
+register(Registry) ->
+  ok = prometheus_registry:register_collector(Registry, ?MODULE).
+
+deregister(_) -> ok.
 
 collect_mf(Callback, _Registry) ->
   Memory = erlang:memory(),
@@ -37,11 +45,3 @@ collect_metrics(erlang_vm_ets_tables, Callback, _MFData) ->
   Callback([], length(ets:all()));
 collect_metrics(erlang_vm_dets_tables, Callback, _MFData) ->
   Callback([], length(dets:all())).
-
-register() ->
-  register(default).
-
-register(Registry) ->
-  ok = prometheus_registry:register_collector(Registry, ?MODULE).
-
-deregister(_) -> ok.

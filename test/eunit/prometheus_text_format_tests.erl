@@ -64,12 +64,12 @@ test_format() ->
   ?_assertEqual("# TYPE pool_size gauge
 # HELP pool_size MongoDB Connections pool size
 pool_size 365
-# TYPE dtest counter
-# HELP dtest qwe
-dtest 6.5
 # TYPE http_requests_total counter
 # HELP http_requests_total Http request count
 http_requests_total 1
+# TYPE dtest counter
+# HELP dtest qwe
+dtest 6.5
 # TYPE orders_summary summary
 # HELP orders_summary Track orders count/total sum
 orders_summary_count 2

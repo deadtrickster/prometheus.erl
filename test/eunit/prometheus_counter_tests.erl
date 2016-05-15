@@ -30,16 +30,18 @@ test_errors(_) ->
    %% counter specific errors
    ?_assertError({invalid_value, -1, "Counters accept only non-negative values"}, prometheus_counter:inc(http_requests_total, -1)),
    ?_assertError({invalid_value, 1.5, "inc accepts only integers"}, prometheus_counter:inc(http_requests_total, 1.5)),
-   ?_assertError({invalid_value, -1, "Counters accept only non-negative values"}, prometheus_counter:dinc(http_requests_total, -1))
+   ?_assertError({invalid_value, "qwe", "inc accepts only integers"}, prometheus_counter:inc(http_requests_total, [], "qwe")),
+   ?_assertError({invalid_value, -1, "Counters accept only non-negative values"}, prometheus_counter:dinc(http_requests_total, -1)),
+   ?_assertError({invalid_value, "qwe", "dinc accepts only numbers"}, prometheus_counter:dinc(http_requests_total, [], "qwe"))
   ].
 
 test_int(_) ->
-  prometheus_counter:new([{name, http_requests_total}, {help, "Http request count"}]),
-  prometheus_counter:inc(http_requests_total),
-  prometheus_counter:inc(http_requests_total, 3),
-  Value = prometheus_counter:value(http_requests_total),
-  prometheus_counter:reset(http_requests_total),
-  RValue = prometheus_counter:value(http_requests_total),
+  prometheus_counter:new([{name, http_requests_total}, {labels, [method]}, {help, "Http request count"}]),
+  prometheus_counter:inc(http_requests_total, [get]),
+  prometheus_counter:inc(http_requests_total, [get], 3),
+  Value = prometheus_counter:value(http_requests_total, [get]),
+  prometheus_counter:reset(http_requests_total, [get]),
+  RValue = prometheus_counter:value(http_requests_total, [get]),
   [?_assertEqual(4, Value),
    ?_assertEqual(0, RValue)].
 

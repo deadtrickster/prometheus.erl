@@ -68,14 +68,14 @@ inc(Name, LabelValues, Value) ->
 
 inc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
   erlang:error({invalid_value, Value, "Counters accept only non-negative values"});
-inc(_Registry, _Name, _LabelValues, Value) when is_float(Value) ->
-  erlang:error({invalid_value, Value, "inc accepts only integers"});
-inc(Registry, Name, LabelValues, Value) ->
+inc(Registry, Name, LabelValues, Value) when is_integer(Value)->
   try ets:update_counter(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, Value})
   catch error:badarg ->
       insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
   end,
-  ok.
+  ok;
+inc(_Registry, _Name, _LabelValues, Value) ->
+  erlang:error({invalid_value, Value, "inc accepts only integers"}).
 
 dinc(Name) ->
   dinc(default, Name, [], 1).
@@ -90,9 +90,12 @@ dinc(Name, LabelValues, Value) ->
 
 dinc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
   erlang:error({invalid_value, Value, "Counters accept only non-negative values"});
-dinc(Registry, Name, LabelValues, Value) ->
+dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
   gen_server:cast(prometheus_counter, {inc, {Registry, Name, LabelValues, Value}}),
-  ok.
+  ok;
+dinc(_Registry, _Name, _LabelValues, Value) ->
+  erlang:error({invalid_value, Value, "dinc accepts only numbers"}).
+
 
 reset(Name) ->
   reset(default, Name, []).

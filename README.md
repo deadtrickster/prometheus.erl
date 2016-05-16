@@ -15,6 +15,10 @@
 
 You can write custom collector/exporter for any library/app you'd like. For example here is [RabbitMQ Exporter](https://github.com/deadtrickster/prometheus_rabbitmq_exporter)
 
+Elixir Plugs
+-----
+[Here](https://github.com/deadtrickster/prometheus-plugs) you can find Elixir Plugs.
+
 Example Console Session
 -----
 Run shell with compiled and loaded app:

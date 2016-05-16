@@ -4,22 +4,11 @@
 
 prometheus_format_test_() ->
   {foreach,
-   fun start/0,
-   fun stop/1,
+   fun prometheus_eunit_common:start/0,
+   fun prometheus_eunit_common:stop/1,
    [fun test_errors/1,
     fun test_int/1,
     fun test_double/1]}.
-
-start() ->
-  prometheus:start(),
-  Collectors = prometheus_registry:collectors(default),
-  prometheus_registry:clear(default),
-  Collectors.
-
-stop(DefaultCollectors) ->
-  prometheus_registry:clear(default),
-  [prometheus_registry:register_collector(default, Collector) || Collector <- DefaultCollectors],
-  ok.
 
 test_errors(_) ->
   prometheus_counter:new([{name, http_requests_total}, {help, "Http request count"}]),

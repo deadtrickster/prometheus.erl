@@ -91,4 +91,4 @@ sub(Str, Old, New) when is_atom(Str) ->
   sub(atom_to_list(Str), Old, New);
 sub(Str,Old,New) ->
   RegExp = "\\Q"++Old++"\\E",
-  re:replace(Str,RegExp,New,[multiline, {return, list}]).
+  re:replace(Str,RegExp,New,[global, {return, list}]).

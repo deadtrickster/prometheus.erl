@@ -69,14 +69,17 @@ observe(Name, Value) ->
 observe(Name, LabelValues, Value) ->
   observe(default, Name, LabelValues, Value).
 
-observe(Registry, Name, LabelValues, Value) ->
+observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
     [Metric]->
       {BucketPosition, SumPosition} = calculate_histogram_update_positions(Metric, Value),
       ets:update_counter(?TABLE, {Registry, Name, LabelValues}, [{BucketPosition, 1}, {SumPosition, Value}]);
     []->
       insert_metric(Registry, Name, LabelValues, Value, fun observe/4)
-  end.
+  end,
+  ok;
+observe(_Registry, _Name, _LabelValues, Value) ->
+  erlang:error({invalid_value, Value, "observe accepts only integers"}).
 
 dobserve(Name, Value) ->
   dobserve(default, Name, [], Value).
@@ -84,8 +87,11 @@ dobserve(Name, Value) ->
 dobserve(Name, LabelValues, Value) ->
   dobserve(default, Name, LabelValues, Value).
 
-dobserve(Registry, Name, LabelValues, Value) ->
-  gen_server:cast(prometheus_histogram, {observe, {Registry, Name, LabelValues, Value}}).
+dobserve(Registry, Name, LabelValues, Value) when is_number(Value) ->
+  gen_server:cast(prometheus_histogram, {observe, {Registry, Name, LabelValues, Value}}),
+  ok;
+dobserve(_Registry, _Name, _LabelValues, Value) ->
+  erlang:error({invalid_value, Value, "dobserve accepts only numbers"}).
 
 reset(Name) ->
   reset(default, Name, []).

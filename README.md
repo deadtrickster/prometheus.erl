@@ -114,7 +114,7 @@ Prometheus.erl supports standard Erlang app configuration.
 TODO
 -----
  - [x] Floats support
- - [ ] Tests
+ - [x] Tests
  - [ ] Protobuf format
  - [ ] Extend custom collectors collection?
 

@@ -68,7 +68,7 @@ inc(Name, LabelValues, Value) ->
 
 inc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
   erlang:error({invalid_value, Value, "Counters accept only non-negative values"});
-inc(Registry, Name, LabelValues, Value) when is_integer(Value)->
+inc(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   try ets:update_counter(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, Value})
   catch error:badarg ->
       insert_metric(Registry, Name, LabelValues, Value, fun inc/4)

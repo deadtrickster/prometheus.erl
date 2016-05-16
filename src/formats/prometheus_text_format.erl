@@ -82,10 +82,13 @@ escape_metric_help(Help) ->
 
 escape_label_value(LValue) when is_list(LValue)->
   sub(sub(sub(LValue, "\\", "\\\\\\\\"), "\n", "\\\\n"), "\"", "\\\\\"");
+escape_label_value(LValue) when is_binary(LValue) ->
+  escape_label_value(binary_to_list(LValue));
 escape_label_value('+Inf') ->
   "+Inf";
 escape_label_value(LValue) ->
   escape_label_value(io_lib:format("~p", [LValue])).
+
 
 sub(Str, Old, New) when is_atom(Str) ->
   sub(atom_to_list(Str), Old, New);

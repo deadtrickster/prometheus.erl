@@ -33,7 +33,7 @@ Register metrics:
 ```erlang
 prometheus_gauge:new([{name, pool_size}, {help, "MongoDB Connections pool size"}]),
 prometheus_counter:new([{name, http_requests_total}, {help, "Http request count"}]).
-prometheus_summary:new([{name, orders_summary}, {help, "Track orders count/total sum"}]).
+prometheus_summary:new([{name, orders}, {help, "Track orders count/total sum"}]).
 prometheus_histogram:new([{name, http_request_duration_milliseconds},
                                {labels, [method]},
                                {bounds, [100, 300, 500, 750, 1000]},
@@ -43,8 +43,8 @@ Use metrics:
 ```erlang
 prometheus_gauge:set(pool_size, 365),
 prometheus_counter:inc(http_requests_total).
-prometheus_summary:observe(orders_summary,  10).
-prometheus_summary:observe(orders_summary,  15).
+prometheus_summary:observe(orders, 10).
+prometheus_summary:observe(orders, 15).
 prometheus_histogram:observe(http_request_duration_milliseconds, [get], 95).
 prometheus_histogram:observe(http_request_duration_milliseconds, [get], 100).
 prometheus_histogram:observe(http_request_duration_milliseconds, [get], 102).
@@ -74,10 +74,10 @@ http_requests_total 2
 # TYPE pool_size gauge
 # HELP pool_size MongoDB Connections pool size
 pool_size 365
-# TYPE orders_summary summary
-# HELP orders_summary Track orders count/total sum
-orders_summary_count 4
-orders_summary_sum 50
+# TYPE orders summary
+# HELP orders Track orders count/total sum
+orders_count 4
+orders_sum 50
 # TYPE http_request_duration_milliseconds histogram
 # HELP http_request_duration_milliseconds Http Request execution time
 http_request_duration_milliseconds_bucket{method="post",le="100"} 0

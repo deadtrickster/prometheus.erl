@@ -1,4 +1,4 @@
-# Prometheus.erl
+# Prometheus.erl [![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)]()
 
 [Prometheus](https://prometheus.io) monitoring system and time series database client in Erlang.
 

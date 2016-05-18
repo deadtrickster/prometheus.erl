@@ -2,6 +2,8 @@
 
 [Prometheus](https://prometheus.io) monitoring system and time series database client in Erlang.
 
+![RabbitMQ Dashboard](https://raw.githubusercontent.com/deadtrickster/prometheus_rabbitmq_exporter/master/priv/dashboards/RabbitMQErlangVM.png)
+
 ### Metrics
 #### Standard
  - [x] Counter

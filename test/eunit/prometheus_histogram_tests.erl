@@ -11,15 +11,20 @@ prometheus_format_test_() ->
     fun test_double/1]}.
 
 test_errors(_) ->
-  prometheus_histogram:new([{name, orders_summary}, {bounds, [100, 300, 500, 750, 1000]}, {help, "Track orders count/total sum"}]),
+  prometheus_histogram:new([{name, request_duration}, {bounds, [100, 300, 500, 750, 1000]}, {help, "Track requests duration"}]),
   [%% basic name/labels/help validations test, lets hope new is using extract_common_params
    ?_assertError({invalid_metric_name, 12, "metric name is not a string"}, prometheus_histogram:new([{name, 12}, {help, ""}])),
    ?_assertError({invalid_metric_labels, 12, "not list"}, prometheus_histogram:new([{name, "qwe"}, {labels, 12}, {help, ""}])),
    ?_assertError({invalid_metric_help, 12, "metric help is not a string"}, prometheus_histogram:new([{name, "qwe"}, {help, 12}])),
-   %% summary specific errors
-   ?_assertError({invalid_value, 1.5, "observe accepts only integers"}, prometheus_histogram:observe(orders_summary, 1.5)),
-   ?_assertError({invalid_value, "qwe", "observe accepts only integers"}, prometheus_histogram:observe(orders_summary, "qwe")),
-   ?_assertError({invalid_value, "qwe", "dobserve accepts only numbers"}, prometheus_histogram:dobserve(orders_summary, "qwe"))
+   %% histogram specific errors
+   ?_assertError({missing_metric_spec_key, bounds, [{name,"qwe"}, {help,[]}]}, prometheus_histogram:new([{name, "qwe"}, {help, ""}])),
+   ?_assertError({histogram_no_bounds, []}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {bounds, []}])),
+   ?_assertError({histogram_invalid_bounds, 1}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {bounds, 1}])),
+   ?_assertError({histogram_invalid_bound, "qwe"}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {bounds, ["qwe"]}])),
+   ?_assertError({histogram_invalid_bounds, [1, 3, 2], "Bounds not sorted"}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {bounds, [1, 3, 2]}])),
+   ?_assertError({invalid_value, 1.5, "observe accepts only integers"}, prometheus_histogram:observe(request_duration, 1.5)),
+   ?_assertError({invalid_value, "qwe", "observe accepts only integers"}, prometheus_histogram:observe(request_duration, "qwe")),
+   ?_assertError({invalid_value, "qwe", "dobserve accepts only numbers"}, prometheus_histogram:dobserve(request_duration, "qwe"))
   ].
 
 test_int(_) ->

@@ -168,14 +168,26 @@ code_change(_OldVsn, State, _Extra) ->
 %%====================================================================
 %% Private Parts
 %%====================================================================
-
+validate_histogram_bounds([]) ->
+  erlang:error({histogram_no_bounds, []});
 validate_histogram_bounds(undefined) ->
-  erlang:error(histogram_no_bounds);
-validate_histogram_bounds(Bounds) when is_list(Bounds) ->
-  %% TODO: validate list elements
-  Bounds ++ ['+Inf'];
-validate_histogram_bounds(_Bounds) ->
-  erlang:error(histogram_invalid_bounds).
+  erlang:error({histogram_no_bounds, undefined});
+validate_histogram_bounds(RawBounds) when is_list(RawBounds) ->
+  Bounds = lists:map(fun validate_histogram_bound/1, RawBounds),
+  case lists:sort(Bounds) of
+    Bounds ->
+      Bounds ++ ['+Inf'];
+    _ ->
+      erlang:error({histogram_invalid_bounds, Bounds, "Bounds not sorted"})
+  end;
+validate_histogram_bounds(Bounds) ->
+  erlang:error({histogram_invalid_bounds, Bounds}).
+
+validate_histogram_bound(Bound) when is_number(Bound) ->
+  Bound;
+validate_histogram_bound(Bound) ->
+  erlang:error({histogram_invalid_bound, Bound}).
+
 
 dobserve_impl(Registry, Name, LabelValues, Value) ->
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of

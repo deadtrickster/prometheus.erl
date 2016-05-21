@@ -55,14 +55,6 @@ new(Spec, Registry) ->
   register(Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help, Bounds).
 
-validate_histogram_labels(Labels) ->
-  [raise_error_if_le_label_found(Label) || Label <- Labels].
-
-raise_error_if_le_label_found("le") ->
-  erlang:error({invalid_metric_label_name, "le", "histogram cannot have a label named \"le\""});
-raise_error_if_le_label_found(Label) ->
-  Label.
-
 observe(Name, Value) ->
   observe(default, Name, [], Value).
 
@@ -168,6 +160,15 @@ code_change(_OldVsn, State, _Extra) ->
 %%====================================================================
 %% Private Parts
 %%====================================================================
+
+validate_histogram_labels(Labels) ->
+  [raise_error_if_le_label_found(Label) || Label <- Labels].
+
+raise_error_if_le_label_found("le") ->
+  erlang:error({invalid_metric_label_name, "le", "histogram cannot have a label named \"le\""});
+raise_error_if_le_label_found(Label) ->
+  Label.
+
 validate_histogram_bounds([]) ->
   erlang:error({histogram_no_bounds, []});
 validate_histogram_bounds(undefined) ->
@@ -187,7 +188,6 @@ validate_histogram_bound(Bound) when is_number(Bound) ->
   Bound;
 validate_histogram_bound(Bound) ->
   erlang:error({histogram_invalid_bound, Bound}).
-
 
 dobserve_impl(Registry, Name, LabelValues, Value) ->
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of

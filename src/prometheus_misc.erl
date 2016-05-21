@@ -16,7 +16,12 @@
 
 -module(prometheus_misc).
 
--export([all_module_attributes/1]).
+-export([behaviour_modules/1]).
+
+behaviour_modules(Behaviour) ->
+  [Module || {Module, Behaviours} <-
+               all_module_attributes(behaviour),
+             lists:member(Behaviour, Behaviours)].
 
 all_module_attributes(Name) ->
   Targets =
@@ -26,22 +31,21 @@ all_module_attributes(Name) ->
           {App, _, _}   <- application:loaded_applications(),
           {ok, Modules} <- [application:get_key(App, modules)]])),
   lists:foldl(
-    fun ({App, Module}, Acc) ->
+    fun ({_App, Module}, Acc) ->
         case lists:append([Atts || {N, Atts} <- module_attributes(Module),
                                    N =:= Name]) of
           []   -> Acc;
-          Atts -> [{App, Module, Atts} | Acc]
+          Atts -> [{Module, Atts} | Acc]
         end
     end, [], Targets).
 
 module_attributes(Module) ->
-    case catch Module:module_info(attributes) of
-        {'EXIT', {undef, [{Module, module_info, _} | _]}} ->
-            io:format("WARNING: module ~p not found, so not scanned for boot steps.~n",
-                      [Module]),
-            [];
-        {'EXIT', Reason} ->
-            exit(Reason);
-        V ->
-            V
-    end.
+  case catch Module:module_info(attributes) of
+    {'EXIT', {undef, [{Module, module_info, _} | _]}} ->
+      [];
+    {'EXIT', _Reason} ->
+      %% return empty list too
+      [];
+    V ->
+      V
+  end.

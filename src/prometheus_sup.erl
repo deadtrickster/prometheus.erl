@@ -58,20 +58,20 @@ init([]) ->
 
 create_tables() ->
   Tables = [
-            {?PROMETHEUS_REGISTRY_TABLE, [bag, named_table, public, {read_concurrency, true}]},
-            {?PROMETHEUS_COUNTER_TABLE, [set, named_table, public, {write_concurrency, true}]},
-            {?PROMETHEUS_GAUGE_TABLE, [set, named_table, public, {write_concurrency, true}]},
-            {?PROMETHEUS_SUMMARY_TABLE, [set, named_table, public, {write_concurrency, true}]},
-            {?PROMETHEUS_HISTOGRAM_TABLE, [set, named_table, public, {write_concurrency, true}]}
+            {?PROMETHEUS_REGISTRY_TABLE, {bag, read_concurrency}},
+            {?PROMETHEUS_COUNTER_TABLE, write_concurrency},
+            {?PROMETHEUS_GAUGE_TABLE, write_concurrency},
+            {?PROMETHEUS_SUMMARY_TABLE, write_concurrency},
+            {?PROMETHEUS_HISTOGRAM_TABLE, write_concurrency}
            ],
-  [maybe_create_table(ets:info(Name), Name, Opts) || {Name, Opts} <- Tables],
+  [maybe_create_table(Name, Concurrency) || {Name, Concurrency} <- Tables],
   ok.
 
 register_collectors() ->
   [Collector:register() || Collector <- enabled_collectors()].
 
 register_metrics() ->
-  [Metric:register(Spec, Registry) || {Registry, Metric, Spec} <- application:get_env(prometheus, default_metrics, [])].
+  [Metric:register(Spec, Registry) || {Registry, Metric, Spec} <- default_metrics()].
 
 enabled_collectors() ->
   case application:get_env(prometheus, default_collectors) of
@@ -80,12 +80,17 @@ enabled_collectors() ->
   end.
 
 all_known_collectors() ->
-  [Module || {_App, Module, Behaviours} <-
-               prometheus_misc:all_module_attributes(behaviour),
-             not lists:member(prometheus_metric, Behaviours),
-             lists:member(prometheus_collector, Behaviours)].
+  prometheus_misc:behaviour_modules(prometheus_collector).
 
-maybe_create_table(undefined, Name, Opts) ->
-  ets:new(Name, Opts);
-maybe_create_table(_, _, _) ->
-  ok.
+default_metrics() ->
+  application:get_env(prometheus, default_metrics, []).
+
+maybe_create_table(Name, {Type, Concurrency}) ->
+  case ets:info(Name) of
+    undefined ->
+      ets:new(Name, [Type, named_table, public, {Concurrency, true}]);
+    _ ->
+      ok
+  end;
+maybe_create_table(Name, Concurrency) ->
+  maybe_create_table(Name, {set, Concurrency}).

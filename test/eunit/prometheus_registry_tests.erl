@@ -22,7 +22,11 @@ stop(ok) ->
 
 default_registry() ->
   ?_assertEqual([prometheus_vm_statistics_collector,
-                 prometheus_vm_memory_collector],
+                 prometheus_vm_memory_collector,
+                 prometheus_summary,
+                 prometheus_histogram,
+                 prometheus_gauge,
+                 prometheus_counter],
                 prometheus_registry:collectors(default)).
 
 clear_registry() ->

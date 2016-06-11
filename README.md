@@ -121,6 +121,7 @@ TODO
 -----
  - [x] Floats support
  - [x] Tests
+ - [ ] Bucket generators
  - [ ] Protobuf format
  - [ ] Extend custom collectors collection?
 

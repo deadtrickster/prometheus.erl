@@ -17,12 +17,12 @@
 
 You can write custom collector/exporter for any library/app you'd like. For example here is [RabbitMQ Exporter](https://github.com/deadtrickster/prometheus_rabbitmq_exporter)
 
-Elixir Plugs
------
+### Elixir Plugs
+
 [Here](https://github.com/deadtrickster/prometheus-plugs) you can find Elixir Plugs.
 
-Example Console Session
------
+### Example Console Session
+
 Run shell with compiled and loaded app:
 
     $ rebar3 shell
@@ -101,8 +101,16 @@ http_request_duration_milliseconds_sum{method="get"} 2622
 
 ```
 
-Implementation Note
------
+### Bucket generators
+
+```erlang
+prometheus_buckets:generate_linear(-15, 5, 6) produces [-15, -10, -5, 0, 5, 10]
+
+prometheus_buckets:generate_exponential(100, 1.2, 3) produces [100, 120, 144]
+```
+
+### Implementation Note
+
 Prometheus.erl exports two API sets. 
  - For Integers: `prometheus_coutner:inc`, `prometheus_summary:observe` and `prometheus_histogram:observe`. Implementation is based on `ets:update_counter`. While this is expected to be much faster than using processes for synchronization it restricts us to integers-only while Prometheus expects series values to be double.
 ETS-based metrics are optimistic - for basic metrics such as counters/gauges it first tries to increment and iff series doesn't exist it queries ETS to check if metric actually registered and if so it inserts series. For histograms at least one lookup is required - we need buckets to compute bucket counter position.
@@ -110,28 +118,26 @@ ETS-based metrics are optimistic - for basic metrics such as counters/gauges it 
  
 ***NOTE***: you can use float APIs after integer but not vice-versa. 
 
-Configuration
------
+### Configuration
+
 Prometheus.erl supports standard Erlang app configuration.
   - `default_collectors` - List of custom collectors modules to be registered automatically. If undefined list of all modules implementing `prometheus_collector` behaviour will be used.
   - `default_metrics` - List of metrics to be registered during app startup. Metric format: `{Registry, Metric, Spec}` where `Registry` is registry name, `Metric` is metric type (prometheus_counter, prometheus_gauge ... etc), `Spec` is a list to be passed to `Metric:register/2`.
 
 
-TODO
------
+### TODO
+
  - [x] Floats support
  - [x] Tests
- - [ ] Bucket generators
+ - [x] Bucket generators
  - [ ] Protobuf format
  - [ ] Extend custom collectors collection?
 
 
-Build
------
+### Build
 
     $ rebar3 compile
 
-License
------
+### License
 
 MIT

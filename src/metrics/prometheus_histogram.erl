@@ -21,7 +21,7 @@
          register/1,
          deregister/1,
          collect_mf/2,
-         collect_metrics/3]).
+         collect_metrics/2]).
 
 %%% gen_server
 -export([init/1,
@@ -31,6 +31,16 @@
          terminate/2,
          code_change/3,
          start_link/0]).
+
+-import(prometheus_model_helpers, [create_mf/5,
+                                   label_pairs/1,
+                                   gauge_metrics/1,
+                                   gauge_metric/1,
+                                   gauge_metric/2,
+                                   counter_metric/1,
+                                   counter_metric/2,
+                                   summary_metric/3,
+                                   histogram_metric/4]).
 
 -include("prometheus.hrl").
 -behaviour(prometheus_collector).
@@ -122,14 +132,14 @@ deregister(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry).
 
 collect_mf(Callback, Registry) ->
-  [Callback(histogram, Name, Labels, Help, [Registry, Bounds])
+  [Callback(create_histogram(Name, Help, {Labels, Registry, Bounds}))
    || [Name, Labels, Help, Bounds] <- prometheus_metric:metrics(?TABLE, Registry)].
 
-collect_metrics(Name, Callback, [Registry, Bounds]) ->
+collect_metrics(Name, {Labels, Registry, Bounds}) ->
   BoundPlaceholders = gen_query_bound_placeholders(Bounds),
   SumPlaceholder = gen_query_placeholder(sum_position(Bounds)),
   QuerySpec = [{Registry, Name, '$1'}, '$2'] ++ BoundPlaceholders ++ [SumPlaceholder],
-  [emit_histogram_stat(Callback, Name, Value) || Value <- ets:match(?TABLE, list_to_tuple(QuerySpec))].
+  [create_histogram_metric(Labels, Value) || Value <- ets:match(?TABLE, list_to_tuple(QuerySpec))].
 
 %%====================================================================
 %% Gen_server API
@@ -248,18 +258,14 @@ sum_position(Bounds) when is_list(Bounds) ->
 sum(Metric) ->
   element(sum_position(Metric), Metric).
 
-emit_histogram_stat(Callback, Name, [LabelValues, Bounds | Stat]) ->
+create_histogram_metric(Labels, [LabelValues, Bounds | Stat]) ->
   BoundValues = lists:sublist(Stat, 1, length(Bounds)),
   BCounters = augment_counters(BoundValues),
-  lists:zipwith(fun(Bound, BCounter) ->
-                    emit_histogram_bound_stat(Callback, Name, LabelValues, Bound, BCounter)
-                end,
-                Bounds, BCounters),
-  Callback({atom_to_list(Name) ++ "_count", LabelValues}, lists:last(BCounters)),
-  Callback({atom_to_list(Name) ++ "_sum", LabelValues}, lists:last(Stat)).
-
-emit_histogram_bound_stat(Callback, Name, LabelValues, Bound, BCounter) ->
-  Callback({atom_to_list(Name) ++ "_bucket", [le], LabelValues ++ [Bound]}, BCounter).
+  Buckets = lists:zipwith(fun(Bound, BCounter) ->
+                              {Bound, BCounter}
+                          end,
+                          Bounds, BCounters),
+  histogram_metric(lists:zip(Labels, LabelValues), Buckets, lists:last(BCounters), lists:last(Stat)).
 
 delete_metrics(Registry, Bounds) ->
   BoundCounters = lists:duplicate(length(Bounds), '_'),
@@ -284,3 +290,6 @@ position([H|L], Pred, Pos) ->
     false ->
       position(L, Pred, Pos + 1)
   end.
+
+create_histogram(Name, Help, Data) ->
+  prometheus_model_helpers:create_mf(Name, Help, histogram, ?MODULE, Data).

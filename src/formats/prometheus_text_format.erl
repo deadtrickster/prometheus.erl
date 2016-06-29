@@ -1,9 +1,7 @@
 -module(prometheus_text_format).
 -export([content_type/0,
          format/0,
-         format/1,
-         registry_collect_callback/3,
-         collector_metrics_callback/5]).
+         format/1]).
 
 -ifdef(TEST).
 -export([escape_metric_help/1,
@@ -11,8 +9,13 @@
 -endif.
 
 -include("prometheus.hrl").
+-include("prometheus_model.hrl").
 
 -behaviour(prometheus_format).
+
+%%====================================================================
+%% Format API
+%%====================================================================
 
 content_type() ->
   <<"text/plain; version=0.0.4">>.
@@ -31,50 +34,72 @@ format(Registry) ->
   ok = file:close(Fd),
   Str.
 
-emit_mf_prologue(Fd, Type, Name, Help) ->
-  file:write(Fd, io_lib:format("# TYPE ~s ~s\n# HELP ~s ~s\n", [Name, Type, Name, escape_metric_help(Help)])).
+%%====================================================================
+%% Private Parts
+%%====================================================================
 
 registry_collect_callback(Fd, Registry, Collector) ->
   Collector:collect_mf(
-    fun (Type, MFName, Labels, Help, MFData) ->
-        emit_mf_prologue(Fd, Type, MFName, Help),
-        Collector:collect_metrics(MFName,
-                                  fun (Series, Value) ->
-                                      case Series of
-                                        {Name, LabelValues} ->
-                                          collector_metrics_callback(Fd, Name, Labels, LabelValues, Value);
-                                        {Name, NewLabels, LabelValues} ->
-                                          collector_metrics_callback(Fd, Name, Labels ++ NewLabels, LabelValues, Value);
-                                        LabelValues ->
-                                          collector_metrics_callback(Fd, MFName, Labels, LabelValues, Value)
-                                      end
-                                  end,
-                                  MFData)
+    fun (MF) ->
+        emit_mf_prologue(Fd, MF),
+        emit_mf_metrics(Fd, MF)
     end,
     Registry).
 
-labels_string(Labels, LabelValues) ->
+emit_mf_prologue(Fd, #'MetricFamily'{name=Name, help=Help, type=Type}) ->
+  file:write(Fd, io_lib:format("# TYPE ~s ~s\n# HELP ~s ~s\n", [Name, string_type(Type), Name, escape_metric_help(Help)])).
+
+emit_mf_metrics(Fd, #'MetricFamily'{name=Name, metric = Metrics}) ->
+  [emit_metric(Fd, Name, Metric) || Metric <- Metrics].
+
+emit_metric(Fd, Name, #'Metric'{label=Labels, counter=#'Counter'{value=Value}}) ->
+  emit_series(Fd, Name, Labels, Value);
+emit_metric(Fd, Name, #'Metric'{label=Labels, gauge=#'Gauge'{value=Value}}) ->
+  emit_series(Fd, Name, Labels, Value);
+emit_metric(Fd, Name, #'Metric'{label=Labels, summary=#'Summary'{sample_count=Count, sample_sum=Sum}}) ->
+  emit_series(Fd, [Name, "_count"], Labels, Count),
+  emit_series(Fd, [Name, "_sum"], Labels, Sum);
+emit_metric(Fd, Name, #'Metric'{label=Labels, histogram=#'Histogram'{sample_count=Count,
+                                                                     sample_sum=Sum,
+                                                                     bucket=Buckets}}) ->
+  [emit_histogram_bucket(Fd, Name, Labels, Bucket) || Bucket <- Buckets],
+  emit_series(Fd, [Name, "_count"], Labels, Count),
+  emit_series(Fd, [Name, "_sum"], Labels, Sum).
+
+emit_histogram_bucket(Fd, Name, Labels, #'Bucket'{cumulative_count=BCount, upper_bound=BBound}) ->
+  emit_series(Fd, [Name, "_bucket"], Labels++[#'LabelPair'{name="le", value=BBound}], BCount).
+
+string_type('COUNTER') ->
+  "counter";
+string_type('GAUGE') ->
+  "gauge";
+string_type('SUMMARY') ->
+  "summary";
+string_type('HISTOGRAM') ->
+  "histogram";
+string_type('UNTYPED') ->
+  "untyped".
+
+labels_string(Labels) ->
   case length(Labels) of
     0 ->
       "";
     _ ->
-      LabelsPList = lists:zip(Labels, LabelValues),
-      "{" ++ string:join(lists:map(fun ({Label, Value1}) ->
-                                       io_lib:format("~s=\"~s\"", [Label, escape_label_value(Value1)])
+      "{" ++ string:join(lists:map(fun (#'LabelPair'{name=Name, value=Value}) ->
+                                       io_lib:format("~s=\"~s\"", [Name, escape_label_value(Value)])
                                    end,
-                                   LabelsPList),
+                                   Labels),
                          ",") ++ "}"
   end.
 
-
-collector_metrics_callback(Fd, Name, Labels, LabelValues, '') ->
-  LString = labels_string(Labels, LabelValues),
+emit_series(Fd, Name, Labels, '') ->
+  LString = labels_string(Labels),
   file:write(Fd, io_lib:format("~s" ++ LString ++ " NaN\n", [Name]));
-collector_metrics_callback(Fd, Name, Labels, LabelValues, undefined) ->
-  LString = labels_string(Labels, LabelValues),
+emit_series(Fd, Name, Labels, undefined) ->
+  LString = labels_string(Labels),
   file:write(Fd, io_lib:format("~s" ++ LString ++ " NaN\n", [Name]));
-collector_metrics_callback(Fd, Name, Labels, LabelValues, Value) ->
-  LString = labels_string(Labels, LabelValues),
+emit_series(Fd, Name, Labels, Value) ->
+  LString = labels_string(Labels),
   file:write(Fd, io_lib:format("~s" ++ LString ++ " ~p\n", [Name, Value])).
 
 escape_metric_help(Help) ->

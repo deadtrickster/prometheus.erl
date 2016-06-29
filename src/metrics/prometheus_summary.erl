@@ -21,7 +21,7 @@
          register/1,
          deregister/1,
          collect_mf/2,
-         collect_metrics/3]).
+         collect_metrics/2]).
 
 %%% gen_server
 -export([init/1,
@@ -31,6 +31,15 @@
          terminate/2,
          code_change/3,
          start_link/0]).
+
+-import(prometheus_model_helpers, [create_mf/5,
+                                   label_pairs/1,
+                                   gauge_metrics/1,
+                                   gauge_metric/1,
+                                   gauge_metric/2,
+                                   counter_metric/1,
+                                   counter_metric/2,
+                                   summary_metric/3]).
 
 -include("prometheus.hrl").
 -behaviour(prometheus_collector).
@@ -111,17 +120,16 @@ register() ->
 register(Registry) ->
   ok = prometheus_registry:register_collector(Registry, ?MODULE).
 
-
 deregister(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry),
   ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_', '_'}).
 
 collect_mf(Callback, Registry) ->
-  [Callback(summary, Name, Labels, Help, [Registry]) ||
+  [Callback(create_summary(Name, Help, {Labels, Registry})) ||
     [Name, Labels, Help, _] <- prometheus_metric:metrics(?TABLE, Registry)].
 
-collect_metrics(Name, Callback, [Registry]) ->
-  [emit_summary_stat(Name, LabelValues, Count, Sum, Callback) ||
+collect_metrics(Name, {Labels, Registry}) ->
+  [summary_metric(lists:zip(Labels, LabelValues), Count, Sum) ||
     [LabelValues, Count, Sum] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2', '$3'})].
 
 %%====================================================================
@@ -175,6 +183,5 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
 sum(Metric) ->
   element(?SUM_POS, Metric).
 
-emit_summary_stat(Name, LabelValues, Count, Sum, Callback) ->
-  Callback({atom_to_list(Name) ++ "_count" , LabelValues}, Count),
-  Callback({atom_to_list(Name) ++ "_sum" , LabelValues}, Sum).
+create_summary(Name, Help, Data) ->
+  prometheus_model_helpers:create_mf(Name, Help, summary, ?MODULE, Data).

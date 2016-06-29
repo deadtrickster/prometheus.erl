@@ -43,18 +43,18 @@ counter_metric(Value) ->
 
 counter_metric(Labels, Value) ->
   #'Metric'{label = label_pairs(Labels),
-            gauge = #'Counter'{value=Value}}.
+            counter = #'Counter'{value=Value}}.
 
 summary_metric(Labels, Count, Sum) ->
   #'Metric'{label = label_pairs(Labels),
-            gauge = #'Summary'{sample_count=Count,
-                               sample_sum=Sum}}.
+            summary = #'Summary'{sample_count=Count,
+                                 sample_sum=Sum}}.
 
 histogram_metric(Labels, Buckets, Count, Sum) ->
   #'Metric'{label = label_pairs(Labels),
-            gauge = #'Histogram'{sample_count=Count,
-                                 sample_sum=Sum,
-                                 bucket=histogram_buckets(Buckets)}}.
+            histogram = #'Histogram'{sample_count=Count,
+                                     sample_sum=Sum,
+                                     bucket=histogram_buckets(Buckets)}}.
 
 
 label_pairs([]) ->

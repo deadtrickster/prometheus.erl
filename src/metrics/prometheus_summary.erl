@@ -184,4 +184,4 @@ sum(Metric) ->
   element(?SUM_POS, Metric).
 
 create_summary(Name, Help, Data) ->
-  prometheus_model_helpers:create_mf(Name, Help, ?MODULE, Data).
+  prometheus_model_helpers:create_mf(Name, Help, summary, ?MODULE, Data).

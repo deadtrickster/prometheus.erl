@@ -5,7 +5,8 @@
          collect_mf/2,
          collect_metrics/2]).
 
--import(prometheus_model_helpers, [label_pairs/1,
+-import(prometheus_model_helpers, [create_mf/5,
+                                   label_pairs/1,
                                    gauge_metrics/1,
                                    gauge_metric/1,
                                    gauge_metric/2,
@@ -27,35 +28,29 @@ deregister(_) -> ok.
 collect_mf(Callback, _Registry) ->
   Memory = erlang:memory(),
 
-  Callback(create_mf(erlang_vm_memory_bytes_total,
-                     "The total amount of memory currently allocated. This is the same as the sum of the memory size for processes and system.",
-                     gauge,
-                     Memory)),
+  Callback(create_gauge(erlang_vm_memory_bytes_total,
+                        "The total amount of memory currently allocated. This is the same as the sum of the memory size for processes and system.",
+                        Memory)),
 
-  Callback(create_mf(erlang_vm_memory_processes_bytes_total,
-                     "The total amount of memory currently allocated for the Erlang processes.",
-                     gauge,
-                     Memory)),
+  Callback(create_gauge(erlang_vm_memory_processes_bytes_total,
+                        "The total amount of memory currently allocated for the Erlang processes.",
+                        Memory)),
 
-  Callback(create_mf(erlang_vm_memory_system_bytes_total,
-                     "The total amount of memory currently allocated for the emulator that is not directly related to ay Erlang process. Memory presented as processes is not included in this memory.",
-                     gauge,
-                     Memory)),
+  Callback(create_gauge(erlang_vm_memory_system_bytes_total,
+                        "The total amount of memory currently allocated for the emulator that is not directly related to ay Erlang process. Memory presented as processes is not included in this memory.",
+                        Memory)),
 
-  Callback(create_mf(erlang_vm_memory_atom_bytes_total,
-                     "The total amount of memory currently allocated for atoms. This memory is part of the memory presented as system memory.",
-                     gauge,
-                     Memory)),
+  Callback(create_gauge(erlang_vm_memory_atom_bytes_total,
+                        "The total amount of memory currently allocated for atoms. This memory is part of the memory presented as system memory.",
+                        Memory)),
 
-  Callback(create_mf(erlang_vm_ets_tables,
-                     "Erlang VM ETS Tables count",
-                     gauge,
-                     Memory)),
+  Callback(create_gauge(erlang_vm_ets_tables,
+                        "Erlang VM ETS Tables count",
+                        Memory)),
 
-  Callback(create_mf(erlang_vm_dets_tables,
-                     "Erlang VM DETS Tables count",
-                     gauge,
-                     Memory)).
+  Callback(create_gauge(erlang_vm_dets_tables,
+                        "Erlang VM DETS Tables count",
+                        Memory)).
 
 collect_metrics(erlang_vm_memory_bytes_total, Memory) ->
   gauge_metrics([{[{kind, system}], proplists:get_value(system, Memory)},
@@ -84,5 +79,5 @@ memory_other(Memory) ->
     - proplists:get_value(code, Memory)
     - proplists:get_value(ets, Memory).
 
-create_mf(Name, Help, Type, Data) ->
-  prometheus_model_helpers:create_mf(Name, Help, Type, ?MODULE, Data).
+create_gauge(Name, Help, Data) ->
+  create_mf(Name, Help, gauge, ?MODULE, Data).

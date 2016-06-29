@@ -83,7 +83,10 @@ ensure_binary(Val) when is_atom(Val) ->
 ensure_binary(Val) when is_list(Val) ->
   list_to_binary(Val);
 ensure_binary(Val) when is_binary(Val) ->
-  Val.
+  Val;
+ensure_binary(Val) ->
+  list_to_binary(io_lib:format("~p", [Val])).
+
 
 ensure_mf_type(gauge) ->
   'GAUGE';

@@ -61,8 +61,8 @@ label_pairs([]) ->
   [];
 label_pairs(Labels) ->
   lists:map(fun({Name, Value}) ->
-                #'LabelPair'{name = Name,
-                             value = Value}
+                #'LabelPair'{name = ensure_binary(Name),
+                             value = ensure_binary(Value)}
             end,
             Labels).
 

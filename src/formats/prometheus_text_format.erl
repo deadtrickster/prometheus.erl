@@ -1,8 +1,7 @@
 -module(prometheus_text_format).
 -export([content_type/0,
          format/0,
-         format/1,
-         registry_collect_callback/3]).
+         format/1]).
 
 -ifdef(TEST).
 -export([escape_metric_help/1,
@@ -13,6 +12,10 @@
 -include("prometheus_model.hrl").
 
 -behaviour(prometheus_format).
+
+%%====================================================================
+%% Format API
+%%====================================================================
 
 content_type() ->
   <<"text/plain; version=0.0.4">>.
@@ -30,6 +33,10 @@ format(Registry) ->
   {ok, Str} = file:pread(Fd, 0, Size),
   ok = file:close(Fd),
   Str.
+
+%%====================================================================
+%% Private Parts
+%%====================================================================
 
 registry_collect_callback(Fd, Registry, Collector) ->
   Collector:collect_mf(

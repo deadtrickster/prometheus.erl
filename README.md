@@ -1,4 +1,4 @@
-# Prometheus.erl [![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)](https://hex.pm/packages/prometheus)
+# Prometheus.erl [![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)](https://hex.pm/packages/prometheus) [![Build Status](https://travis-ci.org/deadtrickster/prometheus.erl.svg?branch=master)](https://travis-ci.org/deadtrickster/prometheus.erl)
 
 [Prometheus](https://prometheus.io) monitoring system and time series database client in Erlang.
 
@@ -130,7 +130,8 @@ Prometheus.erl supports standard Erlang app configuration.
  - [x] Floats support
  - [x] Tests
  - [x] Bucket generators
- - [ ] Protobuf format
+ - [x] Protobuf format
+ - [x] Full summary implementation
  - [ ] Extend custom collectors collection?
 
 

@@ -29,21 +29,47 @@ collect_mf(Callback, _Registry) ->
                                      end) || MFName <- enabled_statistics_metrics()].
 
 add_metric_family(context_switches, Stat, Callback) ->
-  Callback(create_mf(erlang_vm_statistics_context_switches, counter, "Total number of context switches since the system started", Stat));
+  Callback(create_mf(erlang_vm_statistics_context_switches,
+                     counter,
+                     "Total number of context switches since the system started", Stat));
 add_metric_family(garbage_collection, Stat, Callback) ->
-  Callback(create_mf(erlang_vm_statistics_garbage_collection_number_of_gcs, counter, "Garbage collection: number of GCs", Stat)),
-  Callback(create_mf(erlang_vm_statistics_garbage_collection_words_reclaimed, counter, "Garbage collection: words reclaimed", Stat));
+  Callback(create_mf(erlang_vm_statistics_garbage_collection_number_of_gcs,
+                     counter,
+                     "Garbage collection: number of GCs",
+                     Stat)),
+  Callback(create_mf(erlang_vm_statistics_garbage_collection_words_reclaimed,
+                     counter,
+                     "Garbage collection: words reclaimed",
+                     Stat));
 add_metric_family(io, Stat, Callback) ->
-  Callback(create_mf(erlang_vm_statistics_bytes_received_total, counter, "Total number of bytes received through ports", Stat)),
-  Callback(create_mf(erlang_vm_statistics_bytes_output_total, counter, "Total number of bytes output to ports", Stat));
+  Callback(create_mf(erlang_vm_statistics_bytes_received_total,
+                     counter,
+                     "Total number of bytes received through ports",
+                     Stat)),
+  Callback(create_mf(erlang_vm_statistics_bytes_output_total,
+                     counter,
+                     "Total number of bytes output to ports",
+                     Stat));
 add_metric_family(reductions, Stat, Callback) ->
-  Callback(create_mf(erlang_vm_statistics_reductions_total, counter, "Total reductions", Stat));
+  Callback(create_mf(erlang_vm_statistics_reductions_total,
+                     counter,
+                     "Total reductions",
+                     Stat));
 add_metric_family(run_queue, Stat, Callback) ->
-  Callback(create_mf(erlang_vm_statistics_run_queues_length_total, gauge, "Total length of the run-queues", Stat));
+  Callback(create_mf(erlang_vm_statistics_run_queues_length_total,
+                     gauge,
+                     "Total length of the run-queues",
+                     Stat));
 add_metric_family(runtime, Stat, Callback) ->
-  Callback(create_mf(erlang_vm_statistics_runtime_milliseconds, counter, "The sum of the runtime for all threads in the Erlang runtime system. Can be greate than wall clock time", Stat));
+  Callback(create_mf(erlang_vm_statistics_runtime_milliseconds,
+                     counter,
+                     "The sum of the runtime for all threads in the Erlang runtime system. Can be greate than wall clock time",
+                     Stat));
 add_metric_family(wall_clock, Stat, Callback) ->
-  Callback(create_mf(erlang_vm_statistics_wallclock_time_milliseconds, counter, "Information about wall clock. Same as erlang_vm_statistics_runtime_milliseconds except that real time is measured", Stat)).
+  Callback(create_mf(erlang_vm_statistics_wallclock_time_milliseconds,
+                     counter,
+                     "Information about wall clock. Same as erlang_vm_statistics_runtime_milliseconds except that real time is measured",
+                     Stat)).
 
 collect_metrics(erlang_vm_statistics_context_switches, {Stat, _}) ->
   counter_metric(Stat);

@@ -15,7 +15,8 @@ defmodule Prometheus.Mixfile do
   end
 
   defp package do
-    [maintainers: ["Ilya Khaprov"],
+    [build_tools: ["rebar3"],
+     maintainers: ["Ilya Khaprov"],
      licenses: ["MIT"],
      links: %{"GitHub" => "https://github.com/deadtrickster/prometheus.erl"},
      files: ["src", "include", "README.md", "LICENSE", "rebar.config"]]

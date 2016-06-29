@@ -13,9 +13,9 @@
 -include("prometheus_model.hrl").
 
 create_mf(Name, Help, Type, Collector, CollectorData) ->
-  #'MetricFamily'{name = Name,
-                  help = Help,
-                  type = Type,
+  #'MetricFamily'{name = ensure_binary(Name),
+                  help = ensure_binary(Help),
+                  type = ensure_mf_type(Type),
                   metric = ensure_list(Collector:collect_metrics(Name, CollectorData))}.
 
 gauge_metrics(Metrics) ->
@@ -68,12 +68,32 @@ label_pairs(Labels) ->
 
 histogram_buckets(Buckets) ->
   lists:map(fun({Bound, Count}) ->
-                   #'Bucket'{upper_bound = Bound,
-                             cumulative_count = Count}
-               end,
+                #'Bucket'{upper_bound = Bound,
+                          cumulative_count = Count}
+            end,
             Buckets).
 
 ensure_list(Val) when is_list(Val) ->
   Val;
 ensure_list(Val) ->
   [Val].
+
+ensure_binary(Val) when is_atom(Val) ->
+  atom_to_binary(Val, utf8);
+ensure_binary(Val) when is_list(Val) ->
+  list_to_binary(Val);
+ensure_binary(Val) when is_binary(Val) ->
+  Val.
+
+ensure_mf_type(gauge) ->
+  'GAUGE';
+ensure_mf_type(counter) ->
+  'COUNTER';
+ensure_mf_type(summary) ->
+  'SUMMARY';
+ensure_mf_type(histogram) ->
+  'HISTOGRAM';
+ensure_mf_type(untyped) ->
+  'UNTYPED';
+ensure_mf_type(Type) ->
+  Type.

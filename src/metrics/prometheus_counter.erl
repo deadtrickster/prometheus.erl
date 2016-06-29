@@ -34,7 +34,8 @@
          code_change/3,
          start_link/0]).
 
--import(prometheus_model_helpers, [label_pairs/1,
+-import(prometheus_model_helpers, [create_mf/5,
+                                   label_pairs/1,
                                    gauge_metrics/1,
                                    gauge_metric/1,
                                    gauge_metric/2,
@@ -139,7 +140,7 @@ deregister(Registry) ->
   ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_'}).
 
 collect_mf(Callback, Registry) ->
-  [Callback(create_mf(Name, counter, Help, {Labels, Registry})) ||
+  [Callback(create_counter(Name, Help, {Labels, Registry})) ||
     [Name, Labels, Help, _] <- prometheus_metric:metrics(?TABLE, Registry)].
 
 collect_metrics(Name, {Labels, Registry}) ->
@@ -193,5 +194,5 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
       ok
   end.
 
-create_mf(Name, Help, Type, Data) ->
-  prometheus_model_helpers:create_mf(Name, Help, Type, ?MODULE, Data).
+create_counter(Name, Help, Data) ->
+  create_mf(Name, Help, counter, ?MODULE, Data).

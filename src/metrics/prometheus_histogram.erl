@@ -32,7 +32,8 @@
          code_change/3,
          start_link/0]).
 
--import(prometheus_model_helpers, [label_pairs/1,
+-import(prometheus_model_helpers, [create_mf/5,
+                                   label_pairs/1,
                                    gauge_metrics/1,
                                    gauge_metric/1,
                                    gauge_metric/2,
@@ -131,7 +132,7 @@ deregister(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry).
 
 collect_mf(Callback, Registry) ->
-  [Callback(create_mf(Name, gauge, Help, {Labels, Registry, Bounds}))
+  [Callback(create_histogram(Name, Help, {Labels, Registry, Bounds}))
    || [Name, Labels, Help, Bounds] <- prometheus_metric:metrics(?TABLE, Registry)].
 
 collect_metrics(Name, {Labels, Registry, Bounds}) ->
@@ -290,5 +291,5 @@ position([H|L], Pred, Pos) ->
       position(L, Pred, Pos + 1)
   end.
 
-create_mf(Name, Help, Type, Data) ->
-  prometheus_model_helpers:create_mf(Name, Help, Type, ?MODULE, Data).
+create_histogram(Name, Help, Data) ->
+  prometheus_model_helpers:create_mf(Name, Help, histogram, ?MODULE, Data).

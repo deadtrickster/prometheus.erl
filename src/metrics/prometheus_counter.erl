@@ -23,7 +23,7 @@
          register/1,
          deregister/1,
          collect_mf/2,
-         collect_metrics/3]).
+         collect_metrics/2]).
 
 %%% gen_server
 -export([init/1,
@@ -33,6 +33,13 @@
          terminate/2,
          code_change/3,
          start_link/0]).
+
+-import(prometheus_model_helpers, [label_pairs/1,
+                                   gauge_metrics/1,
+                                   gauge_metric/1,
+                                   gauge_metric/2,
+                                   counter_metric/1,
+                                   counter_metric/2]).
 
 -include("prometheus.hrl").
 -behaviour(prometheus_collector).
@@ -132,11 +139,11 @@ deregister(Registry) ->
   ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_'}).
 
 collect_mf(Callback, Registry) ->
-  [Callback(counter, Name, Labels, Help, [Registry]) ||
+  [Callback(create_mf(Name, counter, Help, {Labels, Registry})) ||
     [Name, Labels, Help, _] <- prometheus_metric:metrics(?TABLE, Registry)].
 
-collect_metrics(Name, Callback, [Registry]) ->
-  [Callback(LabelValues, Value) ||
+collect_metrics(Name, {Labels, Registry}) ->
+  [counter_metric(lists:zip(Labels, LabelValues), Value) ||
     [LabelValues, Value] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'})].
 
 %%====================================================================
@@ -185,3 +192,6 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
     true ->
       ok
   end.
+
+create_mf(Name, Help, Type, Data) ->
+  prometheus_model_helpers:create_mf(Name, Help, Type, ?MODULE, Data).

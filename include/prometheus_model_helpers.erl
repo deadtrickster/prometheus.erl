@@ -6,7 +6,9 @@
          gauge_metric/1,
          gauge_metric/2,
          counter_metric/1,
-         counter_metric/2]).
+         counter_metric/2,
+         summary_metric/3,
+         histogram_metric/4]).
 
 -include("prometheus_model.hrl").
 
@@ -15,15 +17,6 @@ create_mf(Name, Help, Type, Collector, CollectorData) ->
                   help = Help,
                   type = Type,
                   metric = ensure_list(Collector:collect_metrics(Name, CollectorData))}.
-
-label_pairs([]) ->
-  [];
-label_pairs(Labels) ->
-  lists:map(fun({Name, Value}) ->
-                #'LabelPair'{name = Name,
-                             value = Value}
-            end,
-            Labels).
 
 gauge_metrics(Metrics) ->
   lists:map(fun(Spec) ->
@@ -51,6 +44,34 @@ counter_metric(Value) ->
 counter_metric(Labels, Value) ->
   #'Metric'{label = label_pairs(Labels),
             gauge = #'Counter'{value=Value}}.
+
+summary_metric(Labels, Count, Sum) ->
+  #'Metric'{label = label_pairs(Labels),
+            gauge = #'Summary'{sample_count=Count,
+                               sample_sum=Sum}}.
+
+histogram_metric(Labels, Buckets, Count, Sum) ->
+  #'Metric'{label = label_pairs(Labels),
+            gauge = #'Histogram'{sample_count=Count,
+                                 sample_sum=Sum,
+                                 bucket=histogram_buckets(Buckets)}}.
+
+
+label_pairs([]) ->
+  [];
+label_pairs(Labels) ->
+  lists:map(fun({Name, Value}) ->
+                #'LabelPair'{name = Name,
+                             value = Value}
+            end,
+            Labels).
+
+histogram_buckets(Buckets) ->
+  lists:map(fun({Bound, Count}) ->
+                   #'Bucket'{upper_bound = Bound,
+                             cumulative_count = Count}
+               end,
+            Buckets).
 
 ensure_list(Val) when is_list(Val) ->
   Val;

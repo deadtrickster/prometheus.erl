@@ -187,7 +187,7 @@ validate_histogram_bounds(RawBounds) when is_list(RawBounds) ->
   Bounds = lists:map(fun validate_histogram_bound/1, RawBounds),
   case lists:sort(Bounds) of
     Bounds ->
-      Bounds ++ ['+Inf'];
+      Bounds ++ [infinity];
     _ ->
       erlang:error({histogram_invalid_bounds, Bounds, "Bounds not sorted"})
   end;

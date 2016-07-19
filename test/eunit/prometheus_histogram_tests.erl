@@ -6,9 +6,20 @@ prometheus_format_test_() ->
   {foreach,
    fun prometheus_eunit_common:start/0,
    fun prometheus_eunit_common:stop/1,
-   [fun test_errors/1,
+   [fun test_registration/1,
+    fun test_errors/1,
     fun test_int/1,
     fun test_double/1]}.
+
+test_registration(_)->
+  Name = request_duration,
+  Spec = [{name, request_duration}, {bounds, [100, 300, 500, 750, 1000]}, {help, "Track requests duration"}],
+  [?_assertEqual(true,
+                 prometheus_counter:declare(Spec)),
+   ?_assertEqual(false,
+                 prometheus_counter:declare(Spec)),
+   ?_assertError({mf_already_exists, {default, Name}, "maybe you could try declare?"},
+                 prometheus_counter:new(Spec))].
 
 test_errors(_) ->
   prometheus_histogram:new([{name, request_duration}, {bounds, [100, 300, 500, 750, 1000]}, {help, "Track requests duration"}]),

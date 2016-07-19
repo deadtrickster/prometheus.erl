@@ -1,5 +1,7 @@
 -module(prometheus_metric).
--export([insert_mf/5,
+-export([insert_new_mf/5,
+         insert_new_mf/6,
+         insert_mf/5,
          insert_mf/6,
          deregister_mf/2,
          check_mf_exists/4,
@@ -20,6 +22,9 @@
 -callback new(Info :: list()) -> ok.
 -callback new(Info :: list(), Registry :: atom) -> ok.
 
+-callback declare(Info :: list()) -> boolean().
+-callback declare(Info :: list(), Registry :: atom) -> boolean().
+
 -callback reset(Name :: atom) -> ok.
 -callback reset(Name :: atom, LValues :: list()) -> ok.
 -callback reset(Registry :: atom, Name :: atom, LValues :: list()) -> ok.
@@ -28,11 +33,22 @@
 -callback value(Name :: atom, LValues :: list()) -> ok.
 -callback value(Registry :: atom, Name :: atom, LValues :: list()) -> ok.
 
+insert_new_mf(Table, Registry, Name, Labels, Help) ->
+  insert_new_mf(Table, Registry, Name, Labels, Help, undefined).
+
+insert_new_mf(Table, Registry, Name, Labels, Help, Data) ->
+  case ets:insert_new(Table, {{Registry, mf, Name}, Labels, Help, Data}) of
+    true ->
+      true;
+    false ->      
+      erlang:error({mf_already_exists, {Registry, Name}, "maybe you could try declare?"})
+  end.
+
 insert_mf(Table, Registry, Name, Labels, Help) ->
   insert_mf(Table, Registry, Name, Labels, Help, undefined).
 
 insert_mf(Table, Registry, Name, Labels, Help, Data) ->
-  true = ets:insert_new(Table, {{Registry, mf, Name}, Labels, Help, Data}).
+  ets:insert_new(Table, {{Registry, mf, Name}, Labels, Help, Data}).
 
 deregister_mf(Table, Registry) ->
   ets:match_delete(Table, {{Registry, mf, '_'}, '_', '_', '_'}).

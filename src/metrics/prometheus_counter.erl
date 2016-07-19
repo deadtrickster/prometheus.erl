@@ -3,6 +3,8 @@
 %%% metric
 -export([new/1,
          new/2,
+         declare/1,
+         declare/2,
          inc/1,
          inc/2,
          inc/3,
@@ -58,6 +60,15 @@ new(Spec) ->
   new(Spec, default).
 
 new(Spec, Registry) ->
+  {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
+  %% Value = proplists:get_value(value, Spec),
+  register(Registry),
+  prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
+
+declare(Spec) ->
+  declare(Spec, default).
+
+declare(Spec, Registry) ->
   {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
   %% Value = proplists:get_value(value, Spec),
   register(Registry),

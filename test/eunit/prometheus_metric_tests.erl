@@ -11,12 +11,12 @@ extract_key_or_raise_missing_test() ->
 
 validate_metric_name_test() ->
   ?assertError({invalid_metric_name, 12, "metric name is not a string"}, prometheus_metric:validate_metric_name(12)),
-  ?assertError({invalid_metric_name, [0,0,123], "metric name is invalid string"}, prometheus_metric:validate_metric_name(<<0,0,123>>)),
+  ?assertError({invalid_metric_name, <<0,0,123>>, "metric name is invalid string"}, prometheus_metric:validate_metric_name(<<0,0,123>>)),
   ?assertError({invalid_metric_name, "1qwe", "metric name doesn't match regex [a-zA-Z_:][a-zA-Z0-9_:]*"}, prometheus_metric:validate_metric_name("1qwe")),
 
   ?assertEqual('qwe_:qwe', prometheus_metric:validate_metric_name('qwe_:qwe')),
-  ?assertEqual('qwe_:qwe', prometheus_metric:validate_metric_name("qwe_:qwe")),
-  ?assertEqual('qwe_:qwe', prometheus_metric:validate_metric_name(<<"qwe_:qwe">>)).
+  ?assertEqual("qwe_:qwe", prometheus_metric:validate_metric_name("qwe_:qwe")),
+  ?assertEqual(<<"qwe_:qwe">>, prometheus_metric:validate_metric_name(<<"qwe_:qwe">>)).
 
 validate_metric_label_names_test() ->
   ?assertError({invalid_metric_labels, 12, "not list"}, prometheus_metric:validate_metric_label_names(12)),
@@ -40,5 +40,5 @@ extract_common_params_test() ->
   ?assertError({invalid_metric_labels, 12, "not list"}, prometheus_metric:extract_common_params([{name, "qwe"}, {labels, 12}])),
   ?assertError({invalid_metric_help, 12, "metric help is not a string"}, prometheus_metric:extract_common_params([{name, "qwe"}, {labels, ["qwe"]}, {help, 12}])),
 
-  ?assertEqual({qwe, [], "qwe"}, prometheus_metric:extract_common_params([{name, "qwe"}, {help, "qwe"}])),
-  ?assertEqual({qwe, ["qwe"], "qwe"}, prometheus_metric:extract_common_params([{name, "qwe"}, {labels, ["qwe"]}, {help, "qwe"}])).
+  ?assertEqual({"qwe", [], "qwe"}, prometheus_metric:extract_common_params([{name, "qwe"}, {help, "qwe"}])),
+  ?assertEqual({"qwe", ["qwe"], "qwe"}, prometheus_metric:extract_common_params([{name, "qwe"}, {labels, ["qwe"]}, {help, "qwe"}])).

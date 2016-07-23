@@ -36,5 +36,10 @@ test_set(_) ->
   Value = prometheus_gauge:value(pool_size, [mongodb]),
   prometheus_gauge:reset(pool_size, [mongodb]),
   RValue = prometheus_gauge:value(pool_size, [mongodb]),
+  prometheus_gauge:new([{name, cur_time}, {labels, []}, {help, ""}]),
+  Timestamp = os:system_time(seconds),
+  prometheus_gauge:set_to_current_time(cur_time),
+  STimestamp = prometheus_gauge:value(cur_time),
   [?_assertEqual(100, Value),
-   ?_assertEqual(0, RValue)].
+   ?_assertEqual(0, RValue),
+   ?_assertEqual(Timestamp, STimestamp)].

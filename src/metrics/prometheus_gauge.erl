@@ -8,6 +8,9 @@
          set/2,
          set/3,
          set/4,
+         set_to_current_time/1,
+         set_to_current_time/2,
+         set_to_current_time/3,
          reset/1,
          reset/2,
          reset/3,
@@ -76,6 +79,14 @@ set(Registry, Name, LabelValues, Value) when is_number(Value) ->
 set(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "set accepts only numbers"}).
 
+set_to_current_time(Name) ->
+  set_to_current_time(default, Name, []).
+
+set_to_current_time(Name, LabelValues) ->
+  set_to_current_time(default, Name, LabelValues).
+
+set_to_current_time(Registry, Name, LabelValues) ->
+  set(Registry, Name, LabelValues, os:system_time(seconds)).
 
 reset(Name) ->
   reset(default, Name, []).

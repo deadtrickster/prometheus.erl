@@ -26,6 +26,8 @@ test_errors(_) ->
   [%% basic name/labels/help validations test, lets hope new is using extract_common_params
    ?_assertError({invalid_metric_name, 12, "metric name is not a string"}, prometheus_histogram:new([{name, 12}, {help, ""}])),
    ?_assertError({invalid_metric_labels, 12, "not list"}, prometheus_histogram:new([{name, "qwe"}, {labels, 12}, {help, ""}])),
+   ?_assertError({invalid_metric_label_name, "le", "histogram cannot have a label named \"le\""},
+                 prometheus_histogram:new([{name, "qwe"}, {labels, ["qwe", "le"]}, {help, ""}])),
    ?_assertError({invalid_metric_help, 12, "metric help is not a string"}, prometheus_histogram:new([{name, "qwe"}, {help, 12}])),
    %% histogram specific errors
    ?_assertError({missing_metric_spec_key, bounds, [{name,"qwe"}, {help,[]}]}, prometheus_histogram:new([{name, "qwe"}, {help, ""}])),

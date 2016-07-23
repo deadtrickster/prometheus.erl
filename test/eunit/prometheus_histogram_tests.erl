@@ -9,7 +9,8 @@ prometheus_format_test_() ->
    [fun test_registration/1,
     fun test_errors/1,
     fun test_int/1,
-    fun test_double/1]}.
+    fun test_double/1,
+    fun test_observe_duration/1]}.
 
 test_registration(_)->
   Name = request_duration,
@@ -60,7 +61,6 @@ test_int(_) ->
   [?_assertEqual({[3, 3, 1, 1, 1, 0], 2622}, Value),
    ?_assertEqual({[0, 0, 0, 0, 0, 0], 0}, RValue)].
 
-
 test_double(_) ->
   prometheus_histogram:new([{name, http_request_duration_milliseconds},
                             {labels, [method]},
@@ -78,3 +78,25 @@ test_double(_) ->
   RValue = prometheus_histogram:value(http_request_duration_milliseconds, [post]),
   [?_assertEqual({[0, 1, 1, 1, 2, 1], 4352.53}, Value),
    ?_assertEqual({[0, 0, 0, 0, 0, 0], 0}, RValue)].
+
+test_observe_duration(_) ->
+  prometheus_histogram:new([{name, fun_executing_histogram}, {bounds, [0.5, 1.1]}, {help, ""}]),
+  prometheus_histogram:observe_duration(fun_executing_histogram, fun () ->
+                                                                     timer:sleep(1000)
+                                                                 end),
+  timer:sleep(10),
+  {Buckets, Sum} = prometheus_histogram:value(fun_executing_histogram),
+
+  try prometheus_histogram:observe_duration(fun_executing_histogram, fun () ->
+                                                                         erlang:error({qwe})
+                                                                     end)
+  catch _:_ -> ok
+  end,
+
+  timer:sleep(10),
+  {BucketsE, SumE} = prometheus_histogram:value(fun_executing_histogram),
+
+  [?_assertEqual([0, 1, 0], Buckets),
+   ?_assertEqual([1, 1, 0], BucketsE),
+   ?_assertMatch(true, 0.9 < Sum andalso Sum < 1.2),
+   ?_assertMatch(true, 0.9 < SumE andalso SumE < 1.2)].

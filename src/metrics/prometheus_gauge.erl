@@ -11,6 +11,9 @@
          set_to_current_time/1,
          set_to_current_time/2,
          set_to_current_time/3,
+         track_inprogress/2,
+         track_inprogress/3,
+         track_inprogress/4,
          reset/1,
          reset/2,
          reset/3,
@@ -88,6 +91,20 @@ set_to_current_time(Name, LabelValues) ->
 set_to_current_time(Registry, Name, LabelValues) ->
   set(Registry, Name, LabelValues, os:system_time(seconds)).
 
+track_inprogress(Name, Fun) ->
+  track_inprogress(default, Name, [], Fun).
+
+track_inprogress(Name, LabelValues, Fun) ->
+  track_inprogress(default, Name, LabelValues, Fun).
+
+track_inprogress(Registry, Name, LabelValues, Fun) ->
+  inc(Registry, Name, LabelValues),
+  try
+    Fun()
+  after
+    dec(Registry, Name, LabelValues)
+  end.
+
 reset(Name) ->
   reset(default, Name, []).
 
@@ -133,6 +150,19 @@ collect_metrics(Name, {Labels, Registry}) ->
 %%====================================================================
 %% Private Parts
 %%====================================================================
+
+inc(Registry, Name, LabelValues) ->
+  inc(Registry, Name, LabelValues, 1).
+
+inc(Registry, Name, LabelValues, Inc) ->
+  try ets:update_counter(?TABLE, {Registry, Name, LabelValues}, {?GAUGE_POS, Inc})
+  catch error:badarg ->
+      insert_metric(Registry, Name, LabelValues, Inc, fun inc/4)
+  end,
+  ok.
+
+dec(Registry, Name, LabelValues) ->
+  inc(Registry, Name, LabelValues, -1).
 
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),

@@ -8,7 +8,9 @@ prometheus_format_test_() ->
    fun prometheus_eunit_common:stop/1,
    [fun test_registration/1,
     fun test_errors/1,
-    fun test_set/1]}.
+    fun test_set/1,
+    fun test_set_to_current_time/1,
+    fun test_track_inprogress/1]}.
 
 test_registration(_)->
   Name = pool_size,
@@ -36,10 +38,27 @@ test_set(_) ->
   Value = prometheus_gauge:value(pool_size, [mongodb]),
   prometheus_gauge:reset(pool_size, [mongodb]),
   RValue = prometheus_gauge:value(pool_size, [mongodb]),
+  [?_assertEqual(100, Value),
+   ?_assertEqual(0, RValue)].
+
+test_set_to_current_time(_) ->
   prometheus_gauge:new([{name, cur_time}, {labels, []}, {help, ""}]),
   Timestamp = os:system_time(seconds),
   prometheus_gauge:set_to_current_time(cur_time),
   STimestamp = prometheus_gauge:value(cur_time),
-  [?_assertEqual(100, Value),
-   ?_assertEqual(0, RValue),
-   ?_assertEqual(Timestamp, STimestamp)].
+  [?_assertEqual(Timestamp, STimestamp)].
+
+test_track_inprogress(_) ->
+  prometheus_gauge:new([{name, fun_executing_gauge}, {help, ""}]),
+  Value = prometheus_gauge:track_inprogress(fun_executing_gauge, fun () ->
+                                                                     prometheus_gauge:value(fun_executing_gauge)
+                                                                 end),
+
+  try prometheus_gauge:track_inprogress(fun_executing_gauge, fun () ->
+                                                                 erlang:error({qwe})
+                                                             end)
+  catch _:_ -> ok
+  end,
+
+  [?_assertEqual(1, Value),
+   ?_assertEqual(0, prometheus_gauge:value(fun_executing_gauge))].

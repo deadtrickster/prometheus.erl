@@ -23,7 +23,8 @@
          buckets/1,
          buckets/2,
          buckets/3,
-         default_buckets/0]
+         default_buckets/0,
+         linear_buckets/3]
        ).
 
 %%% collector
@@ -169,6 +170,9 @@ buckets(Registry, Name, LabelValues) ->
 
 default_buckets () ->
   [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10].
+
+linear_buckets(Start, Step, Count) when is_number(Start) andalso is_number(Step) andalso is_number(Count) ->
+  lists:seq(Start, Start + Step*(Count - 1), Step).
 
 %%====================================================================
 %% Collector API

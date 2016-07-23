@@ -52,7 +52,8 @@ test_buckets(_) ->
   CustomBuckets = prometheus_histogram:buckets(http_request_duration_milliseconds, [method]),
   [?_assertEqual(prometheus_histogram:default_buckets() ++ [infinity], DefaultBuckets),
    ?_assertEqual([100, 300, 500, 750, 1000, infinity], CustomBuckets),
-   ?_assertEqual([-15, -10, -5, 0, 5, 10], prometheus_histogram:linear_buckets(-15, 5, 6))].
+   ?_assertEqual([-15, -10, -5, 0, 5, 10], prometheus_histogram:linear_buckets(-15, 5, 6)),
+   ?_assertEqual([100.0, 120.0, 144.0], prometheus_histogram:exponential_buckets(100, 1.2, 3))].
 
 test_int(_) ->
   prometheus_histogram:new([{name, http_request_duration_milliseconds},

@@ -24,7 +24,8 @@
          buckets/2,
          buckets/3,
          default_buckets/0,
-         linear_buckets/3]
+         linear_buckets/3,
+         exponential_buckets/3]
        ).
 
 %%% collector
@@ -173,6 +174,9 @@ default_buckets () ->
 
 linear_buckets(Start, Step, Count) when is_number(Start) andalso is_number(Step) andalso is_number(Count) ->
   lists:seq(Start, Start + Step*(Count - 1), Step).
+
+exponential_buckets(Start, Factor, Count) when is_number(Start) andalso is_number(Factor) andalso is_number(Count) ->
+  [Start * math:pow(Factor, Index) || Index <- lists:seq(0, Count - 1)].
 
 %%====================================================================
 %% Collector API

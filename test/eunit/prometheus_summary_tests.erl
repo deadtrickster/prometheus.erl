@@ -9,7 +9,8 @@ prometheus_format_test_() ->
    [fun test_registration/1,
     fun test_errors/1,
     fun test_int/1,
-    fun test_double/1]}.
+    fun test_double/1,
+    fun test_observe_duration/1]}.
 
 test_registration(_)->
   Name = orders_summary,
@@ -56,3 +57,25 @@ test_double(_) ->
   RValue = prometheus_summary:value(orders_summary, [electronics]),
   [?_assertEqual({2, 4.2}, Value),
    ?_assertEqual({0, 0}, RValue)].
+
+test_observe_duration(_) ->
+  prometheus_summary:new([{name, fun_executing_summary}, {help, ""}]),
+  prometheus_summary:observe_duration(fun_executing_summary, fun () ->
+                                                                 timer:sleep(1000)
+                                                             end),
+  timer:sleep(10),
+  {Count, Sum} = prometheus_summary:value(fun_executing_summary),
+
+  try prometheus_summary:observe_duration(fun_executing_summary, fun () ->
+                                                                     erlang:error({qwe})
+                                                                 end)
+  catch _:_ -> ok
+  end,
+
+  timer:sleep(10),
+  {CountE, SumE} = prometheus_summary:value(fun_executing_summary),
+
+  [?_assertEqual(1, Count),
+   ?_assertEqual(2, CountE),
+   ?_assertMatch(true, 0.9 < Sum andalso Sum < 1.2),
+   ?_assertMatch(true, 0.9 < SumE andalso SumE < 1.2)].

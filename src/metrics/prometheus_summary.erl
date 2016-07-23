@@ -61,7 +61,7 @@ new(Spec) ->
 
 new(Spec, Registry) ->
   {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
-  %% Value = proplists:get_value(value, Spec),
+  validate_summary_labels(Labels),
   register(Registry),
   prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
 
@@ -172,6 +172,14 @@ start_link() ->
 %%====================================================================
 %% Private Parts
 %%====================================================================
+
+validate_summary_labels(Labels) ->
+  [raise_error_if_quantile_label_found(Label) || Label <- Labels].
+
+raise_error_if_quantile_label_found("quantile") ->
+  erlang:error({invalid_metric_label_name, "quantile", "summary cannot have a label named \"quantile\""});
+raise_error_if_quantile_label_found(Label) ->
+  Label.
 
 dobserve_impl(Registry, Name, LabelValues, Value) ->
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of

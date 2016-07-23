@@ -8,6 +8,7 @@
          mf_data/1,
          metrics/2,
          extract_common_params/1,
+         extract_key_or_default/3,
          extract_key_or_raise_missing/2]).
 
 -ifdef(TEST).

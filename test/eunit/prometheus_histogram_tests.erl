@@ -8,13 +8,14 @@ prometheus_format_test_() ->
    fun prometheus_eunit_common:stop/1,
    [fun test_registration/1,
     fun test_errors/1,
+    fun test_buckets/1,
     fun test_int/1,
     fun test_double/1,
     fun test_observe_duration/1]}.
 
 test_registration(_)->
   Name = request_duration,
-  Spec = [{name, request_duration}, {bounds, [100, 300, 500, 750, 1000]}, {help, "Track requests duration"}],
+  Spec = [{name, request_duration}, {buckets, [100, 300, 500, 750, 1000]}, {help, "Track requests duration"}],
   [?_assertEqual(true,
                  prometheus_counter:declare(Spec)),
    ?_assertEqual(false,
@@ -23,7 +24,7 @@ test_registration(_)->
                  prometheus_counter:new(Spec))].
 
 test_errors(_) ->
-  prometheus_histogram:new([{name, request_duration}, {bounds, [100, 300, 500, 750, 1000]}, {help, "Track requests duration"}]),
+  prometheus_histogram:new([{name, request_duration}, {buckets, [100, 300, 500, 750, 1000]}, {help, "Track requests duration"}]),
   [%% basic name/labels/help validations test, lets hope new is using extract_common_params
    ?_assertError({invalid_metric_name, 12, "metric name is not a string"}, prometheus_histogram:new([{name, 12}, {help, ""}])),
    ?_assertError({invalid_metric_labels, 12, "not list"}, prometheus_histogram:new([{name, "qwe"}, {labels, 12}, {help, ""}])),
@@ -31,20 +32,31 @@ test_errors(_) ->
                  prometheus_histogram:new([{name, "qwe"}, {labels, ["qwe", "le"]}, {help, ""}])),
    ?_assertError({invalid_metric_help, 12, "metric help is not a string"}, prometheus_histogram:new([{name, "qwe"}, {help, 12}])),
    %% histogram specific errors
-   ?_assertError({missing_metric_spec_key, bounds, [{name,"qwe"}, {help,[]}]}, prometheus_histogram:new([{name, "qwe"}, {help, ""}])),
-   ?_assertError({histogram_no_bounds, []}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {bounds, []}])),
-   ?_assertError({histogram_invalid_bounds, 1}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {bounds, 1}])),
-   ?_assertError({histogram_invalid_bound, "qwe"}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {bounds, ["qwe"]}])),
-   ?_assertError({histogram_invalid_bounds, [1, 3, 2], "Bounds not sorted"}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {bounds, [1, 3, 2]}])),
+   ?_assertError({histogram_no_buckets, []}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, []}])),
+   ?_assertError({histogram_invalid_buckets, 1}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, 1}])),
+   ?_assertError({histogram_invalid_bound, "qwe"}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, ["qwe"]}])),
+   ?_assertError({histogram_invalid_buckets, [1, 3, 2], "Buckets not sorted"}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, [1, 3, 2]}])),
    ?_assertError({invalid_value, 1.5, "observe accepts only integers"}, prometheus_histogram:observe(request_duration, 1.5)),
    ?_assertError({invalid_value, "qwe", "observe accepts only integers"}, prometheus_histogram:observe(request_duration, "qwe")),
    ?_assertError({invalid_value, "qwe", "dobserve accepts only numbers"}, prometheus_histogram:dobserve(request_duration, "qwe"))
   ].
 
+test_buckets(_) ->
+  prometheus_histogram:new([{name, "qwe"}, {help, ""}]),
+  DefaultBuckets = prometheus_histogram:buckets("qwe"),
+  prometheus_histogram:new([{name, http_request_duration_milliseconds},
+                            {labels, [method]},
+                            {buckets, [100, 300, 500, 750, 1000]},
+                            {help, "Http Request execution time"}]),
+
+  CustomBuckets = prometheus_histogram:buckets(http_request_duration_milliseconds, [method]),
+  [?_assertEqual(prometheus_histogram:default_buckets() ++ [infinity], DefaultBuckets),
+   ?_assertEqual([100, 300, 500, 750, 1000, infinity], CustomBuckets)].
+
 test_int(_) ->
   prometheus_histogram:new([{name, http_request_duration_milliseconds},
                             {labels, [method]},
-                            {bounds, [100, 300, 500, 750, 1000]},
+                            {buckets, [100, 300, 500, 750, 1000]},
                             {help, "Http Request execution time"}]),
   prometheus_histogram:observe(http_request_duration_milliseconds, [get], 95),
   prometheus_histogram:observe(http_request_duration_milliseconds, [get], 100),
@@ -64,7 +76,7 @@ test_int(_) ->
 test_double(_) ->
   prometheus_histogram:new([{name, http_request_duration_milliseconds},
                             {labels, [method]},
-                            {bounds, [100, 300, 500, 750, 1000]},
+                            {buckets, [100, 300, 500, 750, 1000]},
                             {help, "Http Request execution time"}]),
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 500.2),
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 150.4),
@@ -80,7 +92,7 @@ test_double(_) ->
    ?_assertEqual({[0, 0, 0, 0, 0, 0], 0}, RValue)].
 
 test_observe_duration(_) ->
-  prometheus_histogram:new([{name, fun_executing_histogram}, {bounds, [0.5, 1.1]}, {help, ""}]),
+  prometheus_histogram:new([{name, fun_executing_histogram}, {buckets, [0.5, 1.1]}, {help, ""}]),
   prometheus_histogram:observe_duration(fun_executing_histogram, fun () ->
                                                                      timer:sleep(1000)
                                                                  end),

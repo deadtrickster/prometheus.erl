@@ -78,7 +78,7 @@ test_dsummary(_) ->
 test_histogram(_) ->
   prometheus_histogram:new([{name, http_request_duration_milliseconds},
                             {labels, [method]},
-                            {bounds, [100, 300, 500, 750, 1000]},
+                            {buckets, [100, 300, 500, 750, 1000]},
                             {help, "Http Request execution time"}]),
   prometheus_histogram:observe(http_request_duration_milliseconds, [get], 95),
   prometheus_histogram:observe(http_request_duration_milliseconds, [get], 100),
@@ -104,7 +104,7 @@ test_histogram(_) ->
 test_dhistogram(_) ->
   prometheus_histogram:new([{name, http_request_duration_milliseconds},
                             {labels, [method]},
-                            {bounds, [100, 300, 500, 750, 1000]},
+                            {buckets, [100, 300, 500, 750, 1000]},
                             {help, "Http Request execution time"}]),
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 500.2),
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 150.4),

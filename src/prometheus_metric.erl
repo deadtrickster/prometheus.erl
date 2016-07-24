@@ -38,10 +38,10 @@ insert_new_mf(Table, Registry, Name, Labels, Help) ->
   insert_new_mf(Table, Registry, Name, Labels, Help, undefined).
 
 insert_new_mf(Table, Registry, Name, Labels, Help, Data) ->
-  case ets:insert_new(Table, {{Registry, mf, Name}, Labels, Help, Data}) of
+  case insert_mf(Table, Registry, Name, Labels, Help, Data) of
     true ->
       true;
-    false ->      
+    false ->
       erlang:error({mf_already_exists, {Registry, Name}, "maybe you could try declare?"})
   end.
 
@@ -111,11 +111,11 @@ validate_metric_name(RawName, ListName) ->
     true ->
       case re:run(ListName, "^[a-zA-Z_:][a-zA-Z0-9_:]*$") of
         {match, _} -> RawName;
-        nomatch -> erlang:error({invalid_metric_name, RawName, "metric name doesn't match regex [a-zA-Z_:][a-zA-Z0-9_:]*"})
-      end;
-    false ->
-      erlang:error({invalid_metric_name, RawName, "metric name is invalid string"})
-  end.
+                    nomatch -> erlang:error({invalid_metric_name, RawName, "metric name doesn't match regex [a-zA-Z_:][a-zA-Z0-9_:]*"})
+                 end;
+                    false ->
+                     erlang:error({invalid_metric_name, RawName, "metric name is invalid string"})
+                 end.
 
 validate_metric_label_names(RawLabels) when is_list(RawLabels) ->
   lists:map(fun validate_metric_label_name/1, RawLabels);

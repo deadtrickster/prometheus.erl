@@ -24,7 +24,7 @@ clear() ->
   clear(default).
 
 clear(Registry) ->
-  [Collector:deregister(Registry) || {_, Collector} <- ets:take(?TABLE, Registry)].
+  [prometheus_collector:deregister(Collector, Registry) || {_, Collector} <- ets:take(?TABLE, Registry)].
 
 collector_registeredp(Registry, Collector) ->
   case ets:match(?TABLE, {Registry, Collector}) of

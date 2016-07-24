@@ -16,7 +16,8 @@ default () ->
 linear(_Start, _Step, Count) when Count < 1 ->
   erlang:error({invalid_value, Count, "Buckets count should be positive"});
 linear(Start, Step, Count) ->
-  [try_to_maintain_integer_bounds(Bound) || Bound <- lists:seq(Start, Start + Step*(Count - 1), Step)].
+  Bounds = lists:seq(Start, Start + Step*(Count - 1), Step),
+  [try_to_maintain_integer_bounds(Bound) || Bound <- Bounds].
 
 exponential(_Start, _Factor, Count) when Count < 1 ->
   erlang:error({invalid_value, Count, "Buckets count should be positive"});

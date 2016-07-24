@@ -52,7 +52,6 @@ new(Spec) ->
 
 new(Spec, Registry) ->
   {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
-  %% Value = proplists:get_value(value, Spec),
   register(Registry),
   prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
 
@@ -61,7 +60,6 @@ declare(Spec) ->
 
 declare(Spec, Registry) ->
   {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
-  %% Value = proplists:get_value(value, Spec),
   register(Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
 

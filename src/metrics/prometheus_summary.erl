@@ -63,8 +63,7 @@ new(Spec) ->
   new(Spec, default).
 
 new(Spec, Registry) ->
-  {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
-  validate_summary_labels(Labels),
+  {Name, Labels, Help} = parse_summary_spec(Spec),
   register(Registry),
   prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
 
@@ -72,8 +71,7 @@ declare(Spec) ->
   declare(Spec, default).
 
 declare(Spec, Registry) ->
-  {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
-  %% Value = proplists:get_value(value, Spec),
+  {Name, Labels, Help} = parse_summary_spec(Spec),
   register(Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
 
@@ -189,6 +187,11 @@ start_link() ->
 %%====================================================================
 %% Private Parts
 %%====================================================================
+
+parse_summary_spec(Spec) ->
+  {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
+  validate_summary_labels(Labels),
+  {Name, Labels, Help}.
 
 validate_summary_labels(Labels) ->
   [raise_error_if_quantile_label_found(Label) || Label <- Labels].

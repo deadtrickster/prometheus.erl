@@ -70,27 +70,15 @@ new(Spec) ->
   new(Spec, default).
 
 new(Spec, Registry) ->
-  {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
-  validate_histogram_labels(Labels),
-  Buckets = case prometheus_metric:extract_key_or_default(bounds, Spec, undefined) of
-              undefined ->
-                prometheus_metric:extract_key_or_default(buckets, Spec, default_buckets());
-              Bounds ->
-                error_logger:warning_msg("Bounds config for Prometheus histograms is deprecated and soon will be removed. Please use buckets instead."),
-                Bounds
-            end,
-  Buckets1 = validate_histogram_buckets(Buckets),
+  {Name, Labels, Help, Buckets} = parse_histogram_spec(Spec),
   register(Registry),
-  prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help, Buckets1).
+  prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help, Buckets).
 
 declare(Spec) ->
   declare(Spec, default).
 
 declare(Spec, Registry) ->
-  {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
-  validate_histogram_labels(Labels),
-  Buckets = validate_histogram_buckets(prometheus_metric:extract_key_or_raise_missing(buckets, Spec)),
-  %% Value = proplists:get_value(value, Spec),
+  {Name, Labels, Help, Buckets} = parse_histogram_spec(Spec),
   register(Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help, Buckets).
 
@@ -232,6 +220,18 @@ code_change(_OldVsn, State, _Extra) ->
 %%====================================================================
 %% Private Parts
 %%====================================================================
+
+parse_histogram_spec(Spec) ->
+  {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
+  validate_histogram_labels(Labels),
+  Buckets = case prometheus_metric:extract_key_or_default(bounds, Spec, undefined) of
+              undefined ->
+                prometheus_metric:extract_key_or_default(buckets, Spec, default_buckets());
+              Bounds ->
+                error_logger:warning_msg("Bounds config for Prometheus histograms is deprecated and soon will be removed. Please use buckets instead.~n"),
+                Bounds
+            end,
+  {Name, Labels, Help, validate_histogram_buckets(Buckets)}.
 
 validate_histogram_labels(Labels) ->
   [raise_error_if_le_label_found(Label) || Label <- Labels].

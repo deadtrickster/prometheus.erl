@@ -3,4 +3,4 @@ language: erlang
 install: 'true'
 otp_release:
 - 18.0
-script: "./rebar3 eunit"
+script: "./elvis rock && ./rebar3 eunit"

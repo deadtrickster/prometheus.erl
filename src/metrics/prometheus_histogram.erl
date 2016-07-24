@@ -245,6 +245,12 @@ validate_histogram_buckets([]) ->
   erlang:error({histogram_no_buckets, []});
 validate_histogram_buckets(undefined) ->
   erlang:error({histogram_no_buckets, undefined});
+validate_histogram_buckets(default) ->
+  default_buckets();
+validate_histogram_buckets({linear, Start, Step, Count}) ->
+  linear_buckets(Start, Step, Count) ++ [infinity];
+validate_histogram_buckets({exponential, Start, Factor, Count}) ->
+  exponential_buckets(Start, Factor, Count) ++ [infinity];
 validate_histogram_buckets(RawBuckets) when is_list(RawBuckets) ->
   Buckets = lists:map(fun validate_histogram_bound/1, RawBuckets),
   case lists:sort(Buckets) of

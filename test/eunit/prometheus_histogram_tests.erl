@@ -42,18 +42,26 @@ test_errors(_) ->
   ].
 
 test_buckets(_) ->
-  prometheus_histogram:new([{name, "qwe"}, {help, ""}]),
-  DefaultBuckets = prometheus_histogram:buckets("qwe"),
+  prometheus_histogram:new([{name, "default_buckets"}, {help, ""}]),
+  DefaultBuckets = prometheus_histogram:buckets("default_buckets"),
   prometheus_histogram:new([{name, http_request_duration_milliseconds},
                             {labels, [method]},
                             {buckets, [100, 300, 500, 750, 1000]},
                             {help, "Http Request execution time"}]),
 
+  prometheus_histogram:new([{name, "linear_buckets"}, {help, ""}, {buckets, {linear, -15, 5, 6}}]),
+  LinearBuckets = prometheus_histogram:buckets("linear_buckets"),
+
+  prometheus_histogram:declare([{name, "exp_buckets"}, {help, ""}, {buckets, {exponential, 100, 1.2, 3}}]),
+  ExpBuckets = prometheus_histogram:buckets("exp_buckets"),
+
   CustomBuckets = prometheus_histogram:buckets(http_request_duration_milliseconds, [method]),
   [?_assertEqual(prometheus_histogram:default_buckets() ++ [infinity], DefaultBuckets),
    ?_assertEqual([100, 300, 500, 750, 1000, infinity], CustomBuckets),
    ?_assertEqual([-15, -10, -5, 0, 5, 10], prometheus_histogram:linear_buckets(-15, 5, 6)),
-   ?_assertEqual([100, 120, 144], prometheus_histogram:exponential_buckets(100, 1.2, 3))].
+   ?_assertEqual([100, 120, 144], prometheus_histogram:exponential_buckets(100, 1.2, 3)),
+   ?_assertEqual([-15, -10, -5, 0, 5, 10, infinity], LinearBuckets),
+   ?_assertEqual([100, 120, 144, infinity], ExpBuckets)].
 
 test_int(_) ->
   prometheus_histogram:new([{name, http_request_duration_milliseconds},

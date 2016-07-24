@@ -158,13 +158,13 @@ buckets(Registry, Name, LabelValues) ->
   prometheus_metric:mf_data(MF).
 
 default_buckets () ->
-  [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10].
+  prometheus_buckets:default().
 
-linear_buckets(Start, Step, Count) when is_number(Start) andalso is_number(Step) andalso is_number(Count) ->
-  lists:seq(Start, Start + Step*(Count - 1), Step).
+linear_buckets(Start, Step, Count) ->
+  prometheus_buckets:linear(Start, Step, Count).
 
-exponential_buckets(Start, Factor, Count) when is_number(Start) andalso is_number(Factor) andalso is_number(Count) ->
-  [Start * math:pow(Factor, Index) || Index <- lists:seq(0, Count - 1)].
+exponential_buckets(Start, Factor, Count) ->
+  prometheus_buckets:exponential(Start, Factor, Count).
 
 %%====================================================================
 %% Collector API

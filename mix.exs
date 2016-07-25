@@ -18,7 +18,8 @@ defmodule Prometheus.Mixfile do
     [build_tools: ["rebar3"],
      maintainers: ["Ilya Khaprov"],
      licenses: ["MIT"],
-     links: %{"GitHub" => "https://github.com/deadtrickster/prometheus.erl"},
+     links: %{"GitHub" => "https://github.com/deadtrickster/prometheus.erl",
+              "Elixir Plugs" => "https://hex.pm/packages/prometheus_plugs"},
      files: ["src", "include", "README.md", "LICENSE", "rebar.config"]]
   end
 end

@@ -12,5 +12,6 @@
 
   {maintainers, ["Ilya Khaprov"]},
   {licenses, ["MIT"]},
-  {links, [{"Github", "https://github.com/deadtrickster/prometheus.erl"}]}
+  {links, [{"Github", "https://github.com/deadtrickster/prometheus.erl"},
+           {"Elixir Plugs", "https://hex.pm/packages/prometheus_plugs"}]}
  ]}.

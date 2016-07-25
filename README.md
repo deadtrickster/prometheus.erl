@@ -15,11 +15,12 @@
   - `erlang_vm_memory_collector` - Collects information about Erlang VM memory usage mainly using `erlang:memory/0`
   - `erlang_vm_statistics_collector` - Collects Erlang VM statistics using `erlang:statistics/1`
 
-You can write custom collector/exporter for any library/app you'd like. For example here is [RabbitMQ Exporter](https://github.com/deadtrickster/prometheus_rabbitmq_exporter)
+You can write custom collector/exporter for any library/app you'd like. For example here is [Queue info collector](https://github.com/deadtrickster/prometheus_rabbitmq_exporter/blob/master/src/collectors/prometheus_rabbitmq_queues_collector.erl) from [RabbitMQ Exporter](https://github.com/deadtrickster/prometheus_rabbitmq_exporter).
 
-### Elixir Plugs
-
-[Here](https://github.com/deadtrickster/prometheus-plugs) you can find Elixir Plugs.
+### Integrations
+ - [Elixir plugs](https://github.com/deadtrickster/prometheus-plugs)
+ - [Fuse plugin](https://github.com/jlouis/fuse#fuse_stats_prometheus)
+ - [RabbitMQ Exporter](https://github.com/deadtrickster/prometheus_rabbitmq_exporter)
 
 ### Example Console Session
 

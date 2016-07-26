@@ -106,9 +106,9 @@ http_request_duration_milliseconds_sum{method="get"} 2622
 ### Bucket generators
 
 ```erlang
-prometheus_buckets:generate_linear(-15, 5, 6) produces [-15, -10, -5, 0, 5, 10]
+prometheus_buckets:linear(-15, 5, 6) produces [-15, -10, -5, 0, 5, 10]
 
-prometheus_buckets:generate_exponential(100, 1.2, 3) produces [100, 120, 144]
+prometheus_buckets:exponential(100, 1.2, 3) produces [100, 120, 144]
 ```
 
 ### Implementation Note

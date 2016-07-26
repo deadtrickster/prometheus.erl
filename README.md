@@ -21,7 +21,7 @@ You can write custom collector/exporter for any library/app you'd like. For exam
  - [Elixir plugs](https://github.com/deadtrickster/prometheus-plugs)
  - [Fuse plugin](https://github.com/jlouis/fuse#fuse_stats_prometheus)
  - [RabbitMQ Exporter](https://github.com/deadtrickster/prometheus_rabbitmq_exporter)
- - [Process Info Collector](https://github.com/deadtrickster/prometheus_process_collector.erl) Linux-only. **expiremental**
+ - [Process Info Collector](https://github.com/deadtrickster/prometheus_process_collector.erl)
 
 ### Example Console Session
 

@@ -16,6 +16,10 @@
 
 -behaviour(prometheus_collector).
 
+%%====================================================================
+%% Collector API
+%%====================================================================
+
 register() ->
   register(default).
 
@@ -81,6 +85,10 @@ collect_metrics(erlang_vm_statistics_runtime_milliseconds, {Runtime, _}) ->
   counter_metric(Runtime);
 collect_metrics(erlang_vm_statistics_wallclock_time_milliseconds, {WallclockTime, _}) ->
   counter_metric(WallclockTime).
+
+%%====================================================================
+%% Private Parts
+%%====================================================================
 
 call_if_statistics_exists(StatItem, Fun) ->
   try

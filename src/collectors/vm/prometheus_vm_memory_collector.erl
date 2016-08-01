@@ -17,6 +17,10 @@
 
 -behaviour(prometheus_collector).
 
+%%====================================================================
+%% Collector API
+%%====================================================================
+
 register() ->
   register(default).
 
@@ -71,6 +75,10 @@ collect_metrics(erlang_vm_ets_tables, _MFData) ->
   gauge_metric(length(ets:all()));
 collect_metrics(erlang_vm_dets_tables, _MFData) ->
   gauge_metric(length(dets:all())).
+
+%%====================================================================
+%% Private Parts
+%%====================================================================
 
 memory_other(Memory) ->
   proplists:get_value(system, Memory)

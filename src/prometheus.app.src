@@ -10,6 +10,7 @@
   {env,[]},
   {modules, []},
 
+  {description, "Prometheus monitoring system and time series database client in Erlang."},
   {maintainers, ["Ilya Khaprov"]},
   {licenses, ["MIT"]},
   {links, [{"Github", "https://github.com/deadtrickster/prometheus.erl"},

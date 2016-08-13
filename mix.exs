@@ -3,7 +3,7 @@ defmodule Prometheus.Mixfile do
 
   def project do
     [app: :prometheus,
-     version: "1.6.0",
+     version: "1.7.0",
      description: description,
      package: package]
   end

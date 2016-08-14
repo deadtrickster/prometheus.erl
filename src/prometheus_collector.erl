@@ -6,11 +6,14 @@
          deregister/2,
          collect_mf/3]).
 
--export_type([callback/0]).
+-export_type([collector/0,
+              callback/0]).
 
 -compile({no_auto_import, [register/2]}).
 
 -include("prometheus_model.hrl").
+
+-type collector() :: atom().
 
 %% FIXME: temporary HACK
 -type callback() ::
@@ -40,13 +43,13 @@ register(Collector, Registry) ->
 deregister(Collector) ->
   deregister(Collector, default).
 
--spec deregister(Collector :: atom(),
+-spec deregister(Collector :: collector(),
                  Registry :: prometheus_registry:registry()) -> ok.
 deregister(Collector, Registry) ->
   prometheus_registry:deregister_collector(Registry, Collector).
 
 -spec collect_mf(Collector, Callback, Registry) -> list() when
-    Collector :: atom(),
+    Collector :: collector(),
     Callback  :: callback(),
     Registry  :: prometheus_registry:registry().
 collect_mf(Collector, Callback, Registry) ->

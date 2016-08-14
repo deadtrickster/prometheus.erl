@@ -238,14 +238,20 @@ code_change(_OldVsn, State, _Extra) ->
 parse_histogram_spec(Spec) ->
   {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
   validate_histogram_labels(Labels),
-  Buckets = case prometheus_metric:extract_key_or_default(bounds, Spec, undefined) of
-              undefined ->
-                prometheus_metric:extract_key_or_default(buckets, Spec, default_buckets());
-              Bounds ->
-                error_logger:warning_msg("Bounds config for Prometheus histograms is deprecated and soon will be removed. Please use buckets instead.~n"),
-                Bounds
-            end,
+  Buckets =
+    case get_value(bounds, Spec, undefined) of
+      undefined ->
+        get_value(buckets, Spec, default_buckets());
+      Bounds ->
+        ?DEPRECATED("Bounds config for Prometheus histograms", "buckets"),
+        Bounds
+    end,
   {Name, Labels, Help, validate_histogram_buckets(Buckets)}.
+
+%% FIXME: is get_value/3 or prometheus_metric:extract_key_or_default/3
+%% even necessary? Why not use proplists:get_Value{2,3}?
+get_value(Key, List, Default) ->
+  prometheus_metric:extract_key_or_default(Key, List, Default).
 
 validate_histogram_labels(Labels) ->
   [raise_error_if_le_label_found(Label) || Label <- Labels].

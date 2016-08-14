@@ -21,7 +21,7 @@ get_value(Key, Spec, Default) ->
   proplists:get_value(Key, Spec, Default).
 
 -spec fetch_value(Key :: atom(), Spec :: spec()) -> any() | no_return().
-fetch_value(Key, Spec) ->  
+fetch_value(Key, Spec) ->
   case proplists:get_value(Key, Spec) of
     undefined ->
       erlang:error({missing_metric_spec_key, Key, Spec});

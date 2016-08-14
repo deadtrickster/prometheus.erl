@@ -115,7 +115,6 @@ dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
 dinc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "dinc accepts only numbers"}).
 
-
 reset(Name) ->
   reset(default, Name, []).
 

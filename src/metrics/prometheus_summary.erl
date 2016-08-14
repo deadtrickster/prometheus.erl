@@ -104,18 +104,13 @@ dobserve(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "dobserve accepts only numbers"}).
 
 observe_duration(Name, Fun) ->
-  observe_duration(default, Name, [], Fun).
+  prometheus_misc:observe_duration(?MODULE, default, Name, [], Fun).
 
 observe_duration(Name, LabelValues, Fun) ->
-  observe_duration(default, Name, LabelValues, Fun).
+  prometheus_misc:observe_duration(?MODULE, default, Name, LabelValues, Fun).
 
-observe_duration(Registry, Name, LabelValues, Fun) ->
-  Start = current_time(),
-  try
-    Fun()
-  after
-    dobserve(Registry, Name, LabelValues, time_diff_seconds(Start))
-  end.
+observe_duration(Name, Registry, LabelValues, Fun) ->
+  prometheus_misc:observe_duration(?MODULE, Registry, Name, LabelValues, Fun).
 
 %% @equiv reset(default, Name, [])
 reset(Name) ->
@@ -224,15 +219,6 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
     true ->
       ok
   end.
-
-current_time () ->
-  erlang:monotonic_time().
-
-time_diff_seconds (Start) ->
-  Microseconds = erlang:convert_time_unit(erlang:monotonic_time() - Start,
-                                          native,
-                                          micro_seconds),
-  Microseconds / 1000000.
 
 sum(Metric) ->
   element(?SUM_POS, Metric).

@@ -8,9 +8,7 @@
          check_mf_exists/4,
          mf_data/1,
          metrics/2,
-         extract_common_params/1,
-         extract_key_or_default/3,
-         extract_key_or_raise_missing/2]).
+         extract_common_params/1]).
 
 -export_type([value/0]).
 
@@ -22,6 +20,9 @@
 
 -include("prometheus.hrl").
 
+%%====================================================================
+%% Callbacks
+%%====================================================================
 
 -callback new(Info :: list()) -> ok.
 -callback new(Info :: list(), Registry :: atom()) -> ok.
@@ -46,6 +47,10 @@
     Registry :: atom(),
     Name     :: atom(),
     LValues  :: list().
+
+%%====================================================================
+%% Public API
+%%====================================================================
 
 insert_new_mf(Table, Registry, Name, Labels, Help) ->
   insert_new_mf(Table, Registry, Name, Labels, Help, undefined).
@@ -89,27 +94,20 @@ metrics(Table, Registry) ->
   ets:match(Table, {{Registry, mf, '$1'}, '$2', '$3', '$4'}).
 
 extract_common_params(Spec) ->
-  RawName = extract_key_or_raise_missing(name, Spec),
+  RawName = prometheus_metric_spec:fetch_value(name, Spec),
   Name = validate_metric_name(RawName),
 
-  RawLabels = extract_key_or_default(labels, Spec, []),
+  RawLabels = prometheus_metric_spec:get_value(labels, Spec, []),
   Labels = validate_metric_label_names(RawLabels),
 
-  RawHelp = extract_key_or_raise_missing(help, Spec),
+  RawHelp = prometheus_metric_spec:fetch_value(help, Spec),
   Help = validate_metric_help(RawHelp),
 
   {Name, Labels, Help}.
 
-extract_key_or_raise_missing(Key, Spec) ->
-  case proplists:get_value(Key, Spec) of
-    undefined ->
-      erlang:error({missing_metric_spec_key, Key, Spec});
-    RawValue ->
-      RawValue
-  end.
-
-extract_key_or_default(Key, Spec, Default) ->
-  proplists:get_value(Key, Spec, Default).
+%%====================================================================
+%% Private Parts
+%%====================================================================
 
 validate_metric_name(RawName) when is_atom(RawName) ->
   validate_metric_name(RawName, atom_to_list(RawName));

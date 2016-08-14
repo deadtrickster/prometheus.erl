@@ -2,13 +2,6 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-extract_key_or_raise_missing_test() ->
-  Spec = [{name, "qwe"}],
-
-  ?assertError({missing_metric_spec_key, labels, Spec}, prometheus_metric:extract_key_or_raise_missing(labels, Spec)),
-
-  ?assertEqual("qwe", prometheus_metric:extract_key_or_raise_missing(name, Spec)).
-
 validate_metric_name_test() ->
   ?assertError({invalid_metric_name, 12, "metric name is not a string"}, prometheus_metric:validate_metric_name(12)),
   ?assertError({invalid_metric_name, <<0,0,123>>, "metric name is invalid string"}, prometheus_metric:validate_metric_name(<<0,0,123>>)),

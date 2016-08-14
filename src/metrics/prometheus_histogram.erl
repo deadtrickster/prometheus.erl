@@ -240,19 +240,14 @@ parse_histogram_spec(Spec) ->
   {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
   validate_histogram_labels(Labels),
   Buckets =
-    case get_value(bounds, Spec, undefined) of
+    case prometheus_metric_spec:get_value(bounds, Spec, undefined) of
       undefined ->
-        get_value(buckets, Spec, default_buckets());
+        prometheus_metric_spec:get_value(buckets, Spec, default_buckets());
       Bounds ->
         ?DEPRECATED("Bounds config for Prometheus histograms", "buckets"),
         Bounds
     end,
   {Name, Labels, Help, validate_histogram_buckets(Buckets)}.
-
-%% FIXME: is get_value/3 or prometheus_metric:extract_key_or_default/3
-%% even necessary? Why not use proplists:get_Value{2,3}?
-get_value(Key, List, Default) ->
-  prometheus_metric:extract_key_or_default(Key, List, Default).
 
 validate_histogram_labels(Labels) ->
   [raise_error_if_le_label_found(Label) || Label <- Labels].

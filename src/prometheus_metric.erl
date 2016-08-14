@@ -31,11 +31,12 @@
 %% Callbacks
 %%====================================================================
 
--callback new(Info :: list()) -> ok.
--callback new(Info :: list(), Registry :: prometheus_registry:registry()) -> ok.
+-callback new(Spec :: prometheus_metric_spec:spec()) -> ok.
+-callback new(Spec :: prometheus_metric_spec:spec(),
+              Registry :: prometheus_registry:registry()) -> ok.
 
--callback declare(Info :: list()) -> boolean().
--callback declare(Info :: list(),
+-callback declare(Spec :: prometheus_metric_spec:spec()) -> boolean().
+-callback declare(Spec :: prometheus_metric_spec:spec(),
                   Registry :: prometheus_registry:registry()) -> boolean().
 
 -callback reset(Name :: name()) -> boolean().

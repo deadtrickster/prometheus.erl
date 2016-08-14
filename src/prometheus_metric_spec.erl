@@ -6,7 +6,7 @@
 
 -export_type([spec/0]).
 
--type spec()  :: proplists:proplist().
+-type spec() :: proplists:proplist().
 
 %%====================================================================
 %% Public API

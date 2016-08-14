@@ -2,6 +2,7 @@
 -export([collect/2,
          collectors/1,
          register_collector/2,
+         deregister_collector/2,
          collector_registeredp/2,
          clear/0,
          clear/1]).
@@ -20,11 +21,16 @@ register_collector(Registry, Collector) ->
   ets:insert(?TABLE, {Registry, Collector}),
   ok.
 
+deregister_collector(Registry, Collector) ->
+  ets:delete_object(?TABLE, {Registry, Collector}),
+  Collector:deregister_cleanup(Registry),
+  ok.
+
 clear() ->
   clear(default).
 
 clear(Registry) ->
-  [prometheus_collector:deregister(Collector, Registry) || {_, Collector} <- ets:take(?TABLE, Registry)].
+  [Collector:deregister_cleanup(Registry) || {_, Collector} <- ets:take(?TABLE, Registry)].
 
 collector_registeredp(Registry, Collector) ->
   case ets:match(?TABLE, {Registry, Collector}) of

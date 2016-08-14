@@ -21,9 +21,7 @@
          value/3]).
 
 %%% collector
--export([register/0,
-         register/1,
-         deregister/1,
+-export([deregister_cleanup/1,
          collect_mf/2,
          collect_metrics/2]).
 
@@ -61,7 +59,7 @@ new(Spec) ->
 
 new(Spec, Registry) ->
   {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
-  register(Registry),
+  prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
 
 declare(Spec) ->
@@ -69,7 +67,7 @@ declare(Spec) ->
 
 declare(Spec, Registry) ->
   {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
-  register(Registry),
+  prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
 
 inc(Name) ->
@@ -138,13 +136,7 @@ value(Registry, Name, LabelValues) ->
 %% Collector API
 %%====================================================================
 
-register() ->
-  register(default).
-
-register(Registry) ->
-  ok = prometheus_registry:register_collector(Registry, ?MODULE).
-
-deregister(Registry) ->
+deregister_cleanup(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry),
   ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_'}).
 

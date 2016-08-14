@@ -1,6 +1,6 @@
 -module(prometheus_registry_tests).
 
--export([deregister/1]).
+-export([deregister_cleanup/1]).
 
 -include_lib("eunit/include/eunit.hrl").
 
@@ -30,11 +30,19 @@ default_registry() ->
                 prometheus_registry:collectors(default)).
 
 clear_registry() ->
-  ok = prometheus_registry:register_collector(custom_registry, prometheus_registry_tests),
-
+  %% test whole register cleanup
+  ok = prometheus_collector:register(prometheus_registry_tests, custom_registry),
   Collectors = prometheus_registry:collectors(custom_registry),
   prometheus_registry:clear(custom_registry),
-  [?_assertEqual([prometheus_registry_tests], Collectors),
-   ?_assertEqual([], prometheus_registry:collectors(custom_registry))].
 
-deregister(_) -> ok.
+  %% remove just this one collector from the register
+  ok = prometheus_collector:register(prometheus_registry_tests, custom_registry1),
+  Collectors1 = prometheus_registry:collectors(custom_registry1),
+  prometheus_collector:deregister(prometheus_registry_tests, custom_registry1),
+
+  [?_assertEqual([prometheus_registry_tests], Collectors),
+   ?_assertEqual([], prometheus_registry:collectors(custom_registry)),
+   ?_assertEqual([prometheus_registry_tests], Collectors1),
+   ?_assertEqual([], prometheus_registry:collectors(custom_registry1))].
+
+deregister_cleanup(_) -> ok.

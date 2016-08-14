@@ -68,7 +68,7 @@ create_tables() ->
   ok.
 
 register_collectors() ->
-  [Collector:register() || Collector <- enabled_collectors()].
+  [prometheus_collector:register(Collector) || Collector <- enabled_collectors()].
 
 register_metrics() ->
   [Metric:declare(Spec, Registry) || {Registry, Metric, Spec} <- default_metrics()].

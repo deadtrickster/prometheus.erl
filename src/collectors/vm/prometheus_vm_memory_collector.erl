@@ -1,7 +1,5 @@
 -module(prometheus_vm_memory_collector).
--export([register/0,
-         register/1,
-         deregister/1,
+-export([deregister_cleanup/1,
          collect_mf/2,
          collect_metrics/2]).
 
@@ -21,13 +19,7 @@
 %% Collector API
 %%====================================================================
 
-register() ->
-  register(default).
-
-register(Registry) ->
-  ok = prometheus_registry:register_collector(Registry, ?MODULE).
-
-deregister(_) -> ok.
+deregister_cleanup(_) -> ok.
 
 collect_mf(Callback, _Registry) ->
   Memory = erlang:memory(),

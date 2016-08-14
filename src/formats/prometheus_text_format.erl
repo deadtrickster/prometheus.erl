@@ -26,7 +26,7 @@ content_type() ->
 format() ->
   format(default).
 
--spec format(Registry :: atom()) -> binary().
+-spec format(Registry :: prometheus_registry:registry()) -> binary().
 format(Registry) ->
   {ok, Fd} = ram_file:open("", [write, read, binary]),
   Callback = fun (_, Collector) ->

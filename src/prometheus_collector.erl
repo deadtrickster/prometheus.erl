@@ -18,7 +18,8 @@
       | fun((_, _) -> any()).
 
 %% FIXME: `| ok' is a temporary HACK
--callback collect_mf(Callback :: callback(), Registry :: atom()) -> list() | ok.
+-callback collect_mf(Callback :: callback(),
+                     Registry :: prometheus_registry:registry()) -> list() | ok.
 
 %% FIXME: temporary HACK
 -callback collect_metrics(Name, Data) -> Metrics when
@@ -26,7 +27,7 @@
     Data    :: any(),
     Metrics :: #'Metric'{} | list(#'Metric'{}).
 
--callback deregister_cleanup(Registry :: atom()) -> ok.
+-callback deregister_cleanup(Registry :: prometheus_registry:registry()) -> ok.
 
 %% @equiv register(Collector, default)
 register(Collector) ->
@@ -39,13 +40,14 @@ register(Collector, Registry) ->
 deregister(Collector) ->
   deregister(Collector, default).
 
--spec deregister(Collector :: atom(), Registry :: atom()) -> ok.
+-spec deregister(Collector :: atom(),
+                 Registry :: prometheus_registry:registry()) -> ok.
 deregister(Collector, Registry) ->
   prometheus_registry:deregister_collector(Registry, Collector).
 
 -spec collect_mf(Collector, Callback, Registry) -> list() when
     Collector :: atom(),
     Callback  :: callback(),
-    Registry  :: atom().
+    Registry  :: prometheus_registry:registry().
 collect_mf(Collector, Callback, Registry) ->
   Collector:collect_mf(Callback, Registry).

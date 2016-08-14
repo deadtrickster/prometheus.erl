@@ -25,15 +25,16 @@
 %%====================================================================
 
 -callback new(Info :: list()) -> ok.
--callback new(Info :: list(), Registry :: atom()) -> ok.
+-callback new(Info :: list(), Registry :: prometheus_registry:registry()) -> ok.
 
 -callback declare(Info :: list()) -> boolean().
--callback declare(Info :: list(), Registry :: atom()) -> boolean().
+-callback declare(Info :: list(),
+                  Registry :: prometheus_registry:registry()) -> boolean().
 
 -callback reset(Name :: atom()) -> boolean().
 -callback reset(Name :: atom(), LValues :: list()) -> boolean().
 -callback reset(Registry, Name, LValues) -> boolean() when
-    Registry :: atom(),
+    Registry :: prometheus_registry:registry(),
     Name     :: atom(),
     LValues  :: list().
 
@@ -44,7 +45,7 @@
 -callback value(Name :: atom()) -> value().
 -callback value(Name :: atom(), LValues :: list()) -> value().
 -callback value(Registry, Name, LValues) -> value() when
-    Registry :: atom(),
+    Registry :: prometheus_registry:registry(),
     Name     :: atom(),
     LValues  :: list().
 

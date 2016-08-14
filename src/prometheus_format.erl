@@ -4,4 +4,4 @@
 
 -callback format() -> binary().
 
--callback format(Registry :: atom()) -> binary().
+-callback format(Registry :: prometheus_registry:registry()) -> binary().

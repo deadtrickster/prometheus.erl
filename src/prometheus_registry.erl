@@ -7,28 +7,35 @@
          clear/0,
          clear/1]).
 
+-export_type([registry/0]).
+
+-type registry() :: atom().
+
 -include("prometheus.hrl").
 
 -define(TABLE, ?PROMETHEUS_REGISTRY_TABLE).
 
 -spec collect(Registry, Callback) -> ok when
-    Registry :: atom(),
+    Registry :: prometheus_registry:registry(),
     Callback :: prometheus_collector:callback().
 collect(Registry, Callback) ->
   [Callback(Registry, Collector) ||
     {_, Collector} <- ets:lookup(?TABLE, Registry)],
   ok.
 
--spec collectors(Registry :: atom()) -> [Collector :: atom()].
+-spec collectors(Registry :: prometheus_registry:registry())
+                -> [Collector :: atom()].
 collectors(Registry) ->
   [Collector || {_, Collector} <- ets:lookup(?TABLE, Registry)].
 
--spec register_collector(Registry :: atom(), Collector :: atom()) -> ok.
+-spec register_collector(Registry :: prometheus_registry:registry(),
+                         Collector :: atom()) -> ok.
 register_collector(Registry, Collector) ->
   ets:insert(?TABLE, {Registry, Collector}),
   ok.
 
--spec deregister_collector(Registry :: atom(), Collector :: atom()) -> ok.
+-spec deregister_collector(Registry :: prometheus_registry:registry(),
+                           Collector :: atom()) -> ok.
 deregister_collector(Registry, Collector) ->
   ets:delete_object(?TABLE, {Registry, Collector}),
   Collector:deregister_cleanup(Registry),
@@ -39,14 +46,14 @@ deregister_collector(Registry, Collector) ->
 clear() ->
   clear(default).
 
--spec clear(Registry :: atom()) -> ok.
+-spec clear(Registry :: prometheus_registry:registry()) -> ok.
 clear(Registry) ->
   [Collector:deregister_cleanup(Registry) ||
     {_, Collector} <- ets:take(?TABLE, Registry)],
   ok.
 
 -spec collector_registeredp(Registry, Collector) -> boolean() when
-    Registry  :: atom(),
+    Registry  :: prometheus_registry:registry(),
     Collector :: atom().
 collector_registeredp(Registry, Collector) ->
   case ets:match(?TABLE, {Registry, Collector}) of

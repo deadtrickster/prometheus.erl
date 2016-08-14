@@ -82,9 +82,11 @@ inc(Name, LabelValues, Value) ->
   inc(default, Name, LabelValues, Value).
 
 inc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
-  erlang:error({invalid_value, Value, "Counters accept only non-negative values"});
+  erlang:error({invalid_value, Value,
+                "Counters accept only non-negative values"});
 inc(Registry, Name, LabelValues, Value) when is_integer(Value) ->
-  try ets:update_counter(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, Value})
+  try
+    ets:update_counter(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, Value})
   catch error:badarg ->
       insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
   end,
@@ -104,9 +106,11 @@ dinc(Name, LabelValues, Value) ->
   dinc(default, Name, LabelValues, Value).
 
 dinc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
-  erlang:error({invalid_value, Value, "Counters accept only non-negative values"});
+  erlang:error({invalid_value, Value,
+                "Counters accept only non-negative values"});
 dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  gen_server:cast(prometheus_counter, {inc, {Registry, Name, LabelValues, Value}}),
+  gen_server:cast(prometheus_counter,
+                  {inc, {Registry, Name, LabelValues, Value}}),
   ok;
 dinc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "dinc accepts only numbers"}).
@@ -172,7 +176,8 @@ code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
 start_link() ->
-  gen_server:start_link({local, prometheus_counter}, prometheus_counter, [], []).
+  gen_server:start_link({local, prometheus_counter},
+                        prometheus_counter, [], []).
 
 %%====================================================================
 %% Private Parts
@@ -180,8 +185,9 @@ start_link() ->
 
 dinc_impl(Registry, Name, LabelValues, Value) ->
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
-    [{_key, OldValue}] ->
-      ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, Value + OldValue});
+    [{_Key, OldValue}] ->
+      ets:update_element(?TABLE, {Registry, Name, LabelValues},
+                         {?SUM_POS, Value + OldValue});
     [] ->
       insert_metric(Registry, Name, LabelValues, Value, fun dinc_impl/4)
   end.

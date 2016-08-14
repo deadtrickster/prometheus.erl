@@ -20,7 +20,10 @@
 -callback collect_mf(Callback :: callback(), Registry :: atom()) -> list() | ok.
 
 %% FIXME: temporary HACK
--callback collect_metrics(Name :: atom(), Data :: any()) -> #'Metric'{} | list(#'Metric'{}).
+-callback collect_metrics(Name, Data) -> Metrics when
+    Name    :: atom(),
+    Data    :: any(),
+    Metrics :: #'Metric'{} | list(#'Metric'{}).
 
 -callback deregister_cleanup(Registry :: atom()) -> ok.
 

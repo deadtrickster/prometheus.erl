@@ -28,10 +28,11 @@ format() ->
 
 -spec format(Registry :: atom()) -> binary().
 format(Registry) ->
-  {ok, Fd} = ram_file:open("", [write,read,binary]),
-  prometheus_registry:collect(Registry, fun (_, Collector) ->
-                                            registry_collect_callback(Fd, Registry, Collector)
-                                        end),
+  {ok, Fd} = ram_file:open("", [write, read, binary]),
+  Callback = fun (_, Collector) ->
+                 registry_collect_callback(Fd, Registry, Collector)
+             end,
+  prometheus_registry:collect(Registry, Callback),
   file:write(Fd, io_lib:format("\n", [])),
   {ok, Size} = ram_file:get_size(Fd),
   {ok, Str} = file:pread(Fd, 0, Size),
@@ -51,28 +52,37 @@ registry_collect_callback(Fd, Registry, Collector) ->
     Registry).
 
 emit_mf_prologue(Fd, #'MetricFamily'{name=Name, help=Help, type=Type}) ->
-  file:write(Fd, io_lib:format("# TYPE ~s ~s\n# HELP ~s ~s\n", [Name, string_type(Type), Name, escape_metric_help(Help)])).
+  Bytes = io_lib:format("# TYPE ~s ~s\n# HELP ~s ~s\n",
+                        [Name, string_type(Type),
+                         Name, escape_metric_help(Help)]),
+  file:write(Fd, Bytes).
 
 emit_mf_metrics(Fd, #'MetricFamily'{name=Name, metric = Metrics}) ->
   [emit_metric(Fd, Name, Metric) || Metric <- Metrics].
 
-emit_metric(Fd, Name, #'Metric'{label=Labels, counter=#'Counter'{value=Value}}) ->
+emit_metric(Fd, Name, #'Metric'{label=Labels,
+                                counter=#'Counter'{value=Value}}) ->
   emit_series(Fd, Name, Labels, Value);
 emit_metric(Fd, Name, #'Metric'{label=Labels, gauge=#'Gauge'{value=Value}}) ->
   emit_series(Fd, Name, Labels, Value);
-emit_metric(Fd, Name, #'Metric'{label=Labels, summary=#'Summary'{sample_count=Count, sample_sum=Sum}}) ->
+emit_metric(Fd, Name, #'Metric'{label=Labels,
+                                summary=#'Summary'{sample_count=Count,
+                                                   sample_sum=Sum}}) ->
   emit_series(Fd, [Name, "_count"], Labels, Count),
   emit_series(Fd, [Name, "_sum"], Labels, Sum);
-emit_metric(Fd, Name, #'Metric'{label=Labels, histogram=#'Histogram'{sample_count=Count,
-                                                                     sample_sum=Sum,
-                                                                     bucket=Buckets}}) ->
+emit_metric(Fd, Name, #'Metric'{label=Labels,
+                                histogram=#'Histogram'{sample_count=Count,
+                                                       sample_sum=Sum,
+                                                       bucket=Buckets}}) ->
   [emit_histogram_bucket(Fd, Name, Labels, Bucket) || Bucket <- Buckets],
   emit_series(Fd, [Name, "_count"], Labels, Count),
   emit_series(Fd, [Name, "_sum"], Labels, Sum).
 
-emit_histogram_bucket(Fd, Name, Labels, #'Bucket'{cumulative_count=BCount, upper_bound=BBound}) ->
+emit_histogram_bucket(Fd, Name, Labels, #'Bucket'{cumulative_count=BCount,
+                                                  upper_bound=BBound}) ->
   BLValue = bound_to_label_value(BBound),
-  emit_series(Fd, [Name, "_bucket"], Labels++[#'LabelPair'{name="le", value=BLValue}], BCount).
+  emit_series(Fd, [Name, "_bucket"],
+              Labels ++ [#'LabelPair'{name="le", value=BLValue}], BCount).
 
 string_type('COUNTER') ->
   "counter";
@@ -85,17 +95,12 @@ string_type('HISTOGRAM') ->
 string_type('UNTYPED') ->
   "untyped".
 
+labels_string([])     -> "";
 labels_string(Labels) ->
-  case length(Labels) of
-    0 ->
-      "";
-    _ ->
-      "{" ++ string:join(lists:map(fun (#'LabelPair'{name=Name, value=Value}) ->
-                                       io_lib:format("~s=\"~s\"", [Name, escape_label_value(Value)])
-                                   end,
-                                   Labels),
-                         ",") ++ "}"
-  end.
+  Fun = fun (#'LabelPair'{name=Name, value=Value}) ->
+            io_lib:format("~s=\"~s\"", [Name, escape_label_value(Value)])
+        end,
+  "{" ++ string:join(lists:map(Fun, Labels), ",") ++ "}".
 
 emit_series(Fd, Name, Labels, undefined) ->
   LString = labels_string(Labels),
@@ -123,6 +128,6 @@ escape_label_value(LValue) ->
 -spec sub(string() | atom(), string(), string()) -> string().
 sub(Str, Old, New) when is_atom(Str) ->
   sub(atom_to_list(Str), Old, New);
-sub(Str,Old,New) ->
-  RegExp = "\\Q"++Old++"\\E",
-  re:replace(Str,RegExp,New,[global, {return, list}]).
+sub(Str, Old, New) ->
+  RegExp = "\\Q" ++ Old ++ "\\E",
+  re:replace(Str, RegExp, New, [global, {return, list}]).

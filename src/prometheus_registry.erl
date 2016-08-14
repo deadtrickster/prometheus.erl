@@ -11,9 +11,12 @@
 
 -define(TABLE, ?PROMETHEUS_REGISTRY_TABLE).
 
--spec collect(Registry :: atom(), Callback :: prometheus_collector:callback()) -> ok.
+-spec collect(Registry, Callback) -> ok when
+    Registry :: atom(),
+    Callback :: prometheus_collector:callback().
 collect(Registry, Callback) ->
-  [Callback(Registry, Collector) || {_, Collector} <- ets:lookup(?TABLE, Registry)],
+  [Callback(Registry, Collector) ||
+    {_, Collector} <- ets:lookup(?TABLE, Registry)],
   ok.
 
 -spec collectors(Registry :: atom()) -> [Collector :: atom()].
@@ -41,9 +44,11 @@ clear(Registry) ->
     {_, Collector} <- ets:take(?TABLE, Registry)],
   ok.
 
--spec collector_registeredp(Registry :: atom(), Collector :: atom()) -> boolean().
+-spec collector_registeredp(Registry, Collector) -> boolean() when
+    Registry  :: atom(),
+    Collector :: atom().
 collector_registeredp(Registry, Collector) ->
   case ets:match(?TABLE, {Registry, Collector}) of
     [] -> false;
-    _ -> true
+    _  -> true
   end.

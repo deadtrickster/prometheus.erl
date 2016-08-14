@@ -31,9 +31,11 @@ exponential(_Start, _Factor, Count) when Count < 1 ->
 exponential(Start, _Factor, _Count) when Start =< 0 ->
   erlang:error({invalid_value, Start, "Buckets start should be positive"});
 exponential(_Start, Factor, _Count) when Factor =< 1 ->
-  erlang:error({invalid_value, Factor, "Buckets factor should be greater than 1"});
+  erlang:error({invalid_value, Factor,
+                "Buckets factor should be greater than 1"});
 exponential(Start, Factor, Count) ->
-  [try_to_maintain_integer_bounds(Start*math:pow(Factor, I)) || I <- lists:seq(0, Count-1)].
+  [try_to_maintain_integer_bounds(Start*math:pow(Factor, I)) ||
+    I <- lists:seq(0, Count-1)].
 
 %%===================================================================
 %% Deprecations

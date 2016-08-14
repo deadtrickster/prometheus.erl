@@ -68,10 +68,12 @@ create_tables() ->
   ok.
 
 register_collectors() ->
-  [prometheus_collector:register(Collector) || Collector <- enabled_collectors()].
+  [prometheus_collector:register(Collector) ||
+    Collector <- enabled_collectors()].
 
 register_metrics() ->
-  [Metric:declare(Spec, Registry) || {Registry, Metric, Spec} <- default_metrics()].
+  [Metric:declare(Spec, Registry) ||
+    {Registry, Metric, Spec} <- default_metrics()].
 
 enabled_collectors() ->
   case application:get_env(prometheus, default_collectors) of

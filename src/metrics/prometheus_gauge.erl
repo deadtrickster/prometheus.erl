@@ -70,7 +70,8 @@ set(Name, LabelValues, Value) ->
   set(default, Name, LabelValues, Value).
 
 set(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  case ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?GAUGE_POS, Value}) of
+  case ets:update_element(?TABLE, {Registry, Name, LabelValues},
+                          {?GAUGE_POS, Value}) of
     false ->
       insert_metric(Registry, Name, LabelValues, Value, fun set/4);
     true ->
@@ -151,7 +152,9 @@ inc(Registry, Name, LabelValues) ->
   inc(Registry, Name, LabelValues, 1).
 
 inc(Registry, Name, LabelValues, Inc) ->
-  try ets:update_counter(?TABLE, {Registry, Name, LabelValues}, {?GAUGE_POS, Inc})
+  try
+    ets:update_counter(?TABLE, {Registry, Name, LabelValues},
+                       {?GAUGE_POS, Inc})
   catch error:badarg ->
       insert_metric(Registry, Name, LabelValues, Inc, fun inc/4)
   end,

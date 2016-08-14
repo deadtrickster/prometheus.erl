@@ -3,7 +3,8 @@
 -export([register/1,
          register/2,
          deregister/1,
-         deregister/2]).
+         deregister/2,
+         collect_mf/3]).
 
 -export_type([callback/0]).
 
@@ -41,3 +42,10 @@ deregister(Collector) ->
 -spec deregister(Collector :: atom(), Registry :: atom()) -> true.
 deregister(Collector, Registry) ->
   prometheus_registry:deregister_collector(Registry, Collector).
+
+-spec collect_mf(Collector, Callback, Registry) -> list() when
+    Collector :: atom(),
+    Callback  :: callback(),
+    Registry  :: atom().
+collect_mf(Collector, Callback, Registry) ->
+  Collector:collect_mf(Callback, Registry).

@@ -10,7 +10,8 @@
          metrics/2,
          extract_common_params/1]).
 
--export_type([value/0]).
+-export_type([name/0,
+              value/0]).
 
 -ifdef(TEST).
 -export([validate_metric_name/1,
@@ -19,6 +20,12 @@
 -endif.
 
 -include("prometheus.hrl").
+
+-type name() :: atom() | binary() | nonempty_string().
+
+-type value() :: {Count :: number(), Sum :: number()}
+                 %% FIXME: temporary HACK
+               | {[any()], any()}.
 
 %%====================================================================
 %% Callbacks
@@ -31,22 +38,18 @@
 -callback declare(Info :: list(),
                   Registry :: prometheus_registry:registry()) -> boolean().
 
--callback reset(Name :: atom()) -> boolean().
--callback reset(Name :: atom(), LValues :: list()) -> boolean().
+-callback reset(Name :: name()) -> boolean().
+-callback reset(Name :: name(), LValues :: list()) -> boolean().
 -callback reset(Registry, Name, LValues) -> boolean() when
     Registry :: prometheus_registry:registry(),
-    Name     :: atom(),
+    Name     :: name(),
     LValues  :: list().
 
--type value() :: {Count :: number(), Sum :: number()}
-                 %% FIXME: temporary HACK
-               | {[any()], any()}.
-
--callback value(Name :: atom()) -> value().
--callback value(Name :: atom(), LValues :: list()) -> value().
+-callback value(Name :: name()) -> value().
+-callback value(Name :: name(), LValues :: list()) -> value().
 -callback value(Registry, Name, LValues) -> value() when
     Registry :: prometheus_registry:registry(),
-    Name     :: atom(),
+    Name     :: name(),
     LValues  :: list().
 
 %%====================================================================

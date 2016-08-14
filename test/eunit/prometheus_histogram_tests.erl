@@ -94,7 +94,7 @@ test_double(_) ->
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 850.3),
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 750.9),
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 1650.23),
-  timer:sleep(10), %% dobserve is async so let's make sure gen_server processed our increment request
+  timer:sleep(10), %% dobserve is async so lets make sure gen_server processed our increment request
   Value = prometheus_histogram:value(http_request_duration_milliseconds, [post]),
   prometheus_histogram:reset(http_request_duration_milliseconds, [post]),
   RValue = prometheus_histogram:value(http_request_duration_milliseconds, [post]),

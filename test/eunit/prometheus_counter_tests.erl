@@ -50,7 +50,7 @@ test_double(_) ->
   prometheus_counter:new([{name, http_requests_total}, {help, "Http request count"}]),
   prometheus_counter:dinc(http_requests_total),
   prometheus_counter:dinc(http_requests_total, 3.5),
-  timer:sleep(10), %% dinc is async so let's make sure gen_server processed our increment request
+  timer:sleep(10), %% dinc is async so lets make sure gen_server processed our increment request
   Value = prometheus_counter:value(http_requests_total),
   prometheus_counter:reset(http_requests_total),
   RValue = prometheus_counter:value(http_requests_total),

@@ -54,6 +54,7 @@ test_dcounter(_) ->
   prometheus_counter:dinc(dtest, 1.5),
   prometheus_counter:dinc(dtest, 3.5),
   prometheus_counter:dinc(dtest, 1.5),
+  timer:sleep(10), %% dinc is async so lets make sure gen_server processed our request
   ?_assertEqual(<<"# TYPE dtest counter
 # HELP dtest qw\"\\\\e
 dtest 6.5
@@ -75,6 +76,7 @@ test_dsummary(_) ->
   prometheus_summary:new([{name, dsummary}, {help, "qwe"}]),
   prometheus_summary:dobserve(dsummary, 1.5),
   prometheus_summary:dobserve(dsummary, 2.7),
+  timer:sleep(10), %% dobserve is async so lets make sure gen_server processed our request
   ?_assertEqual(<<"# TYPE dsummary summary
 # HELP dsummary qwe
 dsummary_count 2
@@ -120,6 +122,7 @@ test_dhistogram(_) ->
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 850.3),
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 750.9),
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 1650.23),
+  timer:sleep(10), %% dobserve is async so lets make sure gen_server processed our request
   ?_assertEqual(<<"# TYPE http_request_duration_milliseconds histogram
 # HELP http_request_duration_milliseconds Http Request execution time
 http_request_duration_milliseconds_bucket{method=\"post\",le=\"100\"} 0

@@ -5,7 +5,7 @@
          deregister/1,
          deregister/2]).
 
--compile({no_auto_import,[register/2]}).
+-compile({no_auto_import, [register/2]}).
 
 -callback deregister_cleanup(Registry :: atom()) -> ok.
 

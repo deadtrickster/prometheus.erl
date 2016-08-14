@@ -56,9 +56,13 @@
 -behaviour(prometheus_collector).
 -behaviour(prometheus_metric).
 
+%% Macros.
 -define(TABLE, ?PROMETHEUS_HISTOGRAM_TABLE).
 -define(BUCKETS_POS, 2).
 -define(BUCKETS_START, 3).
+-define(DEPRECATED(Old, New),
+        error_logger:warning_msg(Old " is deprecated and will soon be removed. "
+                                 "Please use " New " instead.~n")).
 
 %%====================================================================
 %% Metric API

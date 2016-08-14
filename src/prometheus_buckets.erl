@@ -6,6 +6,11 @@
          generate_linear/3,
          generate_exponential/3]).
 
+%% Macros.
+-define(DEPRECATED(Old, New),
+        error_logger:warning_msg(Old " is deprecated and will soon be removed. "
+                                 "Please use " New " instead.~n")).
+
 %%====================================================================
 %% Public API
 %%====================================================================
@@ -35,11 +40,13 @@ exponential(Start, Factor, Count) ->
 %%===================================================================
 
 generate_linear(Start, Step, Count) ->
-  error_logger:warning_msg("prometheus_buckets:generate_linear/3 is deprecated and soon will be removed. Please use prometeus_buckets:linear/3 instead.~n"),
+  ?DEPRECATED("prometheus_buckets:generate_linear/3",
+              "prometheus_buckets:linear/3"),
   linear(Start, Step, Count).
 
 generate_exponential(Start, Factor, Count) ->
-  error_logger:warning_msg("prometheus_buckets:generate_exponential/3 is deprecated and soon will be removed. Please use prometeus_buckets:exponential/3 instead.~n"),
+  ?DEPRECATED("prometheus_buckets:generate_exponential/3",
+              "prometheus_buckets:exponential/3"),
   exponential(Start, Factor, Count).
 
 %%====================================================================

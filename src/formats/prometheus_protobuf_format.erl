@@ -12,12 +12,16 @@
 %% Format API
 %%====================================================================
 
+-spec content_type() -> binary().
 content_type() ->
   <<"application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited">>.
 
+%% @equiv format(default)
+-spec format() -> binary().
 format() ->
   format(default).
 
+-spec format(Registry :: atom()) -> binary().
 format(Registry) ->
   {ok, Fd} = ram_file:open("", [write,read,binary]),
   prometheus_registry:collect(Registry, fun (_, Collector) ->

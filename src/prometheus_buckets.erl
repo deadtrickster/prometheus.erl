@@ -10,15 +10,17 @@
 %% Public API
 %%====================================================================
 
-default () ->
-  [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10].
+-spec default() -> [number()].
+default() -> [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10].
 
+-spec linear(integer(), pos_integer(), pos_integer()) -> [integer()].
 linear(_Start, _Step, Count) when Count < 1 ->
   erlang:error({invalid_value, Count, "Buckets count should be positive"});
 linear(Start, Step, Count) ->
   Bounds = lists:seq(Start, Start + Step*(Count - 1), Step),
   [try_to_maintain_integer_bounds(Bound) || Bound <- Bounds].
 
+-spec exponential(number(), number(), pos_integer()) -> [float()].
 exponential(_Start, _Factor, Count) when Count < 1 ->
   erlang:error({invalid_value, Count, "Buckets count should be positive"});
 exponential(Start, _Factor, _Count) when Start =< 0 ->
@@ -44,11 +46,12 @@ generate_exponential(Start, Factor, Count) ->
 %% Private Parts
 %%====================================================================
 
-try_to_maintain_integer_bounds(Bound) when is_integer(Bound) ->
-  Bound;
+-spec try_to_maintain_integer_bounds(integer()) -> integer();
+                                    (float())   -> integer() | float().
+try_to_maintain_integer_bounds(Bound) when is_integer(Bound) -> Bound;
 try_to_maintain_integer_bounds(Bound) when is_float(Bound) ->
   TBound = trunc(Bound),
   case TBound == Bound of
-    true -> TBound;
+    true  -> TBound;
     false -> Bound
   end.

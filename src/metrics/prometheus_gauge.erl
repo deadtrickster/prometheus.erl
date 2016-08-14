@@ -45,6 +45,7 @@
 %% Metric API
 %%====================================================================
 
+%% @equiv new(Spec, default)
 new(Spec) ->
   new(Spec, default).
 
@@ -53,6 +54,7 @@ new(Spec, Registry) ->
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
 
+%% @equiv declare(Spec, default)
 declare(Spec) ->
   declare(Spec, default).
 
@@ -101,9 +103,11 @@ track_inprogress(Registry, Name, LabelValues, Fun) ->
     dec(Registry, Name, LabelValues)
   end.
 
+%% @equiv reset(default, Name, [])
 reset(Name) ->
   reset(default, Name, []).
 
+%% @equiv reset(default, Name, LabelValues)
 reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
@@ -111,9 +115,11 @@ reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?GAUGE_POS, 0}).
 
+%% @equiv value(default, Name, [])
 value(Name) ->
   value(default, Name, []).
 
+%% @equiv value(default, Name, LabelValues)
 value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 

@@ -1,4 +1,5 @@
 -module(prometheus_metric).
+
 -export([insert_new_mf/5,
          insert_new_mf/6,
          insert_mf/5,
@@ -11,6 +12,8 @@
          extract_key_or_default/3,
          extract_key_or_raise_missing/2]).
 
+-export_type([value/0]).
+
 -ifdef(TEST).
 -export([validate_metric_name/1,
          validate_metric_label_names/1,
@@ -21,18 +24,22 @@
 
 
 -callback new(Info :: list()) -> ok.
--callback new(Info :: list(), Registry :: atom) -> ok.
+-callback new(Info :: list(), Registry :: atom()) -> ok.
 
 -callback declare(Info :: list()) -> boolean().
--callback declare(Info :: list(), Registry :: atom) -> boolean().
+-callback declare(Info :: list(), Registry :: atom()) -> boolean().
 
--callback reset(Name :: atom) -> ok.
--callback reset(Name :: atom, LValues :: list()) -> ok.
--callback reset(Registry :: atom, Name :: atom, LValues :: list()) -> ok.
+-callback reset(Name :: atom()) -> boolean().
+-callback reset(Name :: atom(), LValues :: list()) -> boolean().
+-callback reset(Registry :: atom(), Name :: atom(), LValues :: list()) -> boolean().
 
--callback value(Name :: atom) -> ok.
--callback value(Name :: atom, LValues :: list()) -> ok.
--callback value(Registry :: atom, Name :: atom, LValues :: list()) -> ok.
+-type value() :: {Count :: number(), Sum :: number()}
+                 %% FIXME: temporary HACK
+               | {[any()], any()}.
+
+-callback value(Name :: atom()) -> value().
+-callback value(Name :: atom(), LValues :: list()) -> value().
+-callback value(Registry :: atom(), Name :: atom(), LValues :: list()) -> value().
 
 insert_new_mf(Table, Registry, Name, Labels, Help) ->
   insert_new_mf(Table, Registry, Name, Labels, Help, undefined).
@@ -40,7 +47,7 @@ insert_new_mf(Table, Registry, Name, Labels, Help) ->
 insert_new_mf(Table, Registry, Name, Labels, Help, Data) ->
   case insert_mf(Table, Registry, Name, Labels, Help, Data) of
     true ->
-      true;
+      ok;
     false ->
       erlang:error({mf_already_exists, {Registry, Name}, "maybe you could try declare?"})
   end.

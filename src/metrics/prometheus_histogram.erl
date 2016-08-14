@@ -64,6 +64,7 @@
 %% Metric API
 %%====================================================================
 
+%% @equiv new(Spec, default)
 new(Spec) ->
   new(Spec, default).
 
@@ -124,8 +125,11 @@ observe_duration(Registry, Name, LabelValues, Fun) ->
     dobserve(Registry, Name, LabelValues, time_diff_seconds(Start))
   end.
 
+%% @equiv reset(default, Name, [])
 reset(Name) ->
   reset(default, Name, []).
+
+%% @equiv reset(default, Name, LabelValues)
 reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
@@ -135,9 +139,11 @@ reset(Registry, Name, LabelValues) ->
   UpdateSpec = generate_update_spec(?BUCKETS_START, length(Buckets)),
   ets:update_element(?TABLE, {Registry, Name, LabelValues}, UpdateSpec).
 
+%% @equiv value(default, Name, [])
 value(Name) ->
   value(default, Name, []).
 
+%% @equiv value(default, Name, LabelValues)
 value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
@@ -145,9 +151,11 @@ value(Registry, Name, LabelValues) ->
   [Metric] = ets:lookup(?TABLE, {Registry, Name, LabelValues}),
   {buckets_counters(Metric), sum(Metric)}.
 
+%% @equiv buckets(default, Name, [])
 buckets(Name) ->
   buckets(default, Name, []).
 
+%% @equiv buckets(default, Name, LabelValues)
 buckets(Name, LabelValues) ->
   buckets(default, Name, LabelValues).
 

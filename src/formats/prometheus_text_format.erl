@@ -17,12 +17,16 @@
 %% Format API
 %%====================================================================
 
+-spec content_type() -> binary().
 content_type() ->
   <<"text/plain; version=0.0.4">>.
 
+%% @equiv format(default)
+-spec format() -> binary().
 format() ->
   format(default).
 
+-spec format(Registry :: atom()) -> binary().
 format(Registry) ->
   {ok, Fd} = ram_file:open("", [write,read,binary]),
   prometheus_registry:collect(Registry, fun (_, Collector) ->
@@ -111,6 +115,7 @@ bound_to_label_value(Bound) when is_number(Bound) ->
 bound_to_label_value(infinity) ->
   "+Inf".
 
+-spec escape_label_value(binary() | iolist() | undefined) -> string().
 escape_label_value(LValue) when is_list(LValue)->
   sub(sub(sub(LValue, "\\", "\\\\\\\\"), "\n", "\\\\n"), "\"", "\\\\\"");
 escape_label_value(LValue) when is_binary(LValue) ->
@@ -118,7 +123,7 @@ escape_label_value(LValue) when is_binary(LValue) ->
 escape_label_value(LValue) ->
   escape_label_value(io_lib:format("~p", [LValue])).
 
-
+-spec sub(string() | atom(), string(), string()) -> string().
 sub(Str, Old, New) when is_atom(Str) ->
   sub(atom_to_list(Str), Old, New);
 sub(Str,Old,New) ->

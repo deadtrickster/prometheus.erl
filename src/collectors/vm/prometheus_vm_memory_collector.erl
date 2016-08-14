@@ -21,6 +21,7 @@
 
 deregister_cleanup(_) -> ok.
 
+-spec collect_mf(prometheus_collector:callback(), atom()) -> ok.
 collect_mf(Callback, _Registry) ->
   Memory = erlang:memory(),
 

@@ -115,8 +115,11 @@ observe_duration(Registry, Name, LabelValues, Fun) ->
     dobserve(Registry, Name, LabelValues, time_diff_seconds(Start))
   end.
 
+%% @equiv reset(default, Name, [])
 reset(Name) ->
   reset(default, Name, []).
+
+%% @equiv reset(default, Name, LabelValues)
 reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
@@ -124,9 +127,11 @@ reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   ets:update_element(?TABLE, {Registry, Name, LabelValues}, [{?COUNTER_POS, 0}, {?SUM_POS, 0}]).
 
+%% @equiv value(default, Name, [])
 value(Name) ->
   value(default, Name, []).
 
+%% @equiv value(default, Name, LabelValues)
 value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 

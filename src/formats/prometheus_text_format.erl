@@ -67,7 +67,8 @@ emit_metric(Fd, Name, #'Metric'{label=Labels, histogram=#'Histogram'{sample_coun
   emit_series(Fd, [Name, "_sum"], Labels, Sum).
 
 emit_histogram_bucket(Fd, Name, Labels, #'Bucket'{cumulative_count=BCount, upper_bound=BBound}) ->
-  emit_series(Fd, [Name, "_bucket"], Labels++[#'LabelPair'{name="le", value=BBound}], BCount).
+  BLValue = bound_to_label_value(BBound),
+  emit_series(Fd, [Name, "_bucket"], Labels++[#'LabelPair'{name="le", value=BLValue}], BCount).
 
 string_type('COUNTER') ->
   "counter";
@@ -105,12 +106,15 @@ emit_series(Fd, Name, Labels, Value) ->
 escape_metric_help(Help) ->
   sub(sub(Help, "\\", "\\\\\\\\"), "\n", "\\\\n").
 
+bound_to_label_value(Bound) when is_number(Bound) ->
+  Bound;
+bound_to_label_value(infinity) ->
+  "+Inf".
+
 escape_label_value(LValue) when is_list(LValue)->
   sub(sub(sub(LValue, "\\", "\\\\\\\\"), "\n", "\\\\n"), "\"", "\\\\\"");
 escape_label_value(LValue) when is_binary(LValue) ->
   escape_label_value(binary_to_list(LValue));
-escape_label_value(infinity) ->
-  "+Inf";
 escape_label_value(LValue) ->
   escape_label_value(io_lib:format("~p", [LValue])).
 

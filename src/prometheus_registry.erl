@@ -28,6 +28,7 @@ register_collector(Registry, Collector) ->
   ets:insert(?TABLE, {Registry, Collector}),
   ok.
 
+-spec deregister_collector(Registry :: atom(), Collector :: atom()) -> ok.
 deregister_collector(Registry, Collector) ->
   ets:delete_object(?TABLE, {Registry, Collector}),
   Collector:deregister_cleanup(Registry),

@@ -39,7 +39,7 @@ register(Collector, Registry) ->
 deregister(Collector) ->
   deregister(Collector, default).
 
--spec deregister(Collector :: atom(), Registry :: atom()) -> true.
+-spec deregister(Collector :: atom(), Registry :: atom()) -> ok.
 deregister(Collector, Registry) ->
   prometheus_registry:deregister_collector(Registry, Collector).
 

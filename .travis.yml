@@ -4,4 +4,4 @@ install: 'true'
 otp_release:
 - 19.0
 - 18.0
-script: "./elvis rock && ./rebar3 eunit"
+script: "./elvis rock && ./rebar3 do dialyzer, eunit"

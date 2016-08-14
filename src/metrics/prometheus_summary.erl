@@ -81,7 +81,8 @@ observe(Name, LabelValues, Value) ->
 
 observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   try
-    ets:update_counter(?TABLE, {Registry, Name, LabelValues}, [{?COUNTER_POS, 1}, {?SUM_POS, Value}])
+    ets:update_counter(?TABLE, {Registry, Name, LabelValues},
+                       [{?COUNTER_POS, 1}, {?SUM_POS, Value}])
   catch error:badarg ->
       insert_metric(Registry, Name, LabelValues, Value, fun observe/4)
   end,
@@ -96,7 +97,8 @@ dobserve(Name, LabelValues, Value) ->
   dobserve(default, Name, LabelValues, Value).
 
 dobserve(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  gen_server:cast(prometheus_summary, {observe, {Registry, Name, LabelValues, Value}}),
+  gen_server:cast(prometheus_summary,
+                  {observe, {Registry, Name, LabelValues, Value}}),
   ok;
 dobserve(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "dobserve accepts only numbers"}).
@@ -115,18 +117,24 @@ observe_duration(Registry, Name, LabelValues, Fun) ->
     dobserve(Registry, Name, LabelValues, time_diff_seconds(Start))
   end.
 
+%% @equiv reset(default, Name, [])
 reset(Name) ->
   reset(default, Name, []).
+
+%% @equiv reset(default, Name, LabelValues)
 reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
 reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  ets:update_element(?TABLE, {Registry, Name, LabelValues}, [{?COUNTER_POS, 0}, {?SUM_POS, 0}]).
+  ets:update_element(?TABLE, {Registry, Name, LabelValues},
+                     [{?COUNTER_POS, 0}, {?SUM_POS, 0}]).
 
+%% @equiv value(default, Name, [])
 value(Name) ->
   value(default, Name, []).
 
+%% @equiv value(default, Name, LabelValues)
 value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
@@ -140,7 +148,8 @@ value(Registry, Name, LabelValues) ->
 
 deregister_cleanup(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry),
-  ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_', '_'}).
+  true = ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_', '_'}),
+  ok.
 
 collect_mf(Callback, Registry) ->
   [Callback(create_summary(Name, Help, {Labels, Registry})) ||
@@ -148,7 +157,8 @@ collect_mf(Callback, Registry) ->
 
 collect_metrics(Name, {Labels, Registry}) ->
   [summary_metric(lists:zip(Labels, LabelValues), Count, Sum) ||
-    [LabelValues, Count, Sum] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2', '$3'})].
+    [LabelValues, Count, Sum] <- ets:match(?TABLE, {{Registry, Name, '$1'},
+                                                    '$2', '$3'})].
 
 %%====================================================================
 %% Gen_server API
@@ -174,7 +184,8 @@ code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
 start_link() ->
-  gen_server:start_link({local, prometheus_summary}, prometheus_summary, [], []).
+  gen_server:start_link({local, prometheus_summary},
+                        prometheus_summary, [], []).
 
 %%====================================================================
 %% Private Parts
@@ -189,15 +200,18 @@ validate_summary_labels(Labels) ->
   [raise_error_if_quantile_label_found(Label) || Label <- Labels].
 
 raise_error_if_quantile_label_found("quantile") ->
-  erlang:error({invalid_metric_label_name, "quantile", "summary cannot have a label named \"quantile\""});
+  erlang:error({invalid_metric_label_name, "quantile",
+                "summary cannot have a label named \"quantile\""});
 raise_error_if_quantile_label_found(Label) ->
   Label.
 
 dobserve_impl(Registry, Name, LabelValues, Value) ->
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
     [Metric] ->
-      ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, sum(Metric) + Value}),
-      ets:update_counter(?TABLE, {Registry, Name, LabelValues}, {?COUNTER_POS, 1});
+      ets:update_element(?TABLE, {Registry, Name, LabelValues},
+                         {?SUM_POS, sum(Metric) + Value}),
+      ets:update_counter(?TABLE, {Registry, Name, LabelValues},
+                         {?COUNTER_POS, 1});
     [] ->
       insert_metric(Registry, Name, LabelValues, Value, fun dobserve_impl/4)
   end.

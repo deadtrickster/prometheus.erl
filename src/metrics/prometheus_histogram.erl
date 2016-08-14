@@ -56,21 +56,27 @@
 -behaviour(prometheus_collector).
 -behaviour(prometheus_metric).
 
+%% Macros.
 -define(TABLE, ?PROMETHEUS_HISTOGRAM_TABLE).
 -define(BUCKETS_POS, 2).
 -define(BUCKETS_START, 3).
+-define(DEPRECATED(Old, New),
+        error_logger:warning_msg(Old " is deprecated and will soon be removed. "
+                                 "Please use " New " instead.~n")).
 
 %%====================================================================
 %% Metric API
 %%====================================================================
 
+%% @equiv new(Spec, default)
 new(Spec) ->
   new(Spec, default).
 
 new(Spec, Registry) ->
   {Name, Labels, Help, Buckets} = parse_histogram_spec(Spec),
   prometheus_collector:register(?MODULE, Registry),
-  prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help, Buckets).
+  prometheus_metric:insert_new_mf(?TABLE, Registry,
+                                  Name, Labels, Help, Buckets).
 
 declare(Spec) ->
   declare(Spec, default).
@@ -88,10 +94,12 @@ observe(Name, LabelValues, Value) ->
 
 observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
-    [Metric]->
-      {BucketPosition, SumPosition} = calculate_histogram_update_positions(Metric, Value),
-      ets:update_counter(?TABLE, {Registry, Name, LabelValues}, [{BucketPosition, 1}, {SumPosition, Value}]);
-    []->
+    [Metric] ->
+      {BucketPosition, SumPosition} =
+        calculate_histogram_update_positions(Metric, Value),
+      ets:update_counter(?TABLE, {Registry, Name, LabelValues},
+                         [{BucketPosition, 1}, {SumPosition, Value}]);
+    [] ->
       insert_metric(Registry, Name, LabelValues, Value, fun observe/4)
   end,
   ok;
@@ -105,7 +113,8 @@ dobserve(Name, LabelValues, Value) ->
   dobserve(default, Name, LabelValues, Value).
 
 dobserve(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  gen_server:cast(prometheus_histogram, {observe, {Registry, Name, LabelValues, Value}}),
+  gen_server:cast(prometheus_histogram,
+                  {observe, {Registry, Name, LabelValues, Value}}),
   ok;
 dobserve(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "dobserve accepts only numbers"}).
@@ -124,8 +133,11 @@ observe_duration(Registry, Name, LabelValues, Fun) ->
     dobserve(Registry, Name, LabelValues, time_diff_seconds(Start))
   end.
 
+%% @equiv reset(default, Name, [])
 reset(Name) ->
   reset(default, Name, []).
+
+%% @equiv reset(default, Name, LabelValues)
 reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
@@ -135,9 +147,11 @@ reset(Registry, Name, LabelValues) ->
   UpdateSpec = generate_update_spec(?BUCKETS_START, length(Buckets)),
   ets:update_element(?TABLE, {Registry, Name, LabelValues}, UpdateSpec).
 
+%% @equiv value(default, Name, [])
 value(Name) ->
   value(default, Name, []).
 
+%% @equiv value(default, Name, LabelValues)
 value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
@@ -145,9 +159,11 @@ value(Registry, Name, LabelValues) ->
   [Metric] = ets:lookup(?TABLE, {Registry, Name, LabelValues}),
   {buckets_counters(Metric), sum(Metric)}.
 
+%% @equiv buckets(default, Name, [])
 buckets(Name) ->
   buckets(default, Name, []).
 
+%% @equiv buckets(default, Name, LabelValues)
 buckets(Name, LabelValues) ->
   buckets(default, Name, LabelValues).
 
@@ -171,24 +187,31 @@ exponential_buckets(Start, Factor, Count) ->
 deregister_cleanup(Registry) ->
   [delete_metrics(Registry, Buckets)
    || [_, _, _, Buckets] <- prometheus_metric:metrics(?TABLE, Registry)],
-  prometheus_metric:deregister_mf(?TABLE, Registry).
+  true = prometheus_metric:deregister_mf(?TABLE, Registry),
+  ok.
 
 collect_mf(Callback, Registry) ->
-  [Callback(create_histogram(Name, Help, {Labels, Registry, Buckets}))
-   || [Name, Labels, Help, Buckets] <- prometheus_metric:metrics(?TABLE, Registry)].
+  [Callback(create_histogram(Name, Help, {Labels, Registry, Buckets})) ||
+    [Name, Labels, Help, Buckets]
+      <- prometheus_metric:metrics(?TABLE, Registry)].
 
 collect_metrics(Name, {Labels, Registry, Buckets}) ->
   BoundPlaceholders = gen_query_bound_placeholders(Buckets),
   SumPlaceholder = gen_query_placeholder(sum_position(Buckets)),
-  QuerySpec = [{Registry, Name, '$1'}, '$2'] ++ BoundPlaceholders ++ [SumPlaceholder],
-  [create_histogram_metric(Labels, Value) || Value <- ets:match(?TABLE, list_to_tuple(QuerySpec))].
+  QuerySpec =
+    [{Registry, Name, '$1'}, '$2']
+    ++ BoundPlaceholders
+    ++ [SumPlaceholder],
+  [create_histogram_metric(Labels, Value) ||
+    Value <- ets:match(?TABLE, list_to_tuple(QuerySpec))].
 
 %%====================================================================
 %% Gen_server API
 %%====================================================================
 
 start_link() ->
-  gen_server:start_link({local, prometheus_histogram}, prometheus_histogram, [], []).
+  gen_server:start_link({local, prometheus_histogram},
+                        prometheus_histogram, [], []).
 
 init(_Args) ->
   {ok, []}.
@@ -216,20 +239,27 @@ code_change(_OldVsn, State, _Extra) ->
 parse_histogram_spec(Spec) ->
   {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
   validate_histogram_labels(Labels),
-  Buckets = case prometheus_metric:extract_key_or_default(bounds, Spec, undefined) of
-              undefined ->
-                prometheus_metric:extract_key_or_default(buckets, Spec, default_buckets());
-              Bounds ->
-                error_logger:warning_msg("Bounds config for Prometheus histograms is deprecated and soon will be removed. Please use buckets instead.~n"),
-                Bounds
-            end,
+  Buckets =
+    case get_value(bounds, Spec, undefined) of
+      undefined ->
+        get_value(buckets, Spec, default_buckets());
+      Bounds ->
+        ?DEPRECATED("Bounds config for Prometheus histograms", "buckets"),
+        Bounds
+    end,
   {Name, Labels, Help, validate_histogram_buckets(Buckets)}.
+
+%% FIXME: is get_value/3 or prometheus_metric:extract_key_or_default/3
+%% even necessary? Why not use proplists:get_Value{2,3}?
+get_value(Key, List, Default) ->
+  prometheus_metric:extract_key_or_default(Key, List, Default).
 
 validate_histogram_labels(Labels) ->
   [raise_error_if_le_label_found(Label) || Label <- Labels].
 
 raise_error_if_le_label_found("le") ->
-  erlang:error({invalid_metric_label_name, "le", "histogram cannot have a label named \"le\""});
+  erlang:error({invalid_metric_label_name, "le",
+                "histogram cannot have a label named \"le\""});
 raise_error_if_le_label_found(Label) ->
   Label.
 
@@ -261,11 +291,14 @@ validate_histogram_bound(Bound) ->
 
 dobserve_impl(Registry, Name, LabelValues, Value) ->
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
-    [Metric]->
-      {BucketPosition, SumPosition} = calculate_histogram_update_positions(Metric, Value),
-      ets:update_element(?TABLE, {Registry, Name, LabelValues}, {SumPosition, sum(Metric) + Value}),
-      ets:update_counter(?TABLE, {Registry, Name, LabelValues}, {BucketPosition, 1});
-    []->
+    [Metric] ->
+      {BucketPosition, SumPosition} =
+        calculate_histogram_update_positions(Metric, Value),
+      ets:update_element(?TABLE, {Registry, Name, LabelValues},
+                         {SumPosition, sum(Metric) + Value}),
+      ets:update_counter(?TABLE, {Registry, Name, LabelValues},
+                         {BucketPosition, 1});
+    [] ->
       insert_metric(Registry, Name, LabelValues, Value, fun dobserve_impl/4)
   end.
 
@@ -282,7 +315,10 @@ insert_metric(Registry, Name, LabelValues, Value, CB) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   MFBuckets = prometheus_metric:mf_data(MF),
   BoundCounters = lists:duplicate(length(MFBuckets), 0),
-  MetricSpec = [{Registry, Name, LabelValues}, MFBuckets] ++ BoundCounters ++ [0],
+  MetricSpec =
+    [{Registry, Name, LabelValues}, MFBuckets]
+    ++ BoundCounters
+    ++ [0],
   ets:insert(?TABLE, list_to_tuple(MetricSpec)),
   CB(Registry, Name, LabelValues, Value).
 
@@ -295,13 +331,15 @@ calculate_histogram_update_positions(Metric, Value) ->
   {BucketPosition, SumPosition}.
 
 generate_update_spec(BucketsStart, BucketsCount) ->
-  [{Index, 0} || Index <- lists:seq(BucketsStart, ?BUCKETS_START + BucketsCount)].
+  [{Index, 0} ||
+    Index <- lists:seq(BucketsStart, ?BUCKETS_START + BucketsCount)].
 
 gen_query_placeholder(Index) ->
   list_to_atom("$" ++ integer_to_list(Index)).
 
 gen_query_bound_placeholders(Buckets) ->
-  [gen_query_placeholder(Index) || Index <- lists:seq(?BUCKETS_START, ?BUCKETS_POS + length(Buckets))].
+  [gen_query_placeholder(Index) ||
+    Index <- lists:seq(?BUCKETS_START, ?BUCKETS_POS + length(Buckets))].
 
 augment_counters([]) ->
   0;
@@ -317,7 +355,8 @@ metric_buckets(Metric) ->
   element(?BUCKETS_POS, Metric).
 
 buckets_counters(Metric) ->
-  sub_tuple_to_list(Metric, ?BUCKETS_START, ?BUCKETS_START + length(metric_buckets(Metric))).
+  sub_tuple_to_list(Metric, ?BUCKETS_START,
+                    ?BUCKETS_START + length(metric_buckets(Metric))).
 
 sum_position(Metric) when is_tuple(Metric) ->
   ?BUCKETS_START + length(metric_buckets(Metric));
@@ -334,7 +373,8 @@ create_histogram_metric(Labels, [LabelValues, Buckets | Stat]) ->
                                {Bound, BCounter}
                            end,
                            Buckets, BCounters),
-  histogram_metric(lists:zip(Labels, LabelValues), Buckets1, lists:last(BCounters), lists:last(Stat)).
+  histogram_metric(lists:zip(Labels, LabelValues),
+                   Buckets1, lists:last(BCounters), lists:last(Stat)).
 
 delete_metrics(Registry, Buckets) ->
   BoundCounters = lists:duplicate(length(Buckets), '_'),
@@ -342,8 +382,8 @@ delete_metrics(Registry, Buckets) ->
   ets:match_delete(?TABLE, list_to_tuple(MetricSpec)).
 
 sub_tuple_to_list(Tuple, Pos, Size) when Pos < Size ->
-  [element(Pos,Tuple) | sub_tuple_to_list(Tuple, Pos+1, Size)];
-sub_tuple_to_list(_Tuple,_Pos,_Size) -> [].
+  [element(Pos, Tuple) | sub_tuple_to_list(Tuple, Pos + 1, Size)];
+sub_tuple_to_list(_Tuple, _Pos, _Size) -> [].
 
 position([], _Pred) ->
   0;

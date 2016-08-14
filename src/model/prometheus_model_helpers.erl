@@ -22,10 +22,11 @@
 %%====================================================================
 
 create_mf(Name, Help, Type, Collector, CollectorData) ->
-  #'MetricFamily'{name = ensure_binary(Name),
-                  help = ensure_binary(Help),
-                  type = ensure_mf_type(Type),
-                  metric = filter_undefined_metrics(ensure_list(Collector:collect_metrics(Name, CollectorData)))}.
+  Metrics = ensure_list(Collector:collect_metrics(Name, CollectorData)),
+  #'MetricFamily'{name   = ensure_binary(Name),
+                  help   = ensure_binary(Help),
+                  type   = ensure_mf_type(Type),
+                  metric = filter_undefined_metrics(Metrics)}.
 
 gauge_metrics(Metrics) ->
   lists:map(fun(Spec) ->

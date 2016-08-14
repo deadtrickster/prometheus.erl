@@ -20,7 +20,7 @@ test_registration(_)->
                  prometheus_counter:declare(Spec)),
    ?_assertEqual(false,
                  prometheus_counter:declare(Spec)),
-   ?_assertError({mf_already_exists, {default, Name}, "maybe you could try declare?"},
+   ?_assertError({mf_already_exists, {default, Name}, "Consider using declare instead."},
                  prometheus_counter:new(Spec))].
 
 test_errors(_) ->

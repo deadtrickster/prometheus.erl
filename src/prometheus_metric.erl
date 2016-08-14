@@ -1,4 +1,5 @@
 -module(prometheus_metric).
+
 -export([insert_new_mf/5,
          insert_new_mf/6,
          insert_mf/5,
@@ -11,6 +12,8 @@
          extract_key_or_default/3,
          extract_key_or_raise_missing/2]).
 
+-export_type([value/0]).
+
 -ifdef(TEST).
 -export([validate_metric_name/1,
          validate_metric_label_names/1,
@@ -21,18 +24,28 @@
 
 
 -callback new(Info :: list()) -> ok.
--callback new(Info :: list(), Registry :: atom) -> ok.
+-callback new(Info :: list(), Registry :: atom()) -> ok.
 
 -callback declare(Info :: list()) -> boolean().
--callback declare(Info :: list(), Registry :: atom) -> boolean().
+-callback declare(Info :: list(), Registry :: atom()) -> boolean().
 
--callback reset(Name :: atom) -> ok.
--callback reset(Name :: atom, LValues :: list()) -> ok.
--callback reset(Registry :: atom, Name :: atom, LValues :: list()) -> ok.
+-callback reset(Name :: atom()) -> boolean().
+-callback reset(Name :: atom(), LValues :: list()) -> boolean().
+-callback reset(Registry, Name, LValues) -> boolean() when
+    Registry :: atom(),
+    Name     :: atom(),
+    LValues  :: list().
 
--callback value(Name :: atom) -> ok.
--callback value(Name :: atom, LValues :: list()) -> ok.
--callback value(Registry :: atom, Name :: atom, LValues :: list()) -> ok.
+-type value() :: {Count :: number(), Sum :: number()}
+                 %% FIXME: temporary HACK
+               | {[any()], any()}.
+
+-callback value(Name :: atom()) -> value().
+-callback value(Name :: atom(), LValues :: list()) -> value().
+-callback value(Registry, Name, LValues) -> value() when
+    Registry :: atom(),
+    Name     :: atom(),
+    LValues  :: list().
 
 insert_new_mf(Table, Registry, Name, Labels, Help) ->
   insert_new_mf(Table, Registry, Name, Labels, Help, undefined).
@@ -40,9 +53,10 @@ insert_new_mf(Table, Registry, Name, Labels, Help) ->
 insert_new_mf(Table, Registry, Name, Labels, Help, Data) ->
   case insert_mf(Table, Registry, Name, Labels, Help, Data) of
     true ->
-      true;
+      ok;
     false ->
-      erlang:error({mf_already_exists, {Registry, Name}, "maybe you could try declare?"})
+      erlang:error({mf_already_exists, {Registry, Name},
+                    "Consider using declare instead."})
   end.
 
 insert_mf(Table, Registry, Name, Labels, Help) ->
@@ -64,7 +78,7 @@ check_mf_exists(Table, Registry, Name, LabelValues) ->
         LVLength ->
           MF;
         LabelsLength ->
-          erlang:error({invalid_metric_arity}, LabelsLength, LabelValues)
+          erlang:error({invalid_metric_arity, LabelsLength}, LabelValues)
       end
   end.
 
@@ -109,13 +123,18 @@ validate_metric_name(RawName) ->
 validate_metric_name(RawName, ListName) ->
   case io_lib:printable_unicode_list(ListName) of
     true ->
-      case re:run(ListName, "^[a-zA-Z_:][a-zA-Z0-9_:]*$") of
-        {match, _} -> RawName;
-                    nomatch -> erlang:error({invalid_metric_name, RawName, "metric name doesn't match regex [a-zA-Z_:][a-zA-Z0-9_:]*"})
-                 end;
-                    false ->
-                     erlang:error({invalid_metric_name, RawName, "metric name is invalid string"})
-                 end.
+      Regex = "^[a-zA-Z_:][a-zA-Z0-9_:]*$",
+      case re:run(ListName, Regex) of
+        {match, _} ->
+          RawName;
+        nomatch ->
+          erlang:error({invalid_metric_name, RawName,
+                        "metric name doesn't match regex " ++ Regex})
+      end;
+    false ->
+      erlang:error({invalid_metric_name, RawName,
+                    "metric name is invalid string"})
+  end.
 
 validate_metric_label_names(RawLabels) when is_list(RawLabels) ->
   lists:map(fun validate_metric_label_name/1, RawLabels);
@@ -131,27 +150,32 @@ validate_metric_label_name(RawName) when is_list(RawName) ->
     true ->
       validate_metric_label_name_content(RawName);
     false ->
-      erlang:error({invalid_metric_label_name, RawName, "metric label is invalid string"})
+      erlang:error({invalid_metric_label_name, RawName,
+                    "metric label is invalid string"})
   end;
 validate_metric_label_name(RawName) ->
-  erlang:error({invalid_metric_label_name, RawName, "metric label is not a string"}).
+  erlang:error({invalid_metric_label_name, RawName,
+                "metric label is not a string"}).
 
 validate_metric_label_name_content("__"  ++ _Rest = RawName) ->
-  erlang:error({invalid_metric_label_name, RawName, "metric label can't start with __"});
+  erlang:error({invalid_metric_label_name, RawName,
+                "metric label can't start with __"});
 validate_metric_label_name_content(RawName) ->
-  case re:run(RawName, "^[a-zA-Z_][a-zA-Z0-9_]*$") of
+  Regex = "^[a-zA-Z_][a-zA-Z0-9_]*$",
+  case re:run(RawName, Regex) of
     {match, _} -> RawName;
-    nomatch -> erlang:error({invalid_metric_label_name, RawName, "metric label doesn't match regex [a-zA-Z_][a-zA-Z0-9_]*"})
+    nomatch ->
+      erlang:error({invalid_metric_label_name, RawName,
+                    "metric label doesn't match regex " ++ Regex})
   end.
 
 validate_metric_help(RawHelp) when is_binary(RawHelp) ->
   validate_metric_help(binary_to_list(RawHelp));
 validate_metric_help(RawHelp) when is_list(RawHelp) ->
   case io_lib:printable_unicode_list(RawHelp) of
-    true ->
-      RawHelp;
-    false ->
-      erlang:error({invalid_metric_help, RawHelp, "metric help is invalid string"})
+    true  -> RawHelp;
+    false -> erlang:error({invalid_metric_help, RawHelp,
+                           "metric help is invalid string"})
   end;
 validate_metric_help(RawHelp) ->
   erlang:error({invalid_metric_help, RawHelp, "metric help is not a string"}).

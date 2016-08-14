@@ -45,6 +45,7 @@
 %% Metric API
 %%====================================================================
 
+%% @equiv new(Spec, default)
 new(Spec) ->
   new(Spec, default).
 
@@ -53,6 +54,7 @@ new(Spec, Registry) ->
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
 
+%% @equiv declare(Spec, default)
 declare(Spec) ->
   declare(Spec, default).
 
@@ -68,7 +70,8 @@ set(Name, LabelValues, Value) ->
   set(default, Name, LabelValues, Value).
 
 set(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  case ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?GAUGE_POS, Value}) of
+  case ets:update_element(?TABLE, {Registry, Name, LabelValues},
+                          {?GAUGE_POS, Value}) of
     false ->
       insert_metric(Registry, Name, LabelValues, Value, fun set/4);
     true ->
@@ -101,9 +104,11 @@ track_inprogress(Registry, Name, LabelValues, Fun) ->
     dec(Registry, Name, LabelValues)
   end.
 
+%% @equiv reset(default, Name, [])
 reset(Name) ->
   reset(default, Name, []).
 
+%% @equiv reset(default, Name, LabelValues)
 reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
@@ -111,9 +116,11 @@ reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?GAUGE_POS, 0}).
 
+%% @equiv value(default, Name, [])
 value(Name) ->
   value(default, Name, []).
 
+%% @equiv value(default, Name, LabelValues)
 value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
@@ -127,7 +134,8 @@ value(Registry, Name, LabelValues) ->
 
 deregister_cleanup(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry),
-  ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_'}).
+  true = ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_'}),
+  ok.
 
 collect_mf(Callback, Registry) ->
   [Callback(create_gauge(Name, Help, {Labels, Registry})) ||
@@ -145,7 +153,9 @@ inc(Registry, Name, LabelValues) ->
   inc(Registry, Name, LabelValues, 1).
 
 inc(Registry, Name, LabelValues, Inc) ->
-  try ets:update_counter(?TABLE, {Registry, Name, LabelValues}, {?GAUGE_POS, Inc})
+  try
+    ets:update_counter(?TABLE, {Registry, Name, LabelValues},
+                       {?GAUGE_POS, Inc})
   catch error:badarg ->
       insert_metric(Registry, Name, LabelValues, Inc, fun inc/4)
   end,

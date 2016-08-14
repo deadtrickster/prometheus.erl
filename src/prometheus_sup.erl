@@ -71,7 +71,7 @@ register_collectors() ->
   [Collector:register() || Collector <- enabled_collectors()].
 
 register_metrics() ->
-  [Metric:register(Spec, Registry) || {Registry, Metric, Spec} <- default_metrics()].
+  [Metric:declare(Spec, Registry) || {Registry, Metric, Spec} <- default_metrics()].
 
 enabled_collectors() ->
   case application:get_env(prometheus, default_collectors) of

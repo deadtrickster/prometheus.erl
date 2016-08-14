@@ -1,7 +1,14 @@
 sudo: false
 language: erlang
 install: 'true'
+before_script:
+- wget https://s3.amazonaws.com/rebar3/rebar3
+- chmod +x rebar3
+env: PATH=$PATH:.
+cache:
+  directories:
+  - $HOME/.cache/rebar3/
 otp_release:
 - 19.0
 - 18.0
-script: "./elvis rock && ./rebar3 do dialyzer, eunit"
+script: "./elvis rock && rebar3 do dialyzer, eunit"

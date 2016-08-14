@@ -14,7 +14,7 @@
 %% FIXME: temporary HACK
 -type callback() ::
         fun ((atom(), atom(), list(atom()), string() | binary()) -> ok)
-      | fun((_,_) -> any()).
+      | fun((_, _) -> any()).
 
 %% FIXME: `| ok' is a temporary HACK
 -callback collect_mf(Callback :: callback(), Registry :: atom()) -> list() | ok.

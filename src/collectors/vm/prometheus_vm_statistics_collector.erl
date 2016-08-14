@@ -96,5 +96,5 @@ enabled_statistics_metrics() ->
 create_counter(Name, Help, Data) ->
   create_mf(Name, Help, counter, ?MODULE, Data).
 
-create_gauge(Name, Help, Data) ->
-  create_mf(Name, Help, gauge, ?MODULE, Data).
+%% create_gauge(Name, Help, Data) ->
+%%   create_mf(Name, Help, gauge, ?MODULE, Data).

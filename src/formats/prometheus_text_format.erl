@@ -97,9 +97,6 @@ labels_string(Labels) ->
                          ",") ++ "}"
   end.
 
-emit_series(Fd, Name, Labels, '') ->
-  LString = labels_string(Labels),
-  file:write(Fd, io_lib:format("~s" ++ LString ++ " NaN\n", [Name]));
 emit_series(Fd, Name, Labels, undefined) ->
   LString = labels_string(Labels),
   file:write(Fd, io_lib:format("~s" ++ LString ++ " NaN\n", [Name]));

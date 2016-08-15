@@ -9,7 +9,7 @@
 -export_type([collector/0,
               datum/0,
               data/0,
-              callback/0]).
+              collect_mf_callback/0]).
 
 -compile({no_auto_import, [register/2]}).
 
@@ -25,17 +25,15 @@
 
 -type data() :: datum() | [datum(), ...].
 
-%% TODO: Split up callback types.
--type callback() ::
-        fun ((atom(), atom(), list(atom()), string() | binary()) -> ok)
-      | fun((_, _) -> any()).
+-type collect_mf_callback() ::
+        fun((prometheus_model:'MetricFamily'()) -> any()).
 
 %%====================================================================
 %% Callbacks
 %%====================================================================
 
 -callback collect_mf(Callback, Registry) -> Metrics | ok when
-    Callback :: callback(),
+    Callback :: collect_mf_callback(),
     Registry :: prometheus_registry:registry(),
     Metrics  :: [prometheus_model:'Metric'()].
 
@@ -70,7 +68,7 @@ deregister(Collector, Registry) ->
 
 -spec collect_mf(Collector, Callback, Registry) -> list() when
     Collector :: collector(),
-    Callback  :: callback(),
+    Callback  :: collect_mf_callback(),
     Registry  :: prometheus_registry:registry().
 collect_mf(Collector, Callback, Registry) ->
   Collector:collect_mf(Callback, Registry).

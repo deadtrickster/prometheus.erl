@@ -8,7 +8,8 @@
          clear/1,
          collector_registeredp/2]).
 
--export_type([registry/0]).
+-export_type([registry/0,
+             collect_callback/0]).
 
 -include("prometheus.hrl").
 
@@ -17,6 +18,9 @@
 %%====================================================================
 
 -type registry() :: atom().
+
+-type collect_callback() ::
+        fun((registry(), prometheus_collector:collector()) -> any()).
 
 %%====================================================================
 %% Macros
@@ -30,7 +34,7 @@
 
 -spec collect(Registry, Callback) -> ok when
     Registry :: prometheus_registry:registry(),
-    Callback :: prometheus_collector:callback().
+    Callback :: collect_callback().
 collect(Registry, Callback) ->
   [Callback(Registry, Collector) ||
     {_, Collector} <- ets:lookup(?TABLE, Registry)],

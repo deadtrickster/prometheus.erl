@@ -149,6 +149,8 @@ Prometheus.erl supports standard Erlang app configuration.
 install git precommit hook:
     
     ./bin/pre-commit.sh install
+    
+ Pre-commit check can be skipped passing `--no-verify` option to git commit. 
 
 ### License
 

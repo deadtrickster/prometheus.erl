@@ -100,5 +100,9 @@ memory_other(Memory) ->
     - proplists:get_value(code, Memory)
     - proplists:get_value(ets, Memory).
 
+-spec create_gauge(Name, Help, Data) -> prometheus_model:'MetricFamily'() when
+    Name :: atom(),
+    Help :: string(),
+    Data :: prometheus_collector:data().
 create_gauge(Name, Help, Data) ->
   create_mf(Name, Help, gauge, ?MODULE, Data).

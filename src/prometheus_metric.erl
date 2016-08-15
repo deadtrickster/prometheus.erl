@@ -23,9 +23,9 @@
 
 -type name() :: atom() | binary() | nonempty_string().
 
--type value() :: {Count :: number(), Sum :: number()}
-                 %% FIXME: temporary HACK
-               | {[any()], any()}.
+-type value() :: number() %% counter or gauge
+               | {Count :: number(), Sum :: number()} %% summary
+               | {Buckets :: [number(), ...], Sum :: number()}. %% histogram
 
 %%====================================================================
 %% Callbacks

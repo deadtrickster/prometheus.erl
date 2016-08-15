@@ -11,8 +11,6 @@
 
 -compile({no_auto_import, [register/2]}).
 
--include("prometheus_model.hrl").
-
 -type collector() :: atom().
 
 %% FIXME: temporary HACK
@@ -28,7 +26,7 @@
 -callback collect_metrics(Name, Data) -> Metrics when
     Name    :: atom(),
     Data    :: any(),
-    Metrics :: #'Metric'{} | list(#'Metric'{}).
+    Metrics :: prometheus_model:'Metric'() | [prometheus_model:'Metric'()].
 
 -callback deregister_cleanup(Registry :: prometheus_registry:registry()) -> ok.
 

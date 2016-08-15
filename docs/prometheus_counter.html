@@ -1,0 +1,194 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<title>Module prometheus_counter</title>
+<link rel="stylesheet" type="text/css" href="stylesheet.css" title="EDoc">
+</head>
+<body bgcolor="white">
+<div class="navbar"><a name="#navbar_top"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<hr>
+
+<h1>Module prometheus_counter</h1>
+<ul class="index"><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+
+<p><b>Behaviours:</b> <a href="gen_server.html"><tt>gen_server</tt></a>, <a href="prometheus_collector.html"><tt>prometheus_collector</tt></a>, <a href="prometheus_metric.html"><tt>prometheus_metric</tt></a>.</p>
+
+<h2><a name="index">Function Index</a></h2>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#code_change-3">code_change/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#collect_metrics-2">collect_metrics/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#collect_mf-2">collect_mf/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#declare-1">declare/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#declare-2">declare/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#deregister_cleanup-1">deregister_cleanup/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#dinc-1">dinc/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#dinc-2">dinc/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#dinc-3">dinc/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#dinc-4">dinc/4</a></td><td></td></tr>
+<tr><td valign="top"><a href="#handle_call-3">handle_call/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#handle_cast-2">handle_cast/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#handle_info-2">handle_info/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#inc-1">inc/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#inc-2">inc/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#inc-3">inc/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#inc-4">inc/4</a></td><td></td></tr>
+<tr><td valign="top"><a href="#init-1">init/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#new-1">new/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#new-2">new/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#reset-1">reset/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#reset-2">reset/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#reset-3">reset/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#start_link-0">start_link/0</a></td><td></td></tr>
+<tr><td valign="top"><a href="#terminate-2">terminate/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#value-1">value/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#value-2">value/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#value-3">value/3</a></td><td></td></tr>
+</table>
+
+<h2><a name="functions">Function Details</a></h2>
+
+<h3 class="function"><a name="code_change-3">code_change/3</a></h3>
+<div class="spec">
+<p><tt>code_change(OldVsn, State, Extra) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="collect_metrics-2">collect_metrics/2</a></h3>
+<div class="spec">
+<p><tt>collect_metrics(Name, X2) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="collect_mf-2">collect_mf/2</a></h3>
+<div class="spec">
+<p><tt>collect_mf(Callback, Registry) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="declare-1">declare/1</a></h3>
+<div class="spec">
+<p><tt>declare(Spec) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="declare-2">declare/2</a></h3>
+<div class="spec">
+<p><tt>declare(Spec, Registry) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="deregister_cleanup-1">deregister_cleanup/1</a></h3>
+<div class="spec">
+<p><tt>deregister_cleanup(Registry) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="dinc-1">dinc/1</a></h3>
+<div class="spec">
+<p><tt>dinc(Name) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="dinc-2">dinc/2</a></h3>
+<div class="spec">
+<p><tt>dinc(Name, LabelValues) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="dinc-3">dinc/3</a></h3>
+<div class="spec">
+<p><tt>dinc(Name, LabelValues, Value) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="dinc-4">dinc/4</a></h3>
+<div class="spec">
+<p><tt>dinc(Registry, Name, LabelValues, Value) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="handle_call-3">handle_call/3</a></h3>
+<div class="spec">
+<p><tt>handle_call(Call, From, State) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="handle_cast-2">handle_cast/2</a></h3>
+<div class="spec">
+<p><tt>handle_cast(X1, State) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="handle_info-2">handle_info/2</a></h3>
+<div class="spec">
+<p><tt>handle_info(Info, State) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="inc-1">inc/1</a></h3>
+<div class="spec">
+<p><tt>inc(Name) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="inc-2">inc/2</a></h3>
+<div class="spec">
+<p><tt>inc(Name, LabelValues) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="inc-3">inc/3</a></h3>
+<div class="spec">
+<p><tt>inc(Name, LabelValues, Value) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="inc-4">inc/4</a></h3>
+<div class="spec">
+<p><tt>inc(Registry, Name, LabelValues, Value) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="init-1">init/1</a></h3>
+<div class="spec">
+<p><tt>init(Args) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="new-1">new/1</a></h3>
+<div class="spec">
+<p><tt>new(Spec) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="new-2">new/2</a></h3>
+<div class="spec">
+<p><tt>new(Spec, Registry) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="reset-1">reset/1</a></h3>
+<div class="spec">
+<p><tt>reset(Name) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="reset-2">reset/2</a></h3>
+<div class="spec">
+<p><tt>reset(Name, LabelValues) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="reset-3">reset/3</a></h3>
+<div class="spec">
+<p><tt>reset(Registry, Name, LabelValues) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="start_link-0">start_link/0</a></h3>
+<div class="spec">
+<p><tt>start_link() -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="terminate-2">terminate/2</a></h3>
+<div class="spec">
+<p><tt>terminate(Reason, State) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="value-1">value/1</a></h3>
+<div class="spec">
+<p><tt>value(Name) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="value-2">value/2</a></h3>
+<div class="spec">
+<p><tt>value(Name, LabelValues) -&gt; any()</tt></p>
+</div>
+
+<h3 class="function"><a name="value-3">value/3</a></h3>
+<div class="spec">
+<p><tt>value(Registry, Name, LabelValues) -&gt; any()</tt></p>
+</div>
+<hr>
+
+<div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
+<p><i>Generated by EDoc, Aug 15 2016, 18:56:23.</i></p>
+</body>
+</html>

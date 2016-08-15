@@ -33,11 +33,12 @@
     Metrics  :: [prometheus_model:'Metric'()].
 
 -callback collect_metrics(Name, Data) -> Metrics when
-    Name    :: atom(),
+    Name    :: prometheus_metric:name(),
     Data    :: data(),
     Metrics :: prometheus_model:'Metric'() | [prometheus_model:'Metric'()].
 
--callback deregister_cleanup(Registry :: prometheus_registry:registry()) -> ok.
+-callback deregister_cleanup(Registry) -> ok when
+    Registry :: prometheus_registry:registry().
 
 %%====================================================================
 %% Public API

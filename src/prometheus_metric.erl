@@ -11,6 +11,7 @@
          extract_common_params/1]).
 
 -export_type([name/0,
+              help/0,
               value/0]).
 
 -ifdef(TEST).
@@ -26,6 +27,8 @@
 %%====================================================================
 
 -type name() :: atom() | binary() | nonempty_string().
+
+-type help() :: binary() | nonempty_string().
 
 -type value() :: number() %% counter or gauge
                | {Count :: number(), Sum :: number()} %% summary

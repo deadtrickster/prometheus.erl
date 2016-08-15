@@ -32,10 +32,10 @@
 %%%===================================================================
 
 -spec create_mf(Name, Help, Type, Collector, CollectorData) -> MetricFamily when
-    Name          :: atom(),
-    Help          :: nonempty_string() | binary(),
+    Name          :: prometheus_metric:name(),
+    Help          :: prometheus_metric:help(),
     Type          :: atom(),
-    Collector     :: atom(),
+    Collector     :: prometheus_collector:collector(),
     CollectorData :: prometheus_collector:data(),
     MetricFamily  :: prometheus_model:'MetricFamily'().
 create_mf(Name, Help, Type, Collector, CollectorData) ->

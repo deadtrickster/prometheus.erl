@@ -134,7 +134,7 @@ Prometheus.erl supports standard Erlang app configuration.
  - [x] Tests
  - [x] Bucket generators
  - [x] Protobuf format
- - [x] Full summary implementation
+ - [ ] Full summary implementation
  - [ ] Extend custom collectors collection?
 
 

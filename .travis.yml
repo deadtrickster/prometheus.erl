@@ -11,4 +11,4 @@ cache:
 otp_release:
 - 19.0
 - 18.0
-script: "./elvis rock && rebar3 do xref, dialyzer, eunit"
+script: "./bin/checks.sh"

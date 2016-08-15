@@ -50,7 +50,7 @@ create_mf(Name, Help, Type, Collector, CollectorData) ->
 gauge_metrics(Values) -> lists:map(fun gauge_metric/1, Values).
 
 -spec gauge_metric(Value) -> prometheus_model:'Metric'() when
-    Value :: prometheus_collector:datum() | non_neg_integer().
+    Value :: integer().
 gauge_metric({Labels, Value}) -> gauge_metric(Labels, Value);
 gauge_metric({Value})         -> gauge_metric([], Value);
 gauge_metric(Value)           -> gauge_metric([], Value).
@@ -120,7 +120,7 @@ histogram_metric({Buckets, Count, Sum}) ->
     Buckets :: [{Bound, Count}],
     Bound   :: prometheus_buckets:bucket_bound(),
     Count   :: non_neg_integer(),
-    Sum     :: atom(),
+    Sum     :: non_neg_integer(),
     Metric  :: prometheus_model:'Metric'().
 histogram_metric(Labels, Buckets, Count, Sum) ->
   Label  = label_pairs(Labels),
@@ -134,7 +134,6 @@ histogram_metric(Labels, Buckets, Count, Sum) ->
 %% {@link label_pair/1. `lists:map(fun label_pair/1, Labels)'}.
 label_pairs(Labels) -> lists:map(fun label_pair/1, Labels).
 
-%% FIXME: refine
 -spec label_pair(label()) -> prometheus_model:'LabelPair'().
 label_pair({Name, Value}) ->
   #'LabelPair'{name  = ensure_binary(Name),

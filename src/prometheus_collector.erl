@@ -7,7 +7,6 @@
          collect_mf/3]).
 
 -export_type([collector/0,
-              datum/0,
               data/0,
               collect_mf_callback/0]).
 
@@ -19,11 +18,7 @@
 
 -type collector() :: atom().
 
--type datum() :: {atom(), non_neg_integer()}
-               | {[{atom(), atom() | non_neg_integer()}, ...], atom()}
-               | {_, _, [_]}.
-
--type data() :: datum() | [datum(), ...].
+-type data() :: any().
 
 -type collect_mf_callback() ::
         fun((prometheus_model:'MetricFamily'()) -> any()).

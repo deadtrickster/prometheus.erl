@@ -68,7 +68,7 @@ counter_metric({Value})         -> counter_metric([], Value);
 counter_metric(Value)           -> counter_metric([], Value).
 
 -spec counter_metric(Labels, Value) -> prometheus_model:'Metric'() when
-    Labels :: [{_, _}],
+    Labels :: [{_, _}],                         % FIXME: refine
     Value  :: non_neg_integer().
 counter_metric(Labels, Value) ->
   #'Metric'{label   = label_pairs(Labels),
@@ -109,7 +109,7 @@ histogram_metric({Buckets, Count, Sum}) ->
   histogram_metric([], Buckets, Count, Sum).
 
 -spec histogram_metric(Labels, Buckets, Count, Sum) -> Metric when
-    Labels  :: [{_, _}],
+    Labels  :: [{_, _}],                        % FIXME: refine
     Buckets :: [{Bound, Count}],
     Bound   :: prometheus_buckets:bucket_bound(),
     Count   :: non_neg_integer(),

@@ -19,6 +19,10 @@
 
 -include("prometheus_model.hrl").
 
+-type label_name() :: term().
+-type label_value() :: term().
+-type label() :: {label_name(), label_value()}.
+
 %%%===================================================================
 %%% Public API
 %%%===================================================================
@@ -48,8 +52,7 @@ gauge_metric({Value})         -> gauge_metric([], Value);
 gauge_metric(Value)           -> gauge_metric([], Value).
 
 -spec gauge_metric(Labels, Value) -> prometheus_model:'Metric'() when
-    Labels :: [{Name, Value}],
-    Name   :: atom(),
+    Labels :: [label()],
     Value  :: non_neg_integer().
 gauge_metric(Labels, Value) ->
   #'Metric'{label = label_pairs(Labels),
@@ -61,14 +64,14 @@ counter_metrics(Specs) -> lists:map(fun counter_metric/1, Specs).
 
 -spec counter_metric(Value) -> prometheus_model:'Metric'() when
     Value  :: {Labels, Val} | {Val} | Val,
-    Labels :: [{_, _}],                          % FIXME: refine
+    Labels :: [label()],
     Val    :: non_neg_integer().
 counter_metric({Labels, Value}) -> counter_metric(Labels, Value);
 counter_metric({Value})         -> counter_metric([], Value);
 counter_metric(Value)           -> counter_metric([], Value).
 
 -spec counter_metric(Labels, Value) -> prometheus_model:'Metric'() when
-    Labels :: [{_, _}],                         % FIXME: refine
+    Labels :: [label()],
     Value  :: non_neg_integer().
 counter_metric(Labels, Value) ->
   #'Metric'{label   = label_pairs(Labels),
@@ -80,7 +83,7 @@ summary_metrics(Specs) -> lists:map(fun summary_metric/1, Specs).
 
 -spec summary_metric(Spec) -> prometheus_model:'Metric'() when
     Spec   :: {Labels, Count, Sum} | {Count, Sum},
-    Labels :: [{_, _}],                         % FIXME: refine
+    Labels :: [label()],
     Count  :: non_neg_integer(),
     Sum    :: non_neg_integer().
 summary_metric({Labels, Count, Sum}) -> summary_metric(Labels, Count, Sum);
@@ -90,7 +93,7 @@ summary_metric({Count, Sum})         -> summary_metric([], Count, Sum).
 summary_metric(Count, Sum) -> summary_metric([], Count, Sum).
 
 -spec summary_metric(Labels, Count, Sum) -> prometheus_model:'Metric'() when
-    Labels :: [{_, _}],                         % FIXME: refine
+    Labels :: [label()],
     Count  :: non_neg_integer(),
     Sum    :: non_neg_integer().
 summary_metric(Labels, Count, Sum) ->
@@ -109,7 +112,7 @@ histogram_metric({Buckets, Count, Sum}) ->
   histogram_metric([], Buckets, Count, Sum).
 
 -spec histogram_metric(Labels, Buckets, Count, Sum) -> Metric when
-    Labels  :: [{_, _}],                        % FIXME: refine
+    Labels  :: [label()],
     Buckets :: [{Bound, Count}],
     Bound   :: prometheus_buckets:bucket_bound(),
     Count   :: non_neg_integer(),
@@ -128,7 +131,7 @@ histogram_metric(Labels, Buckets, Count, Sum) ->
 label_pairs(Labels) -> lists:map(fun label_pair/1, Labels).
 
 %% FIXME: refine
--spec label_pair({_, _}) -> prometheus_model:'LabelPair'().
+-spec label_pair(label()) -> prometheus_model:'LabelPair'().
 label_pair({Name, Value}) ->
   #'LabelPair'{name  = ensure_binary(Name),
                value = ensure_binary(Value)}.

@@ -5,15 +5,18 @@
 
 -module(prometheus_sup).
 
--behaviour(supervisor).
-
 %% API
 -export([start_link/0]).
-
 %% Supervisor callbacks
 -export([init/1]).
 
+-behaviour(supervisor).
+
 -include("prometheus.hrl").
+
+%%====================================================================
+%% Macros
+%%====================================================================
 
 -define(SERVER, ?MODULE).
 
@@ -53,7 +56,7 @@ init([]) ->
                                [prometheus_histogram]}]}}.
 
 %%====================================================================
-%% Internal functions
+%% Private Parts
 %%====================================================================
 
 create_tables() ->

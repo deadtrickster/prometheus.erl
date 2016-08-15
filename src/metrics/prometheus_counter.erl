@@ -43,9 +43,14 @@
                                    counter_metric/2]).
 
 -include("prometheus.hrl").
--behaviour(prometheus_collector).
+
 -behaviour(prometheus_metric).
+-behaviour(prometheus_collector).
 -behaviour(gen_server).
+
+%%====================================================================
+%% Macros
+%%====================================================================
 
 -define(TABLE, ?PROMETHEUS_COUNTER_TABLE).
 -define(SUM_POS, 2).

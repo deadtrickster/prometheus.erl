@@ -1,4 +1,5 @@
 -module(prometheus_vm_memory_collector).
+
 -export([deregister_cleanup/1,
          collect_mf/2,
          collect_metrics/2]).

@@ -13,6 +13,10 @@
 
 -compile({no_auto_import, [register/2]}).
 
+%%====================================================================
+%% Types
+%%====================================================================
+
 -type collector() :: atom().
 
 -type datum() :: {atom(), non_neg_integer()}
@@ -26,6 +30,10 @@
         fun ((atom(), atom(), list(atom()), string() | binary()) -> ok)
       | fun((_, _) -> any()).
 
+%%====================================================================
+%% Callbacks
+%%====================================================================
+
 -callback collect_mf(Callback, Registry) -> Metrics | ok when
     Callback :: callback(),
     Registry :: prometheus_registry:registry(),
@@ -37,6 +45,10 @@
     Metrics :: prometheus_model:'Metric'() | [prometheus_model:'Metric'()].
 
 -callback deregister_cleanup(Registry :: prometheus_registry:registry()) -> ok.
+
+%%====================================================================
+%% Public API
+%%====================================================================
 
 %% @equiv register(Collector, default)
 register(Collector) -> register(Collector, default).

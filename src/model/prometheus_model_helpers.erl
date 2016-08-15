@@ -19,6 +19,10 @@
 
 -include("prometheus_model.hrl").
 
+%%%===================================================================
+%%% Types
+%%%===================================================================
+
 -type label_name() :: term().
 -type label_value() :: term().
 -type label() :: {label_name(), label_value()}.
@@ -137,7 +141,7 @@ label_pair({Name, Value}) ->
                value = ensure_binary(Value)}.
 
 %%%===================================================================
-%%% Private Functions
+%%% Private Parts
 %%%===================================================================
 
 %% @doc Equivalent to

@@ -141,6 +141,14 @@ Prometheus.erl supports standard Erlang app configuration.
 ### Build
 
     $ rebar3 compile
+    
+### Contributing
+
+    Types -> Macros -> Callbacks -> Public API -> Deprecations -> Private Parts
+
+install git precommit hook:
+    
+    ./bin/pre-commit.sh install
 
 ### License
 

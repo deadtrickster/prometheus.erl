@@ -21,6 +21,10 @@
 
 -include("prometheus.hrl").
 
+%%====================================================================
+%% Types
+%%====================================================================
+
 -type name() :: atom() | binary() | nonempty_string().
 
 -type value() :: number() %% counter or gauge

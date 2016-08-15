@@ -1,19 +1,32 @@
 -module(prometheus_registry).
+
 -export([collect/2,
          collectors/1,
          register_collector/2,
          deregister_collector/2,
-         collector_registeredp/2,
          clear/0,
-         clear/1]).
+         clear/1,
+         collector_registeredp/2]).
 
 -export_type([registry/0]).
 
--type registry() :: atom().
-
 -include("prometheus.hrl").
 
+%%====================================================================
+%% Types
+%%====================================================================
+
+-type registry() :: atom().
+
+%%====================================================================
+%% Macros
+%%====================================================================
+
 -define(TABLE, ?PROMETHEUS_REGISTRY_TABLE).
+
+%%====================================================================
+%% Public API
+%%====================================================================
 
 -spec collect(Registry, Callback) -> ok when
     Registry :: prometheus_registry:registry(),

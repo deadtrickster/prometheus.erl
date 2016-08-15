@@ -9,10 +9,17 @@
 -export_type([bucket_bound/0,
               buckets/0]).
 
+%%====================================================================
+%% Types
+%%====================================================================
+
 -type bucket_bound() :: number() | infinity.
 -type buckets() :: [bucket_bound(), ...].
 
-%% Macros.
+%%====================================================================
+%% Macros
+%%====================================================================
+
 -define(DEPRECATED(Old, New),
         error_logger:warning_msg(Old " is deprecated and will soon be removed. "
                                  "Please use " New " instead.~n")).

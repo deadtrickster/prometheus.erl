@@ -35,8 +35,13 @@
                                    counter_metric/2]).
 
 -include("prometheus.hrl").
--behaviour(prometheus_collector).
+
 -behaviour(prometheus_metric).
+-behaviour(prometheus_collector).
+
+%%====================================================================
+%% Macros
+%%====================================================================
 
 -define(TABLE, ?PROMETHEUS_GAUGE_TABLE).
 -define(GAUGE_POS, 2).

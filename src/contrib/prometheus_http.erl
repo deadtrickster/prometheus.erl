@@ -1,10 +1,11 @@
+%% @doc HTTP instrumentation helpers
 -module(prometheus_http).
 
 -export([microseconds_duration_buckets/0,
          status_class/1]).
 
 %%====================================================================
-%% Http instrumentation helpers
+%% Public API
 %%====================================================================
 
 %% @doc default microseconds buckets for measuring http requests duration

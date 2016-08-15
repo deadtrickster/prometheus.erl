@@ -53,10 +53,15 @@
                                    histogram_metric/4]).
 
 -include("prometheus.hrl").
--behaviour(prometheus_collector).
--behaviour(prometheus_metric).
 
-%% Macros.
+-behaviour(prometheus_metric).
+-behaviour(prometheus_collector).
+
+
+%%====================================================================
+%% Macros
+%%====================================================================
+
 -define(TABLE, ?PROMETHEUS_HISTOGRAM_TABLE).
 -define(BUCKETS_POS, 2).
 -define(BUCKETS_START, 3).

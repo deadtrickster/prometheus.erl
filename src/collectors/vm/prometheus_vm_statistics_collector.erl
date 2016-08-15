@@ -1,4 +1,5 @@
 -module(prometheus_vm_statistics_collector).
+
 -export([deregister_cleanup/1,
          collect_mf/2,
          collect_metrics/2]).
@@ -14,7 +15,10 @@
 
 -behaviour(prometheus_collector).
 
-%% Macros.
+%%====================================================================
+%% Macros
+%%====================================================================
+
 -define(GC_NUM_GCS,
         erlang_vm_statistics_garbage_collection_number_of_gcs).
 -define(GC_WORDS_RECLAIMED,

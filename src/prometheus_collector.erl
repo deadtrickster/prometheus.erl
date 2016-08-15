@@ -7,42 +7,52 @@
          collect_mf/3]).
 
 -export_type([collector/0,
+              datum/0,
+              data/0,
               callback/0]).
 
 -compile({no_auto_import, [register/2]}).
 
 -type collector() :: atom().
 
-%% FIXME: temporary HACK
+-type datum() :: {atom(), non_neg_integer()}
+               | {[{atom(), atom() | non_neg_integer()}, ...], atom()}
+               | {_, _, [_]}.
+
+-type data() :: datum() | [datum(), ...].
+
+%% TODO: Split up callback types.
 -type callback() ::
         fun ((atom(), atom(), list(atom()), string() | binary()) -> ok)
       | fun((_, _) -> any()).
 
-%% FIXME: `| ok' is a temporary HACK
--callback collect_mf(Callback :: callback(),
-                     Registry :: prometheus_registry:registry()) -> list() | ok.
+-callback collect_mf(Callback, Registry) -> Metrics | ok when
+    Callback :: callback(),
+    Registry :: prometheus_registry:registry(),
+    Metrics  :: [prometheus_model:'Metric'()].
 
-%% FIXME: temporary HACK
 -callback collect_metrics(Name, Data) -> Metrics when
     Name    :: atom(),
-    Data    :: any(),
+    Data    :: data(),
     Metrics :: prometheus_model:'Metric'() | [prometheus_model:'Metric'()].
 
 -callback deregister_cleanup(Registry :: prometheus_registry:registry()) -> ok.
 
 %% @equiv register(Collector, default)
-register(Collector) ->
-  register(Collector, default).
+register(Collector) -> register(Collector, default).
 
+-spec register(Collector, Registry) -> ok when
+    Collector :: collector(),
+    Registry  :: prometheus_registry:registry().
 register(Collector, Registry) ->
   ok = prometheus_registry:register_collector(Registry, Collector).
 
 %% @equiv deregister(Collector, default)
-deregister(Collector) ->
-  deregister(Collector, default).
+deregister(Collector) -> deregister(Collector, default).
 
--spec deregister(Collector :: collector(),
-                 Registry :: prometheus_registry:registry()) -> ok.
+-spec deregister(Collector, Registry) -> ok when
+    Collector :: collector(),
+    Registry  :: prometheus_registry:registry().
 deregister(Collector, Registry) ->
   prometheus_registry:deregister_collector(Registry, Collector).
 

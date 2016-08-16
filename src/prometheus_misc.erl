@@ -1,3 +1,4 @@
+%% @hidden
 %% behaviour_modules original Copyright message
 %% all other code is under MIT
 %% The contents of this file are subject to the Mozilla Public License

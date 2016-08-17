@@ -18,6 +18,7 @@
 You can write custom collector/exporter for any library/app you'd like. For example here is [Queue info collector](https://github.com/deadtrickster/prometheus_rabbitmq_exporter/blob/master/src/collectors/prometheus_rabbitmq_queues_collector.erl) from [RabbitMQ Exporter](https://github.com/deadtrickster/prometheus_rabbitmq_exporter).
 
 ### Integrations / Collectors
+ - [Ecto collector](https://github.com/deadtrickster/prometheus-ecto)
  - [Elixir plugs](https://github.com/deadtrickster/prometheus-plugs)
  - [Elli middleware](https://github.com/elli-lib/elli_prometheus)
  - [Fuse plugin](https://github.com/jlouis/fuse#fuse_stats_prometheus)

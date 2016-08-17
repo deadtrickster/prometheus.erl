@@ -19,7 +19,8 @@ defmodule Prometheus.Mixfile do
      maintainers: ["Ilya Khaprov"],
      licenses: ["MIT"],
      links: %{"GitHub" => "https://github.com/deadtrickster/prometheus.erl",
-              "Elixir Plugs" => "https://hex.pm/packages/prometheus_plugs"},
+              "Elixir Plugs" => "https://hex.pm/packages/prometheus_plugs",
+              "Ecto Collector" => "https://hex.pm/packages/prometheus_ecto"},
      files: ["src", "include", "README.md", "LICENSE", "rebar.config"]]
   end
 end

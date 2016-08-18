@@ -134,7 +134,7 @@ Prometheus.erl supports standard Erlang app configuration.
 
 All 3d-party libraries should be configured via `prometheus` app env.
 
-Exporters usually tightly coupled with web server and are signletons. They should understand these keys:
+Exproters are responsible for maintianing scrape endpoint. Exporters usually tightly coupled with web server and are singletons. They should understand these keys:
  - `path` - url for scraping;
  - `format` - scrape format as module name i.e. `prometheus_text_format` or `prometheus_protobuf_format`.
 Exporter-specific options should be under `<exporter_name>_exporter` for erlang or `<Exporter_name>Exporter` for Elixir i.e. `PlugsExporter` or `elli_exporter`

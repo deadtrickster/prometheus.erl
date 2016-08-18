@@ -128,6 +128,25 @@ Prometheus.erl supports standard Erlang app configuration.
   - `default_collectors` - List of custom collectors modules to be registered automatically. If undefined list of all modules implementing `prometheus_collector` behaviour will be used.
   - `default_metrics` - List of metrics to be registered during app startup. Metric format: `{Registry, Metric, Spec}` where `Registry` is registry name, `Metric` is metric type (prometheus_counter, prometheus_gauge ... etc), `Spec` is a list to be passed to `Metric:register/2`.
 
+### Collectors & Exporters Conventions
+
+#### Configuration
+
+All 3d-party libraries should be configured via `prometheus` app env.
+
+Exporters usually tightly coupled with web server and are signletons. They should understand these keys:
+ - `path` - url for scraping;
+ - `format` - scrape format as module name i.e. `prometheus_text_format` or `prometheus_protobuf_format`.
+Exporter-specific options should be under `<exporter_name>_exporter` for erlang or `<Exporter_name>Exporter` for Elixir i.e. `PlugsExporter` or `elli_exporter`
+
+Collectors collect integration specific metrics i.e. ecto timings, process informations and so on.
+Their configuration should be under `<collector_name>_collector`for erlang or `<Collector_name>Collector` for Elixir i.e. `process_collector`, `EctoCollector` and so on.
+
+#### Naming
+
+For Erlang: `prometheus_<name>_collector`/`prometheus_<name>_exporter`.
+
+For Elixir: `Prometheus.Collectors.<name>`/`Prometheus.Exporters.<name>`.
 
 ### TODO
 

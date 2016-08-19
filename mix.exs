@@ -3,7 +3,7 @@ defmodule Prometheus.Mixfile do
 
   def project do
     [app: :prometheus,
-     version: "2.0.0",
+     version: "2.1.0",
      description: description,
      package: package]
   end
@@ -20,7 +20,8 @@ defmodule Prometheus.Mixfile do
      licenses: ["MIT"],
      links: %{"GitHub" => "https://github.com/deadtrickster/prometheus.erl",
               "Elixir Plugs" => "https://hex.pm/packages/prometheus_plugs",
-              "Ecto Collector" => "https://hex.pm/packages/prometheus_ecto"},
+              "Ecto Instrumenter" => "https://hex.pm/packages/prometheus_ecto",
+              "Phoenix Instrumenter" => "https://hex.pm/packages/prometheus_phoenix"},
      files: ["src", "include", "README.md", "LICENSE", "rebar.config"]]
   end
 end

@@ -1,6 +1,7 @@
 -module(prometheus_collector).
 
--export([register/1,
+-export([enabled_collectors/0,
+         register/1,
          register/2,
          deregister/1,
          deregister/2,
@@ -44,6 +45,13 @@
 %% Public API
 %%====================================================================
 
+-spec enabled_collectors() -> [collector()].
+enabled_collectors() ->
+  case application:get_env(prometheus, default_collectors) of
+    undefined -> all_known_collectors();
+    Collectors -> Collectors
+  end.
+
 %% @equiv register(Collector, default)
 register(Collector) -> register(Collector, default).
 
@@ -68,3 +76,10 @@ deregister(Collector, Registry) ->
     Registry  :: prometheus_registry:registry().
 collect_mf(Collector, Callback, Registry) ->
   Collector:collect_mf(Callback, Registry).
+
+%%====================================================================
+%% Private Parts
+%%====================================================================
+
+all_known_collectors() ->
+  prometheus_misc:behaviour_modules(prometheus_collector).

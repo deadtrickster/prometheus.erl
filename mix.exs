@@ -22,6 +22,6 @@ defmodule Prometheus.Mixfile do
               "Elixir Plugs" => "https://hex.pm/packages/prometheus_plugs",
               "Ecto Instrumenter" => "https://hex.pm/packages/prometheus_ecto",
               "Phoenix Instrumenter" => "https://hex.pm/packages/prometheus_phoenix"},
-     files: ["src", "include", "README.md", "LICENSE", "rebar.config"]]
+     files: ["bin", "src", "include", "README.md", "LICENSE", "rebar.config"]]
   end
 end

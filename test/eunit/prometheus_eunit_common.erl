@@ -11,5 +11,5 @@ start() ->
 
 stop(DefaultCollectors) ->
   prometheus_registry:clear(default),
-  [prometheus_registry:register_collector(default, Collector) || Collector <- DefaultCollectors],
+  prometheus_registry:register_collectors(default, DefaultCollectors),
   ok.

@@ -13,6 +13,7 @@ microseconds_duration_buckets() ->
   [10, 100, 1000, 10000, 100000, 300000, 500000,
    750000, 1000000, 1500000, 2000000, 3000000].
 
+%% FIXME: throw invalid_value if StatusCode isn't a positive integer
 %% @doc returns status class for http status code
 status_class(StatusCode) when StatusCode < 100 ->
   "unknown";

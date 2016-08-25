@@ -3,6 +3,7 @@
 -export([collect/2,
          collectors/1,
          register_collector/2,
+         register_collectors/2,
          deregister_collector/2,
          clear/0,
          clear/1,
@@ -49,6 +50,13 @@ collectors(Registry) ->
                          Collector :: prometheus_collector:collector()) -> ok.
 register_collector(Registry, Collector) ->
   ets:insert(?TABLE, {Registry, Collector}),
+  ok.
+
+-spec register_collectors(Registry :: prometheus_registry:registry(),
+                          Collectors :: [prometheus_collector:collector()])
+                         -> ok.
+register_collectors(Registry, Collectors) ->
+  [register_collector(Registry, Collector) || Collector <- Collectors],
   ok.
 
 -spec deregister_collector(Registry :: prometheus_registry:registry(),

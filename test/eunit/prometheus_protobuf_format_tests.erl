@@ -10,8 +10,8 @@ escape_label_value_test()->
 
 prometheus_format_test_() ->
   {foreach,
-   fun start/0,
-   fun stop/1,
+   fun prometheus_eunit_common:start/0,
+   fun prometheus_eunit_common:stop/1,
    [fun test_gauge/1,
     fun test_counter/1,
     fun test_dcounter/1,
@@ -19,17 +19,6 @@ prometheus_format_test_() ->
     fun test_dsummary/1,
     fun test_histogram/1,
     fun test_dhistogram/1]}.
-
-start() ->
-  prometheus:start(),
-  Collectors = prometheus_registry:collectors(default),
-  prometheus_registry:clear(default),
-  Collectors.
-
-stop(DefaultCollectors) ->
-  prometheus_registry:clear(default),
-  [prometheus_registry:register_collector(default, Collector) || Collector <- DefaultCollectors],
-  ok.
 
 test_gauge(_) ->
   prometheus_gauge:new([{name, pool_size}, {help, "MongoDB Connections pool size"}]),

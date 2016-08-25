@@ -130,7 +130,7 @@ observe_duration(Name, Fun) ->
 observe_duration(Name, LabelValues, Fun) ->
   prometheus_misc:observe_duration(?MODULE, default, Name, LabelValues, Fun).
 
-observe_duration(Name, Registry, LabelValues, Fun) ->
+observe_duration(Name, Registry, LabelValues, Fun) -> %% FIXME: args order
   prometheus_misc:observe_duration(?MODULE, Registry, Name, LabelValues, Fun).
 
 %% @equiv reset(default, Name, [])
@@ -277,7 +277,7 @@ validate_histogram_buckets(RawBuckets) when is_list(RawBuckets) ->
       erlang:error({histogram_invalid_buckets, Buckets, "Buckets not sorted"})
   end;
 validate_histogram_buckets(Buckets) ->
-  erlang:error({histogram_invalid_buckets, Buckets}).
+  erlang:error({histogram_invalid_buckets, Buckets}). %% FIXME: why no message?
 
 validate_histogram_bound(Bound) when is_number(Bound) ->
   Bound;

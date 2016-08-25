@@ -20,6 +20,9 @@ prometheus_format_test_() ->
     fun test_histogram/1,
     fun test_dhistogram/1]}.
 
+content_type_test() ->
+  ?assertEqual(<<"text/plain; version=0.0.4">>, prometheus_text_format:content_type()).
+
 test_gauge(_) ->
   prometheus_gauge:new([{name, pool_size}, {help, "MongoDB Connections pool size"}]),
   prometheus_gauge:set(pool_size, 365),

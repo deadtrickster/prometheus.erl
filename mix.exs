@@ -19,9 +19,11 @@ defmodule Prometheus.Mixfile do
      maintainers: ["Ilya Khaprov"],
      licenses: ["MIT"],
      links: %{"GitHub" => "https://github.com/deadtrickster/prometheus.erl",
-              "Elixir Plugs" => "https://hex.pm/packages/prometheus_plugs",
+              "Prometheus.ex" => "https://hex.pm/packages/prometheus_ex",
               "Ecto Instrumenter" => "https://hex.pm/packages/prometheus_ecto",
-              "Phoenix Instrumenter" => "https://hex.pm/packages/prometheus_phoenix"},
+              "Phoenix Instrumenter" => "https://hex.pm/packages/prometheus_phoenix",
+              "Plugs Instrumenter/Exporter" => "https://hex.pm/packages/prometheus_plugs",
+              "Process info Collector" => "https://hex.pm/packages/prometheus_process_collector"},
      files: ["bin", "src", "include", "README.md", "LICENSE", "rebar.config"]]
   end
 end

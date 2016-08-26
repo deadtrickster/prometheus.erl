@@ -7,7 +7,7 @@ microseconds_duration_buckets_test() ->
                 750000, 1000000, 1500000, 2000000, 3000000], prometheus_http:microseconds_duration_buckets()).
 
 status_class_test() ->
-  ?assertMatch("unknown", prometheus_http:status_class(655)), %% FIXME: s/665/65
+  ?assertMatch("unknown", prometheus_http:status_class(65)),
   ?assertMatch("informational", prometheus_http:status_class(155)),
   ?assertMatch("success", prometheus_http:status_class(255)),
   ?assertMatch("redirection", prometheus_http:status_class(355)),

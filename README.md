@@ -1,6 +1,6 @@
 # Prometheus.erl [![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)](https://hex.pm/packages/prometheus) [![Build Status](https://travis-ci.org/deadtrickster/prometheus.erl.svg?branch=master)](https://travis-ci.org/deadtrickster/prometheus.erl)
 
-[Prometheus](https://prometheus.io) monitoring system and time series database client in Erlang.
+[Prometheus.io](https://prometheus.io) monitoring system and time series database client in Erlang.
 
 ![RabbitMQ Dashboard](https://raw.githubusercontent.com/deadtrickster/prometheus_rabbitmq_exporter/master/priv/dashboards/RabbitMQErlangVM.png)
 
@@ -19,6 +19,7 @@ You can write custom collector/exporter for any library/app you'd like. For exam
 
 ### Integrations / Collectors / Instrumenters
  - [Ecto collector](https://github.com/deadtrickster/prometheus-ecto)
+ - [Elixir client](https://github.com/deadtrickster/prometheus.ex)
  - [Elixir plugs](https://github.com/deadtrickster/prometheus-plugs)
  - [Elli middleware](https://github.com/elli-lib/elli_prometheus)
  - [Fuse plugin](https://github.com/jlouis/fuse#fuse_stats_prometheus)

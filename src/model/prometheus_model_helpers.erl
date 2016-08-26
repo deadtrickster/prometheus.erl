@@ -40,8 +40,8 @@
     MetricFamily  :: prometheus_model:'MetricFamily'().
 create_mf(Name, Help, Type, Collector, CollectorData) ->
   Metrics = ensure_list(Collector:collect_metrics(Name, CollectorData)),
-  #'MetricFamily'{name   = ensure_binary(Name),
-                  help   = ensure_binary(Help),
+  #'MetricFamily'{name   = ensure_binary_or_string(Name),
+                  help   = ensure_binary_or_string(Help),
                   type   = ensure_mf_type(Type),
                   metric = filter_undefined_metrics(Metrics)}.
 
@@ -136,8 +136,8 @@ label_pairs(Labels) -> lists:map(fun label_pair/1, Labels).
 
 -spec label_pair(label()) -> prometheus_model:'LabelPair'().
 label_pair({Name, Value}) ->
-  #'LabelPair'{name  = ensure_binary(Name),
-               value = ensure_binary(Value)}.
+  #'LabelPair'{name  = ensure_binary_or_string(Name),
+               value = ensure_binary_or_string(Value)}.
 
 %%%===================================================================
 %%% Private Parts
@@ -164,12 +164,12 @@ filter_undefined_metrics(Metrics) -> lists:filter(fun not_undefined/1, Metrics).
 not_undefined(undefined) -> false;
 not_undefined(_)         -> true.
 
--spec ensure_binary(Val :: term())     -> binary().
-ensure_binary(Val) when is_atom(Val)   -> atom_to_binary(Val, utf8);
-ensure_binary(Val) when is_list(Val)   -> list_to_binary(Val);
-ensure_binary(Val) when is_binary(Val) -> Val;
-ensure_binary(Val) ->
-  list_to_binary(io_lib:format("~p", [Val])).
+-spec ensure_binary_or_string(Val :: term())     -> binary() | string().
+ensure_binary_or_string(Val) when is_atom(Val)   -> atom_to_binary(Val, utf8);
+ensure_binary_or_string(Val) when is_list(Val)   -> Val; %% FIXME: validate utf8
+ensure_binary_or_string(Val) when is_binary(Val) -> Val;
+ensure_binary_or_string(Val) ->
+  io_lib:format("~p", [Val]).
 
 -spec ensure_mf_type(atom()) -> atom().
 ensure_mf_type(gauge)     -> 'GAUGE';

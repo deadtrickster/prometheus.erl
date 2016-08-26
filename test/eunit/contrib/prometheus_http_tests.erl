@@ -4,9 +4,16 @@
 
 microseconds_duration_buckets_test() ->
   ?assertMatch([10, 100, 1000, 10000, 100000, 300000, 500000,
-                750000, 1000000, 1500000, 2000000, 3000000], prometheus_http:microseconds_duration_buckets()).
+                750000, 1000000, 1500000, 2000000, 3000000],
+               prometheus_http:microseconds_duration_buckets()).
 
 status_class_test() ->
+  ?assertError({invalid_value, "qwe", "status code must be a positive integer"},
+               prometheus_http:status_class("qwe")),
+  ?assertError({invalid_value, 1.2, "status code must be a positive integer"},
+               prometheus_http:status_class(1.2)),
+  ?assertError({invalid_value, -10, "status code must be a positive integer"},
+               prometheus_http:status_class(-10)),
   ?assertMatch("unknown", prometheus_http:status_class(65)),
   ?assertMatch("informational", prometheus_http:status_class(155)),
   ?assertMatch("success", prometheus_http:status_class(255)),

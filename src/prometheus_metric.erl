@@ -64,6 +64,7 @@
 %% Public API
 %%====================================================================
 
+%% @equiv insert_new_mf(Table, Registry, Name, Labels, Help, undefined)
 insert_new_mf(Table, Registry, Name, Labels, Help) ->
   insert_new_mf(Table, Registry, Name, Labels, Help, undefined).
 
@@ -76,6 +77,7 @@ insert_new_mf(Table, Registry, Name, Labels, Help, Data) ->
                     "Consider using declare instead."})
   end.
 
+%% @equiv insert_mf(Table, Registry, Name, Labels, Help, undefined)
 insert_mf(Table, Registry, Name, Labels, Help) ->
   insert_mf(Table, Registry, Name, Labels, Help, undefined).
 

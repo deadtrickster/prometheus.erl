@@ -36,6 +36,8 @@ test_errors(_) ->
    %% mf/arity errors
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:observe(unknown_metric, 1)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:observe(db_query_duration, [repo, db], 1)),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:dobserve(unknown_metric, 1)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:dobserve(db_query_duration, [repo, db], 1)),
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:observe_duration(unknown_metric, fun() -> 1 end)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:observe_duration(db_query_duration, [repo, db], fun() -> 1 end)),
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:reset(unknown_metric)),

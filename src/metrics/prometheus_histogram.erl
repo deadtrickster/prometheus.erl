@@ -118,6 +118,7 @@ dobserve(Name, LabelValues, Value) ->
   dobserve(default, Name, LabelValues, Value).
 
 dobserve(Registry, Name, LabelValues, Value) when is_number(Value) ->
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   gen_server:cast(prometheus_histogram,
                   {observe, {Registry, Name, LabelValues, Value}}),
   ok;

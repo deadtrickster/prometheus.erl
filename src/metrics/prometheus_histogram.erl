@@ -64,9 +64,6 @@
 -define(TABLE, ?PROMETHEUS_HISTOGRAM_TABLE).
 -define(BUCKETS_POS, 2).
 -define(BUCKETS_START, 3).
--define(DEPRECATED(Old, New),
-        error_logger:warning_msg(Old " is deprecated and will soon be removed. "
-                                 "Please use " New " instead.~n")).
 
 %%====================================================================
 %% Metric API
@@ -250,14 +247,7 @@ code_change(_OldVsn, State, _Extra) ->
 parse_histogram_spec(Spec) ->
   {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
   validate_histogram_labels(Labels),
-  Buckets =
-    case prometheus_metric_spec:get_value(bounds, Spec, undefined) of
-      undefined ->
-        prometheus_metric_spec:get_value(buckets, Spec, default_buckets());
-      Bounds ->
-        ?DEPRECATED("Bounds config for Prometheus histograms", "buckets"),
-        Bounds
-    end,
+  Buckets = prometheus_metric_spec:get_value(buckets, Spec, default_buckets()),
   {Name, Labels, Help, validate_histogram_buckets(Buckets)}.
 
 validate_histogram_labels(Labels) ->

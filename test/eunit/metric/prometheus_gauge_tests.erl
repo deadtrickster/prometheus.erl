@@ -35,6 +35,10 @@ test_errors(_) ->
    %% mf/arity errors
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:set(unknown_metric, 2)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:set(with_label, [repo, db], 2)),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:set_to_current_time(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:set_to_current_time(with_label, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:track_inprogress(unknown_metric, nil)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:track_inprogress(with_label, [repo, db], nil)),
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:reset(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:reset(with_label, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:value(unknown_metric)),

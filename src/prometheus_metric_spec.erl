@@ -17,15 +17,18 @@
 %%====================================================================
 
 -spec get_value(Key :: atom(), Spec :: spec()) -> any().
+%% @private
 %% @equiv get_value(Key, Spec, undefined)
 get_value(Key, Spec) ->
   get_value(Key, Spec, undefined).
 
 -spec get_value(Key :: atom(), Spec :: spec(), Default :: any()) -> any().
+%% @private
 get_value(Key, Spec, Default) ->
   proplists:get_value(Key, Spec, Default).
 
 -spec fetch_value(Key :: atom(), Spec :: spec()) -> any() | no_return().
+%% @private
 fetch_value(Key, Spec) ->
   case proplists:get_value(Key, Spec) of
     undefined ->

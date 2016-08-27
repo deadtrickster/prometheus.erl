@@ -65,6 +65,8 @@ new(Spec) ->
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
 
+%% @deprecated Please use {@link new/1} with registry
+%% key instead.
 new(Spec, Registry) ->
   ?DEPRECATED("prometheus_counter:new/2", "prometheus_counter:new/1"
               " with registry key"),
@@ -76,6 +78,8 @@ declare(Spec) ->
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
 
+%% @deprecated Please use {@link declare/1} with registry
+%% key instead.
 declare(Spec, Registry) ->
   ?DEPRECATED("prometheus_counter:declare/2", "prometheus_counter:declare/1"
               " with registry key"),
@@ -162,15 +166,18 @@ value(Registry, Name, LabelValues) ->
 %% Collector API
 %%====================================================================
 
+%% @private
 deregister_cleanup(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry),
   true = ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_'}),
   ok.
 
+%% @private
 collect_mf(Callback, Registry) ->
   [Callback(create_counter(Name, Help, {Labels, Registry})) ||
     [Name, Labels, Help, _] <- prometheus_metric:metrics(?TABLE, Registry)].
 
+%% @private
 collect_metrics(Name, {Labels, Registry}) ->
   [counter_metric(lists:zip(Labels, LabelValues), Value) ||
     [LabelValues, Value] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'})].
@@ -179,25 +186,32 @@ collect_metrics(Name, {Labels, Registry}) ->
 %% Gen_server API
 %%====================================================================
 
+%% @private
 init(_Args) ->
   {ok, []}.
 
+%% @private
 handle_call(_Call, _From, State) ->
   {noreply, State}.
 
+%% @private
 handle_cast({inc, {Registry, Name, LabelValues, Value}}, State) ->
   dinc_impl(Registry, Name, LabelValues, Value),
   {noreply, State}.
 
+%% @private
 handle_info(_Info, State) ->
   {noreply, State}.
 
+%% @private
 terminate(_Reason, _State) ->
   ok.
 
+%% @private
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
+%% @private
 start_link() ->
   gen_server:start_link({local, prometheus_counter},
                         prometheus_counter, [], []).

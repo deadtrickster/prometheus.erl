@@ -1,3 +1,4 @@
+%% @private
 -module(prometheus_test_instrumenter).
 
 -behaviour(prometheus_instrumenter).

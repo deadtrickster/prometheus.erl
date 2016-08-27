@@ -30,9 +30,19 @@
 
 -type help() :: binary() | nonempty_string().
 
--type value() :: number() %% counter or gauge
-               | {Count :: number(), Sum :: number()} %% summary
-               | {Buckets :: [number(), ...], Sum :: number()}. %% histogram
+-type counter_value() :: number().
+
+-type gauge_value() :: number().
+
+-type summary_value() :: {Count :: number(), Sum :: number()}.
+
+-type histogram_value() :: {Buckets :: [number(), ...], Sum :: number()}.
+
+-type value() :: counter_value()
+               | gauge_value()
+               | summary_value()
+               | histogram_value()
+               | undefined.
 
 %%====================================================================
 %% Callbacks
@@ -42,16 +52,16 @@
 
 -callback declare(Spec :: prometheus_metric_spec:spec()) -> boolean().
 
--callback reset(Name :: name()) -> boolean().
--callback reset(Name :: name(), LValues :: list()) -> boolean().
--callback reset(Registry, Name, LValues) -> boolean() when
+-callback reset(Name :: name()) -> boolean() | no_return().
+-callback reset(Name :: name(), LValues :: list()) -> boolean() | no_return().
+-callback reset(Registry, Name, LValues) -> boolean() | no_return()  when
     Registry :: prometheus_registry:registry(),
     Name     :: name(),
     LValues  :: list().
 
--callback value(Name :: name()) -> value().
--callback value(Name :: name(), LValues :: list()) -> value().
--callback value(Registry, Name, LValues) -> value() when
+-callback value(Name :: name()) -> value() | no_return().
+-callback value(Name :: name(), LValues :: list()) -> value() | no_return().
+-callback value(Registry, Name, LValues) -> value() | no_return() when
     Registry :: prometheus_registry:registry(),
     Name     :: name(),
     LValues  :: list().
@@ -61,9 +71,11 @@
 %%====================================================================
 
 %% @equiv insert_new_mf(Table, Registry, Name, Labels, Help, undefined)
+%% @private
 insert_new_mf(Table, Registry, Name, Labels, Help) ->
   insert_new_mf(Table, Registry, Name, Labels, Help, undefined).
 
+%% @private
 insert_new_mf(Table, Registry, Name, Labels, Help, Data) ->
   case insert_mf(Table, Registry, Name, Labels, Help, Data) of
     true ->
@@ -73,16 +85,20 @@ insert_new_mf(Table, Registry, Name, Labels, Help, Data) ->
                     "Consider using declare instead."})
   end.
 
+%% @private
 %% @equiv insert_mf(Table, Registry, Name, Labels, Help, undefined)
 insert_mf(Table, Registry, Name, Labels, Help) ->
   insert_mf(Table, Registry, Name, Labels, Help, undefined).
 
+%% @private
 insert_mf(Table, Registry, Name, Labels, Help, Data) ->
   ets:insert_new(Table, {{Registry, mf, Name}, Labels, Help, Data}).
 
+%% @private
 deregister_mf(Table, Registry) ->
   ets:match_delete(Table, {{Registry, mf, '_'}, '_', '_', '_'}).
 
+%% @private
 check_mf_exists(Table, Registry, Name, LabelValues) ->
   case ets:lookup(Table, {Registry, mf, Name}) of
     [] ->
@@ -97,12 +113,15 @@ check_mf_exists(Table, Registry, Name, LabelValues) ->
       end
   end.
 
+%% @private
 mf_data(MF) ->
   element(4, MF).
 
+%% @private
 metrics(Table, Registry) ->
   ets:match(Table, {{Registry, mf, '$1'}, '$2', '$3', '$4'}).
 
+%% @private
 extract_common_params(Spec) ->
   Registry = prometheus_metric_spec:get_value(registry, Spec, default),
 
@@ -119,8 +138,9 @@ extract_common_params(Spec) ->
 
 %%====================================================================
 %% Private Parts
-%%====================================================================
+%%===================================================================
 
+%% @private
 validate_metric_name(RawName) when is_atom(RawName) ->
   validate_metric_name(RawName, atom_to_list(RawName));
 validate_metric_name(RawName) when is_binary(RawName) ->
@@ -130,6 +150,7 @@ validate_metric_name(RawName) when is_list(RawName) ->
 validate_metric_name(RawName) ->
   erlang:error({invalid_metric_name, RawName, "metric name is not a string"}).
 
+%% @private
 validate_metric_name(RawName, ListName) ->
   case io_lib:printable_unicode_list(ListName) of
     true ->
@@ -146,11 +167,13 @@ validate_metric_name(RawName, ListName) ->
                     "metric name is invalid string"})
   end.
 
+%% @private
 validate_metric_label_names(RawLabels) when is_list(RawLabels) ->
   lists:map(fun validate_metric_label_name/1, RawLabels);
 validate_metric_label_names(RawLabels) ->
   erlang:error({invalid_metric_labels, RawLabels, "not list"}).
 
+%% @private
 validate_metric_label_name(RawName) when is_atom(RawName) ->
   validate_metric_label_name(atom_to_list(RawName));
 validate_metric_label_name(RawName) when is_binary(RawName) ->
@@ -179,6 +202,7 @@ validate_metric_label_name_content(RawName) ->
                     "metric label doesn't match regex " ++ Regex})
   end.
 
+%% @private
 validate_metric_help(RawHelp) when is_binary(RawHelp) ->
   validate_metric_help(binary_to_list(RawHelp));
 validate_metric_help(RawHelp) when is_list(RawHelp) ->

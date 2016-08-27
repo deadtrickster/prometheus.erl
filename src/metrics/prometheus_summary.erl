@@ -67,6 +67,8 @@ new(Spec) ->
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
 
+%% @deprecated Please use {@link new/1} with registry
+%% key instead.
 new(Spec, Registry) ->
   ?DEPRECATED("prometheus_summary:new/2", "prometheus_summary:new/1"
               " with registry key"),
@@ -77,6 +79,8 @@ declare(Spec) ->
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
 
+%% @deprecated Please use {@link declare/1} with registry
+%% key instead.
 declare(Spec, Registry) ->
   ?DEPRECATED("prometheus_summary:declare/2", "prometheus_summary:declare/1"
               " with registry key"),
@@ -161,15 +165,18 @@ value(Registry, Name, LabelValues) ->
 %% Collector API
 %%====================================================================
 
+%% @private
 deregister_cleanup(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry),
   true = ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_', '_'}),
   ok.
 
+%% @private
 collect_mf(Callback, Registry) ->
   [Callback(create_summary(Name, Help, {Labels, Registry})) ||
     [Name, Labels, Help, _] <- prometheus_metric:metrics(?TABLE, Registry)].
 
+%% @private
 collect_metrics(Name, {Labels, Registry}) ->
   [summary_metric(lists:zip(Labels, LabelValues), Count, Sum) ||
     [LabelValues, Count, Sum] <- ets:match(?TABLE, {{Registry, Name, '$1'},
@@ -179,25 +186,32 @@ collect_metrics(Name, {Labels, Registry}) ->
 %% Gen_server API
 %%====================================================================
 
+%% @private
 init(_Args) ->
   {ok, []}.
 
+%% @private
 handle_call(_Call, _From, State) ->
   {noreply, State}.
 
+%% @private
 handle_cast({observe, {Registry, Name, LabelValues, Value}}, State) ->
   dobserve_impl(Registry, Name, LabelValues, Value),
   {noreply, State}.
 
+%% @private
 handle_info(_Info, State) ->
   {noreply, State}.
 
+%% @private
 terminate(_Reason, _State) ->
   ok.
 
+%% @private
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 
+%% @private
 start_link() ->
   gen_server:start_link({local, prometheus_summary},
                         prometheus_summary, [], []).

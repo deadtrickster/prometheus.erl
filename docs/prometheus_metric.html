@@ -10,111 +10,42 @@
 <hr>
 
 <h1>Module prometheus_metric</h1>
-<ul class="index"><li><a href="#types">Data Types</a></li><li><a href="#index">Function Index</a></li><li><a href="#functions">Function Details</a></li></ul>
+<ul class="index"><li><a href="#types">Data Types</a></li></ul>
 
-<p><b>This module defines the <tt>prometheus_metric</tt> behaviour.</b><br> Required callback functions: <tt>new/1</tt>, <tt>new/2</tt>, <tt>declare/1</tt>, <tt>declare/2</tt>, <tt>reset/1</tt>, <tt>reset/2</tt>, <tt>reset/3</tt>, <tt>value/1</tt>, <tt>value/2</tt>, <tt>value/3</tt>.</p>
+<p><b>This module defines the <tt>prometheus_metric</tt> behaviour.</b><br> Required callback functions: <tt>new/1</tt>, <tt>declare/1</tt>, <tt>reset/1</tt>, <tt>reset/2</tt>, <tt>reset/3</tt>, <tt>value/1</tt>, <tt>value/2</tt>, <tt>value/3</tt>.</p>
 
 <h2><a name="types">Data Types</a></h2>
 
+<h3 class="typedecl"><a name="type-counter_value">counter_value()</a></h3>
+<p><tt>counter_value() = number()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-gauge_value">gauge_value()</a></h3>
+<p><tt>gauge_value() = number()</tt></p>
+
+
 <h3 class="typedecl"><a name="type-help">help()</a></h3>
 <p><tt>help() = binary() | nonempty_string()</tt></p>
+
+
+<h3 class="typedecl"><a name="type-histogram_value">histogram_value()</a></h3>
+<p><tt>histogram_value() = {Buckets::[number(), ...], Sum::number()}</tt></p>
 
 
 <h3 class="typedecl"><a name="type-name">name()</a></h3>
 <p><tt>name() = atom() | binary() | nonempty_string()</tt></p>
 
 
+<h3 class="typedecl"><a name="type-summary_value">summary_value()</a></h3>
+<p><tt>summary_value() = {Count::number(), Sum::number()}</tt></p>
+
+
 <h3 class="typedecl"><a name="type-value">value()</a></h3>
-<p><tt>value() = number() | {Count::number(), Sum::number()} | {Buckets::[number(), ...], Sum::number()}</tt></p>
-<p>  histogram</p>
+<p><tt>value() = <a href="#type-counter_value">counter_value()</a> | <a href="#type-gauge_value">gauge_value()</a> | <a href="#type-summary_value">summary_value()</a> | <a href="#type-histogram_value">histogram_value()</a> | undefined</tt></p>
 
-<h2><a name="index">Function Index</a></h2>
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#check_mf_exists-4">check_mf_exists/4</a></td><td></td></tr>
-<tr><td valign="top"><a href="#deregister_mf-2">deregister_mf/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#extract_common_params-1">extract_common_params/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#insert_mf-5">insert_mf/5</a></td><td>Equivalent to <a href="#insert_mf-6"><tt>insert_mf(Table, Registry, Name, Labels, Help,
-	  undefined)</tt></a>.
-</td></tr>
-<tr><td valign="top"><a href="#insert_mf-6">insert_mf/6</a></td><td></td></tr>
-<tr><td valign="top"><a href="#insert_new_mf-5">insert_new_mf/5</a></td><td>Equivalent to <a href="#insert_new_mf-6"><tt>insert_new_mf(Table, Registry, Name, Labels, Help,
-	      undefined)</tt></a>.
-</td></tr>
-<tr><td valign="top"><a href="#insert_new_mf-6">insert_new_mf/6</a></td><td></td></tr>
-<tr><td valign="top"><a href="#metrics-2">metrics/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#mf_data-1">mf_data/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#validate_metric_help-1">validate_metric_help/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#validate_metric_label_names-1">validate_metric_label_names/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#validate_metric_name-1">validate_metric_name/1</a></td><td></td></tr>
-</table>
-
-<h2><a name="functions">Function Details</a></h2>
-
-<h3 class="function"><a name="check_mf_exists-4">check_mf_exists/4</a></h3>
-<div class="spec">
-<p><tt>check_mf_exists(Table, Registry, Name, LabelValues) -&gt; any()</tt></p>
-</div>
-
-<h3 class="function"><a name="deregister_mf-2">deregister_mf/2</a></h3>
-<div class="spec">
-<p><tt>deregister_mf(Table, Registry) -&gt; any()</tt></p>
-</div>
-
-<h3 class="function"><a name="extract_common_params-1">extract_common_params/1</a></h3>
-<div class="spec">
-<p><tt>extract_common_params(Spec) -&gt; any()</tt></p>
-</div>
-
-<h3 class="function"><a name="insert_mf-5">insert_mf/5</a></h3>
-<div class="spec">
-<p><tt>insert_mf(Table, Registry, Name, Labels, Help) -&gt; any()</tt></p>
-</div><p>Equivalent to <a href="#insert_mf-6"><tt>insert_mf(Table, Registry, Name, Labels, Help,
-	  undefined)</tt></a>.</p>
-
-
-<h3 class="function"><a name="insert_mf-6">insert_mf/6</a></h3>
-<div class="spec">
-<p><tt>insert_mf(Table, Registry, Name, Labels, Help, Data) -&gt; any()</tt></p>
-</div>
-
-<h3 class="function"><a name="insert_new_mf-5">insert_new_mf/5</a></h3>
-<div class="spec">
-<p><tt>insert_new_mf(Table, Registry, Name, Labels, Help) -&gt; any()</tt></p>
-</div><p>Equivalent to <a href="#insert_new_mf-6"><tt>insert_new_mf(Table, Registry, Name, Labels, Help,
-	      undefined)</tt></a>.</p>
-
-
-<h3 class="function"><a name="insert_new_mf-6">insert_new_mf/6</a></h3>
-<div class="spec">
-<p><tt>insert_new_mf(Table, Registry, Name, Labels, Help, Data) -&gt; any()</tt></p>
-</div>
-
-<h3 class="function"><a name="metrics-2">metrics/2</a></h3>
-<div class="spec">
-<p><tt>metrics(Table, Registry) -&gt; any()</tt></p>
-</div>
-
-<h3 class="function"><a name="mf_data-1">mf_data/1</a></h3>
-<div class="spec">
-<p><tt>mf_data(MF) -&gt; any()</tt></p>
-</div>
-
-<h3 class="function"><a name="validate_metric_help-1">validate_metric_help/1</a></h3>
-<div class="spec">
-<p><tt>validate_metric_help(RawHelp) -&gt; any()</tt></p>
-</div>
-
-<h3 class="function"><a name="validate_metric_label_names-1">validate_metric_label_names/1</a></h3>
-<div class="spec">
-<p><tt>validate_metric_label_names(RawLabels) -&gt; any()</tt></p>
-</div>
-
-<h3 class="function"><a name="validate_metric_name-1">validate_metric_name/1</a></h3>
-<div class="spec">
-<p><tt>validate_metric_name(RawName) -&gt; any()</tt></p>
-</div>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Aug 27 2016, 13:46:54.</i></p>
+<p><i>Generated by EDoc, Aug 27 2016, 18:26:58.</i></p>
 </body>
 </html>

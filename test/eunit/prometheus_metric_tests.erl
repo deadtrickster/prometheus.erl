@@ -33,5 +33,5 @@ extract_common_params_test() ->
   ?assertError({invalid_metric_labels, 12, "not list"}, prometheus_metric:extract_common_params([{name, "qwe"}, {labels, 12}])),
   ?assertError({invalid_metric_help, 12, "metric help is not a string"}, prometheus_metric:extract_common_params([{name, "qwe"}, {labels, ["qwe"]}, {help, 12}])),
 
-  ?assertEqual({"qwe", [], "qwe"}, prometheus_metric:extract_common_params([{name, "qwe"}, {help, "qwe"}])),
-  ?assertEqual({"qwe", ["qwe"], "qwe"}, prometheus_metric:extract_common_params([{name, "qwe"}, {labels, ["qwe"]}, {help, "qwe"}])).
+  ?assertEqual({default, "qwe", [], "qwe"}, prometheus_metric:extract_common_params([{name, "qwe"}, {help, "qwe"}])),
+  ?assertEqual({qwe, "qwe", ["qwe"], "qwe"}, prometheus_metric:extract_common_params([{name, "qwe"}, {labels, ["qwe"]}, {help, "qwe"}, {registry, qwe}])).

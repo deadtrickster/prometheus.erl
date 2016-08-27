@@ -2,9 +2,7 @@
 
 -export([default/0,
          linear/3,
-         exponential/3,
-         generate_linear/3,
-         generate_exponential/3]).
+         exponential/3]).
 
 -export_type([bucket_bound/0,
               buckets/0]).
@@ -15,14 +13,6 @@
 
 -type bucket_bound() :: number() | infinity.
 -type buckets() :: [bucket_bound(), ...].
-
-%%====================================================================
-%% Macros
-%%====================================================================
-
--define(DEPRECATED(Old, New),
-        error_logger:warning_msg(Old " is deprecated and will soon be removed. "
-                                 "Please use " New " instead.~n")).
 
 %%====================================================================
 %% Public API
@@ -49,20 +39,6 @@ exponential(_Start, Factor, _Count) when Factor =< 1 ->
 exponential(Start, Factor, Count) ->
   [try_to_maintain_integer_bounds(Start*math:pow(Factor, I)) ||
     I <- lists:seq(0, Count-1)].
-
-%%===================================================================
-%% Deprecations
-%%===================================================================
-
-generate_linear(Start, Step, Count) ->
-  ?DEPRECATED("prometheus_buckets:generate_linear/3",
-              "prometheus_buckets:linear/3"),
-  linear(Start, Step, Count).
-
-generate_exponential(Start, Factor, Count) ->
-  ?DEPRECATED("prometheus_buckets:generate_exponential/3",
-              "prometheus_buckets:exponential/3"),
-  exponential(Start, Factor, Count).
 
 %%====================================================================
 %% Private Parts

@@ -50,23 +50,27 @@
 %% Metric API
 %%====================================================================
 
-%% @equiv new(Spec, default)
 new(Spec) ->
-  new(Spec, default).
-
-new(Spec, Registry) ->
-  {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
+  {Registry, Name, Labels, Help} =
+    prometheus_metric:extract_common_params(Spec),
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
 
-%% @equiv declare(Spec, default)
-declare(Spec) ->
-  declare(Spec, default).
+new(Spec, Registry) ->
+  ?DEPRECATED("prometheus_gauge:new/2", "prometheus_gauge:new/1"
+              " with registry key"),
+  new([{registry, Registry} | Spec]).
 
-declare(Spec, Registry) ->
-  {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
+declare(Spec) ->
+  {Registry, Name, Labels, Help} =
+    prometheus_metric:extract_common_params(Spec),
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
+
+declare(Spec, Registry) ->
+  ?DEPRECATED("prometheus_gauge:declare/2", "prometheus_gauge:declare/1"
+              " with registry key"),
+  declare([{registry, Registry} | Spec]).
 
 %% @equiv set(default, Name, [], Value)
 set(Name, Value) ->

@@ -39,12 +39,8 @@
 %%====================================================================
 
 -callback new(Spec :: prometheus_metric_spec:spec()) -> ok.
--callback new(Spec :: prometheus_metric_spec:spec(),
-              Registry :: prometheus_registry:registry()) -> ok.
 
 -callback declare(Spec :: prometheus_metric_spec:spec()) -> boolean().
--callback declare(Spec :: prometheus_metric_spec:spec(),
-                  Registry :: prometheus_registry:registry()) -> boolean().
 
 -callback reset(Name :: name()) -> boolean().
 -callback reset(Name :: name(), LValues :: list()) -> boolean().
@@ -108,6 +104,8 @@ metrics(Table, Registry) ->
   ets:match(Table, {{Registry, mf, '$1'}, '$2', '$3', '$4'}).
 
 extract_common_params(Spec) ->
+  Registry = prometheus_metric_spec:get_value(registry, Spec, default),
+
   RawName = prometheus_metric_spec:fetch_value(name, Spec),
   Name = validate_metric_name(RawName),
 
@@ -117,7 +115,7 @@ extract_common_params(Spec) ->
   RawHelp = prometheus_metric_spec:fetch_value(help, Spec),
   Help = validate_metric_help(RawHelp),
 
-  {Name, Labels, Help}.
+  {Registry, Name, Labels, Help}.
 
 %%====================================================================
 %% Private Parts

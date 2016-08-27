@@ -62,23 +62,25 @@
 %% Metric API
 %%====================================================================
 
-%% @equiv new(Spec, default)
 new(Spec) ->
-  new(Spec, default).
-
-new(Spec, Registry) ->
-  {Name, Labels, Help} = parse_summary_spec(Spec),
+  {Registry, Name, Labels, Help} = parse_summary_spec(Spec),
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
 
-%% @equiv declare(Spec, default)
-declare(Spec) ->
-  declare(Spec, default).
+new(Spec, Registry) ->
+  ?DEPRECATED("prometheus_summary:new/2", "prometheus_summary:new/1"
+              " with registry key"),
+  new([{registry, Registry} | Spec]).
 
-declare(Spec, Registry) ->
-  {Name, Labels, Help} = parse_summary_spec(Spec),
+declare(Spec) ->
+  {Registry, Name, Labels, Help} = parse_summary_spec(Spec),
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
+
+declare(Spec, Registry) ->
+  ?DEPRECATED("prometheus_summary:declare/2", "prometheus_summary:declare/1"
+              " with registry key"),
+  declare([{registry, Registry} | Spec]).
 
 %% @equiv observe(default, Name, [], Value)
 observe(Name, Value) ->
@@ -205,9 +207,10 @@ start_link() ->
 %%====================================================================
 
 parse_summary_spec(Spec) ->
-  {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
+  {Registry, Name, Labels, Help} =
+    prometheus_metric:extract_common_params(Spec),
   validate_summary_labels(Labels),
-  {Name, Labels, Help}.
+  {Registry, Name, Labels, Help}.
 
 validate_summary_labels(Labels) ->
   [raise_error_if_quantile_label_found(Label) || Label <- Labels].

@@ -69,24 +69,26 @@
 %% Metric API
 %%====================================================================
 
-%% @equiv new(Spec, default)
 new(Spec) ->
-  new(Spec, default).
-
-new(Spec, Registry) ->
-  {Name, Labels, Help, Buckets} = parse_histogram_spec(Spec),
+  {Registry, Name, Labels, Help, Buckets} = parse_histogram_spec(Spec),
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_new_mf(?TABLE, Registry,
                                   Name, Labels, Help, Buckets).
 
-%% @equiv declare(Spec, default)
-declare(Spec) ->
-  declare(Spec, default).
+new(Spec, Registry) ->
+  ?DEPRECATED("prometheus_histogram:new/2", "prometheus_histogram:new/1"
+              " with registry key"),
+  new([{registry, Registry} | Spec]).
 
-declare(Spec, Registry) ->
-  {Name, Labels, Help, Buckets} = parse_histogram_spec(Spec),
+declare(Spec) ->
+  {Registry, Name, Labels, Help, Buckets} = parse_histogram_spec(Spec),
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help, Buckets).
+
+declare(Spec, Registry) ->
+  ?DEPRECATED("prometheus_histogram:declare/2", "prometheus_histogram:declare/1"
+              " with registry key"),
+  declare([{registry, Registry} | Spec]).
 
 %% @equiv observe(default, Name, [], Value)
 observe(Name, Value) ->
@@ -245,10 +247,11 @@ code_change(_OldVsn, State, _Extra) ->
 %%====================================================================
 
 parse_histogram_spec(Spec) ->
-  {Name, Labels, Help} = prometheus_metric:extract_common_params(Spec),
+  {Registry, Name, Labels, Help} =
+    prometheus_metric:extract_common_params(Spec),
   validate_histogram_labels(Labels),
   Buckets = prometheus_metric_spec:get_value(buckets, Spec, default_buckets()),
-  {Name, Labels, Help, validate_histogram_buckets(Buckets)}.
+  {Registry, Name, Labels, Help, validate_histogram_buckets(Buckets)}.
 
 validate_histogram_labels(Labels) ->
   [raise_error_if_le_label_found(Label) || Label <- Labels].

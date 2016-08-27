@@ -95,7 +95,7 @@ check_mf_exists(Table, Registry, Name, LabelValues) ->
         LVLength ->
           MF;
         LabelsLength ->
-          erlang:error({invalid_metric_arity, LabelsLength}, LabelValues)
+          erlang:error({invalid_metric_arity, LVLength, LabelsLength})
       end
   end.
 

@@ -125,12 +125,13 @@ dobserve(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "dobserve accepts only numbers"}).
 
 observe_duration(Name, Fun) ->
-  prometheus_misc:observe_duration(default, ?MODULE, Name, [], Fun).
+  observe_duration(default, Name, [], Fun).
 
 observe_duration(Name, LabelValues, Fun) ->
-  prometheus_misc:observe_duration(default, ?MODULE, Name, LabelValues, Fun).
+  observe_duration(default, Name, LabelValues, Fun).
 
-observe_duration(Registry, Name, LabelValues, Fun) -> %% FIXME: args order
+observe_duration(Registry, Name, LabelValues, Fun) ->
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   prometheus_misc:observe_duration(Registry, ?MODULE, Name, LabelValues, Fun).
 
 %% @equiv reset(default, Name, [])
@@ -156,8 +157,11 @@ value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
 value(Registry, Name, LabelValues) ->
-  [Metric] = ets:lookup(?TABLE, {Registry, Name, LabelValues}),
-  {buckets_counters(Metric), sum(Metric)}.
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
+    [Metric] -> {buckets_counters(Metric), sum(Metric)};
+    [] -> undefined
+  end.
 
 %% @equiv buckets(default, Name, [])
 buckets(Name) ->

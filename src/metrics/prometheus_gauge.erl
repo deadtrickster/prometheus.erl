@@ -130,8 +130,11 @@ value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
 value(Registry, Name, LabelValues) ->
-  [{_Key, Value}] = ets:lookup(?TABLE, {Registry, Name, LabelValues}),
-  Value.
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
+    [{_Key, Value}] -> Value;
+    [] -> undefined
+  end.
 
 %%====================================================================
 %% Collector API

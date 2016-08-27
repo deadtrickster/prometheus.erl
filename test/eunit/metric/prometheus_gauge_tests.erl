@@ -10,7 +10,8 @@ prometheus_format_test_() ->
     fun test_errors/1,
     fun test_set/1,
     fun test_set_to_current_time/1,
-    fun test_track_inprogress/1]}.
+    fun test_track_inprogress/1,
+    fun test_undefined_value/1]}.
 
 test_registration(_)->
   Name = pool_size,
@@ -24,12 +25,20 @@ test_registration(_)->
 
 test_errors(_) ->
   prometheus_gauge:new([{name, pool_size}, {help, ""}]),
+  prometheus_gauge:new([{name, with_label}, {labels, [label]}, {help, ""}]),
   [%% basic name/labels/help validations test, lets hope new is using extract_common_params
    ?_assertError({invalid_metric_name, 12, "metric name is not a string"}, prometheus_gauge:new([{name, 12}, {help, ""}])),
    ?_assertError({invalid_metric_labels, 12, "not list"}, prometheus_gauge:new([{name, "qwe"}, {labels, 12}, {help, ""}])),
    ?_assertError({invalid_metric_help, 12, "metric help is not a string"}, prometheus_gauge:new([{name, "qwe"}, {help, 12}])),
    %% gauge specific errors,
-   ?_assertError({invalid_value, "qwe", "set accepts only numbers"}, prometheus_gauge:set(pool_size, "qwe"))
+   ?_assertError({invalid_value, "qwe", "set accepts only numbers"}, prometheus_gauge:set(pool_size, "qwe")),
+   %% mf/arity errors
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:set(unknown_metric, 2)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:set(with_label, [repo, db], 2)),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:reset(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:reset(with_label, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:value(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:value(with_label, [repo, db]))
   ].
 
 test_set(_) ->
@@ -62,3 +71,9 @@ test_track_inprogress(_) ->
 
   [?_assertEqual(1, Value),
    ?_assertEqual(0, prometheus_gauge:value(fun_executing_gauge))].
+
+test_undefined_value(_) ->
+  prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),
+  UndefinedValue = prometheus_gauge:value(pool_size, [post]),
+  [?_assertEqual(undefined, UndefinedValue)].
+

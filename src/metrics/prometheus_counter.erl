@@ -59,6 +59,7 @@
 %% Metric API
 %%====================================================================
 
+%% @equiv new(Spec, default)
 new(Spec) ->
   new(Spec, default).
 
@@ -67,6 +68,7 @@ new(Spec, Registry) ->
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
 
+%% @equiv declare(Spec, default)
 declare(Spec) ->
   declare(Spec, default).
 
@@ -75,6 +77,7 @@ declare(Spec, Registry) ->
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
 
+%% @equiv inc(default, Name, [], 1)
 inc(Name) ->
   inc(default, Name, [], 1).
 
@@ -83,6 +86,7 @@ inc(Name, LabelValues) when is_list(LabelValues)->
 inc(Name, Value) when is_number(Value) ->
   inc(default, Name, [], Value).
 
+%% @equiv inc(default, Name, LabelValues, Value)
 inc(Name, LabelValues, Value) ->
   inc(default, Name, LabelValues, Value).
 
@@ -99,6 +103,7 @@ inc(Registry, Name, LabelValues, Value) when is_integer(Value) ->
 inc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "inc accepts only integers"}).
 
+%% @equiv dinc(default, Name, [], 1)
 dinc(Name) ->
   dinc(default, Name, [], 1).
 
@@ -107,6 +112,7 @@ dinc(Name, LabelValues) when is_list(LabelValues)->
 dinc(Name, Value) when is_number(Value) ->
   dinc(default, Name, [], Value).
 
+%% @equiv dinc(default, Name, LabelValues, Value)
 dinc(Name, LabelValues, Value) ->
   dinc(default, Name, LabelValues, Value).
 
@@ -121,9 +127,11 @@ dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
 dinc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "dinc accepts only numbers"}).
 
+%% @equiv reset(default, Name, [])
 reset(Name) ->
   reset(default, Name, []).
 
+%% @equiv reset(default, Name, LabelValues)
 reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
@@ -131,9 +139,11 @@ reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, 0}).
 
+%% @equiv value(default, Name, [])
 value(Name) ->
   value(default, Name, []).
 
+%% @equiv value(default, Name, LabelValues)
 value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 

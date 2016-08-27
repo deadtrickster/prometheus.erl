@@ -68,9 +68,11 @@ declare(Spec, Registry) ->
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
 
+%% @equiv set(default, Name, [], Value)
 set(Name, Value) ->
   set(default, Name, [], Value).
 
+%% @equiv set(default, Name, LabelValues, Value)
 set(Name, LabelValues, Value) ->
   set(default, Name, LabelValues, Value).
 
@@ -86,18 +88,22 @@ set(Registry, Name, LabelValues, Value) when is_number(Value) ->
 set(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "set accepts only numbers"}).
 
+%% @equiv set_to_current_time(default, Name, [])
 set_to_current_time(Name) ->
   set_to_current_time(default, Name, []).
 
+%% @equiv seto_to_current_time(default, Name, LabelValues)
 set_to_current_time(Name, LabelValues) ->
   set_to_current_time(default, Name, LabelValues).
 
 set_to_current_time(Registry, Name, LabelValues) ->
   set(Registry, Name, LabelValues, os:system_time(seconds)).
 
+%% @equiv track_inprogress(default, Name, [], Fun)
 track_inprogress(Name, Fun) ->
   track_inprogress(default, Name, [], Fun).
 
+%% @equiv track_inprogress(default, Name, LabelValues, Fun)
 track_inprogress(Name, LabelValues, Fun) ->
   track_inprogress(default, Name, LabelValues, Fun).
 

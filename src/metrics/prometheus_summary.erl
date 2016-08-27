@@ -62,6 +62,7 @@
 %% Metric API
 %%====================================================================
 
+%% @equiv new(Spec, default)
 new(Spec) ->
   new(Spec, default).
 
@@ -70,6 +71,7 @@ new(Spec, Registry) ->
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
 
+%% @equiv declare(Spec, default)
 declare(Spec) ->
   declare(Spec, default).
 
@@ -78,9 +80,11 @@ declare(Spec, Registry) ->
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
 
+%% @equiv observe(default, Name, [], Value)
 observe(Name, Value) ->
   observe(default, Name, [], Value).
 
+%% @equiv observe(default, Name, LabelValues, Value)
 observe(Name, LabelValues, Value) ->
   observe(default, Name, LabelValues, Value).
 
@@ -95,9 +99,11 @@ observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
 observe(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "observe accepts only integers"}).
 
+%% @equiv dobserve(default, Name, [], Value)
 dobserve(Name, Value) ->
   dobserve(default, Name, [], Value).
 
+%% @equiv dobserve(default, Name, LabelValues, Value)
 dobserve(Name, LabelValues, Value) ->
   dobserve(default, Name, LabelValues, Value).
 
@@ -109,9 +115,11 @@ dobserve(Registry, Name, LabelValues, Value) when is_number(Value) ->
 dobserve(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "dobserve accepts only numbers"}).
 
+%% @equiv observe_duration(default, Name, [], Fun)
 observe_duration(Name, Fun) ->
   observe_duration(default, Name, [], Fun).
 
+%% @equiv observe_duration(default, Name, LabelValues, Fun)
 observe_duration(Name, LabelValues, Fun) ->
   observe_duration(default, Name, LabelValues, Fun).
 

@@ -10,7 +10,8 @@ prometheus_format_test_() ->
     fun test_errors/1,
     fun test_int/1,
     fun test_double/1,
-    fun test_observe_duration/1]}.
+    fun test_observe_duration/1,
+    fun test_undefined_value/1]}.
 
 test_registration(_)->
   Name = orders_summary,
@@ -24,12 +25,22 @@ test_registration(_)->
 
 test_errors(_) ->
   prometheus_summary:new([{name, orders_summary}, {help, "Track orders count/total sum"}]),
+  prometheus_summary:new([{name, db_query_duration}, {labels, [repo]}, {help, ""}]),
   [%% basic name/labels/help validations test, lets hope new is using extract_common_params
    ?_assertError({invalid_metric_name, 12, "metric name is not a string"}, prometheus_summary:new([{name, 12}, {help, ""}])),
    ?_assertError({invalid_metric_labels, 12, "not list"}, prometheus_summary:new([{name, "qwe"}, {labels, 12}, {help, ""}])),
    ?_assertError({invalid_metric_label_name, "quantile", "summary cannot have a label named \"quantile\""},
                  prometheus_summary:new([{name, "qwe"}, {labels, ["qua", "quantile"]}, {help, ""}])),
    ?_assertError({invalid_metric_help, 12, "metric help is not a string"}, prometheus_summary:new([{name, "qwe"}, {help, 12}])),
+   %% mf/arity errors
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_summary:observe(unknown_metric, 1)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_summary:observe(db_query_duration, [repo, db], 1)),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_summary:observe_duration(unknown_metric, fun() -> 1 end)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_summary:observe_duration(db_query_duration, [repo, db], fun() -> 1 end)),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_summary:reset(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_summary:reset(db_query_duration, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_summary:value(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_summary:value(db_query_duration, [repo, db])),
    %% summary specific errors
    ?_assertError({invalid_value, 1.5, "observe accepts only integers"}, prometheus_summary:observe(orders_summary, 1.5)),
    ?_assertError({invalid_value, "qwe", "observe accepts only integers"}, prometheus_summary:observe(orders_summary, "qwe")),
@@ -79,3 +90,8 @@ test_observe_duration(_) ->
    ?_assertEqual(2, CountE),
    ?_assertMatch(true, 0.9 < Sum andalso Sum < 1.2),
    ?_assertMatch(true, 0.9 < SumE andalso SumE < 1.2)].
+
+test_undefined_value(_) ->  
+  prometheus_summary:new([{name, orders_summary}, {labels, [department]}, {help, "Track orders count/total sum"}]),
+  Value = prometheus_summary:value(orders_summary, [electronics]),
+  [?_assertEqual(undefined, Value)].

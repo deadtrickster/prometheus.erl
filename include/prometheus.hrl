@@ -18,3 +18,7 @@
                                       prometheus_gauge,
                                       prometheus_summary,
                                       prometheus_histogram]).
+
+-define(DEPRECATED(Old, New),
+        error_logger:warning_msg(Old " is deprecated and will soon be removed. "
+                                 "Please use " New " instead.~n")).

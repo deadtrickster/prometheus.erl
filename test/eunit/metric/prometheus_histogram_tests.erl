@@ -11,7 +11,8 @@ prometheus_format_test_() ->
     fun test_buckets/1,
     fun test_int/1,
     fun test_double/1,
-    fun test_observe_duration/1]}.
+    fun test_observe_duration/1,
+    fun test_undefined_value/1]}.
 
 test_registration(_)->
   Name = request_duration,
@@ -25,12 +26,26 @@ test_registration(_)->
 
 test_errors(_) ->
   prometheus_histogram:new([{name, request_duration}, {buckets, [100, 300, 500, 750, 1000]}, {help, "Track requests duration"}]),
+  prometheus_histogram:new([{name, db_query_duration}, {labels, [repo]}, {help, ""}]),
   [%% basic name/labels/help validations test, lets hope new is using extract_common_params
    ?_assertError({invalid_metric_name, 12, "metric name is not a string"}, prometheus_histogram:new([{name, 12}, {help, ""}])),
    ?_assertError({invalid_metric_labels, 12, "not list"}, prometheus_histogram:new([{name, "qwe"}, {labels, 12}, {help, ""}])),
    ?_assertError({invalid_metric_label_name, "le", "histogram cannot have a label named \"le\""},
                  prometheus_histogram:new([{name, "qwe"}, {labels, ["qwe", "le"]}, {help, ""}])),
    ?_assertError({invalid_metric_help, 12, "metric help is not a string"}, prometheus_histogram:new([{name, "qwe"}, {help, 12}])),
+   %% mf/arity errors
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:observe(unknown_metric, 1)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:observe(db_query_duration, [repo, db], 1)),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:dobserve(unknown_metric, 1)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:dobserve(db_query_duration, [repo, db], 1)),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:observe_duration(unknown_metric, fun() -> 1 end)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:observe_duration(db_query_duration, [repo, db], fun() -> 1 end)),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:reset(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:reset(db_query_duration, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:value(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:value(db_query_duration, [repo, db])),   
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:buckets(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:buckets(db_query_duration, [repo, db])), 
    %% histogram specific errors
    ?_assertError({histogram_no_buckets, []}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, []}])),
    ?_assertError({histogram_invalid_buckets, 1}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, 1}])),
@@ -122,3 +137,8 @@ test_observe_duration(_) ->
    ?_assertEqual([1, 1, 0], BucketsE),
    ?_assertMatch(true, 0.9 < Sum andalso Sum < 1.2),
    ?_assertMatch(true, 0.9 < SumE andalso SumE < 1.2)].
+
+test_undefined_value(_) ->  
+  prometheus_histogram:new([{name, duraiton_histogram}, {labels, [label]}, {help, ""}]),
+  Value = prometheus_histogram:value(duraiton_histogram, [label]),
+  [?_assertEqual(undefined, Value)].

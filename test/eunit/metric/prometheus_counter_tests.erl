@@ -9,7 +9,8 @@ prometheus_format_test_() ->
    [fun test_registration/1,
     fun test_errors/1,
     fun test_int/1,
-    fun test_double/1]}.
+    fun test_double/1,
+    fun test_undefined_value/1]}.
 
 test_registration(_)->
   Name = http_requests_total,
@@ -34,8 +35,11 @@ test_errors(_) ->
    ?_assertError({invalid_value, "qwe", "inc accepts only integers"}, prometheus_counter:inc(http_requests_total, [], "qwe")),
    ?_assertError({invalid_value, -1, "Counters accept only non-negative values"}, prometheus_counter:dinc(http_requests_total, -1)),
    ?_assertError({invalid_value, "qwe", "dinc accepts only numbers"}, prometheus_counter:dinc(http_requests_total, [], "qwe")),
+   %% mf/arity errors
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_counter:inc(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_counter:inc(db_query_duration, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_counter:dinc(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_counter:dinc(db_query_duration, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_counter:reset(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_counter:reset(db_query_duration, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_counter:value(unknown_metric)),
@@ -63,3 +67,8 @@ test_double(_) ->
   RValue = prometheus_counter:value(http_requests_total),
   [?_assertEqual(4.5, Value),
    ?_assertEqual(0, RValue)].
+
+test_undefined_value(_) ->
+  prometheus_counter:new([{name, http_requests_total}, {labels, [method]}, {help, "Http request count"}]),
+  UndefinedValue = prometheus_counter:value(http_requests_total, [post]),
+  [?_assertEqual(undefined, UndefinedValue)].

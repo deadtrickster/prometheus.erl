@@ -114,6 +114,7 @@ dinc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
   erlang:error({invalid_value, Value,
                 "Counters accept only non-negative values"});
 dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   gen_server:cast(prometheus_counter,
                   {inc, {Registry, Name, LabelValues, Value}}),
   ok;
@@ -138,8 +139,10 @@ value(Name, LabelValues) ->
 
 value(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  [{_Key, Value}] = ets:lookup(?TABLE, {Registry, Name, LabelValues}),
-  Value.
+  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
+    [{_Key, Value}] -> Value;
+    [] -> undefined
+  end.
 
 %%====================================================================
 %% Collector API

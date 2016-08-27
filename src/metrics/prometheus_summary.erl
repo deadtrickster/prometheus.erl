@@ -102,6 +102,7 @@ dobserve(Name, LabelValues, Value) ->
   dobserve(default, Name, LabelValues, Value).
 
 dobserve(Registry, Name, LabelValues, Value) when is_number(Value) ->
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   gen_server:cast(prometheus_summary,
                   {observe, {Registry, Name, LabelValues, Value}}),
   ok;
@@ -109,13 +110,14 @@ dobserve(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "dobserve accepts only numbers"}).
 
 observe_duration(Name, Fun) ->
-  prometheus_misc:observe_duration(?MODULE, default, Name, [], Fun).
+  observe_duration(default, Name, [], Fun).
 
 observe_duration(Name, LabelValues, Fun) ->
-  prometheus_misc:observe_duration(?MODULE, default, Name, LabelValues, Fun).
+  observe_duration(default, Name, LabelValues, Fun).
 
-observe_duration(Name, Registry, LabelValues, Fun) ->
-  prometheus_misc:observe_duration(?MODULE, Registry, Name, LabelValues, Fun).
+observe_duration(Registry, Name, LabelValues, Fun) ->
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  prometheus_misc:observe_duration(Registry, ?MODULE, Name, LabelValues, Fun).
 
 %% @equiv reset(default, Name, [])
 reset(Name) ->
@@ -139,8 +141,11 @@ value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
 value(Registry, Name, LabelValues) ->
-  [{_Key, Count, Sum}] = ets:lookup(?TABLE, {Registry, Name, LabelValues}),
-  {Count, Sum}.
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  case  ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
+    [{_Key, Count, Sum}] -> {Count, Sum};
+    [] -> undefined
+  end.
 
 %%====================================================================
 %% Collector API

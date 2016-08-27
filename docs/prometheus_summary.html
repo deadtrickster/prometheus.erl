@@ -18,23 +18,31 @@
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#code_change-3">code_change/3</a></td><td></td></tr>
 <tr><td valign="top"><a href="#collect_metrics-2">collect_metrics/2</a></td><td></td></tr>
 <tr><td valign="top"><a href="#collect_mf-2">collect_mf/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#declare-1">declare/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#declare-1">declare/1</a></td><td>Equivalent to <a href="#declare-2"><tt>declare(Spec, default)</tt></a>.
+</td></tr>
 <tr><td valign="top"><a href="#declare-2">declare/2</a></td><td></td></tr>
 <tr><td valign="top"><a href="#deregister_cleanup-1">deregister_cleanup/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#dobserve-2">dobserve/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#dobserve-3">dobserve/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#dobserve-2">dobserve/2</a></td><td>Equivalent to <a href="#dobserve-4"><tt>dobserve(default, Name, [], Value)</tt></a>.
+</td></tr>
+<tr><td valign="top"><a href="#dobserve-3">dobserve/3</a></td><td>Equivalent to <a href="#dobserve-4"><tt>dobserve(default, Name, LabelValues, Value)</tt></a>.
+</td></tr>
 <tr><td valign="top"><a href="#dobserve-4">dobserve/4</a></td><td></td></tr>
 <tr><td valign="top"><a href="#handle_call-3">handle_call/3</a></td><td></td></tr>
 <tr><td valign="top"><a href="#handle_cast-2">handle_cast/2</a></td><td></td></tr>
 <tr><td valign="top"><a href="#handle_info-2">handle_info/2</a></td><td></td></tr>
 <tr><td valign="top"><a href="#init-1">init/1</a></td><td></td></tr>
-<tr><td valign="top"><a href="#new-1">new/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#new-1">new/1</a></td><td>Equivalent to <a href="#new-2"><tt>new(Spec, default)</tt></a>.
+</td></tr>
 <tr><td valign="top"><a href="#new-2">new/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#observe-2">observe/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#observe-3">observe/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#observe-2">observe/2</a></td><td>Equivalent to <a href="#observe-4"><tt>observe(default, Name, [], Value)</tt></a>.
+</td></tr>
+<tr><td valign="top"><a href="#observe-3">observe/3</a></td><td>Equivalent to <a href="#observe-4"><tt>observe(default, Name, LabelValues, Value)</tt></a>.
+</td></tr>
 <tr><td valign="top"><a href="#observe-4">observe/4</a></td><td></td></tr>
-<tr><td valign="top"><a href="#observe_duration-2">observe_duration/2</a></td><td></td></tr>
-<tr><td valign="top"><a href="#observe_duration-3">observe_duration/3</a></td><td></td></tr>
+<tr><td valign="top"><a href="#observe_duration-2">observe_duration/2</a></td><td>Equivalent to <a href="#observe_duration-4"><tt>observe_duration(default, Name, [], Fun)</tt></a>.
+</td></tr>
+<tr><td valign="top"><a href="#observe_duration-3">observe_duration/3</a></td><td>Equivalent to <a href="#observe_duration-4"><tt>observe_duration(default, Name, LabelValues, Fun)</tt></a>.
+</td></tr>
 <tr><td valign="top"><a href="#observe_duration-4">observe_duration/4</a></td><td></td></tr>
 <tr><td valign="top"><a href="#reset-1">reset/1</a></td><td>Equivalent to <a href="#reset-3"><tt>reset(default, Name, [])</tt></a>.
 </td></tr>
@@ -70,7 +78,8 @@
 <h3 class="function"><a name="declare-1">declare/1</a></h3>
 <div class="spec">
 <p><tt>declare(Spec) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#declare-2"><tt>declare(Spec, default)</tt></a>.</p>
+
 
 <h3 class="function"><a name="declare-2">declare/2</a></h3>
 <div class="spec">
@@ -85,12 +94,14 @@
 <h3 class="function"><a name="dobserve-2">dobserve/2</a></h3>
 <div class="spec">
 <p><tt>dobserve(Name, Value) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#dobserve-4"><tt>dobserve(default, Name, [], Value)</tt></a>.</p>
+
 
 <h3 class="function"><a name="dobserve-3">dobserve/3</a></h3>
 <div class="spec">
 <p><tt>dobserve(Name, LabelValues, Value) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#dobserve-4"><tt>dobserve(default, Name, LabelValues, Value)</tt></a>.</p>
+
 
 <h3 class="function"><a name="dobserve-4">dobserve/4</a></h3>
 <div class="spec">
@@ -120,7 +131,8 @@
 <h3 class="function"><a name="new-1">new/1</a></h3>
 <div class="spec">
 <p><tt>new(Spec) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#new-2"><tt>new(Spec, default)</tt></a>.</p>
+
 
 <h3 class="function"><a name="new-2">new/2</a></h3>
 <div class="spec">
@@ -130,12 +142,14 @@
 <h3 class="function"><a name="observe-2">observe/2</a></h3>
 <div class="spec">
 <p><tt>observe(Name, Value) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#observe-4"><tt>observe(default, Name, [], Value)</tt></a>.</p>
+
 
 <h3 class="function"><a name="observe-3">observe/3</a></h3>
 <div class="spec">
 <p><tt>observe(Name, LabelValues, Value) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#observe-4"><tt>observe(default, Name, LabelValues, Value)</tt></a>.</p>
+
 
 <h3 class="function"><a name="observe-4">observe/4</a></h3>
 <div class="spec">
@@ -145,16 +159,18 @@
 <h3 class="function"><a name="observe_duration-2">observe_duration/2</a></h3>
 <div class="spec">
 <p><tt>observe_duration(Name, Fun) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#observe_duration-4"><tt>observe_duration(default, Name, [], Fun)</tt></a>.</p>
+
 
 <h3 class="function"><a name="observe_duration-3">observe_duration/3</a></h3>
 <div class="spec">
 <p><tt>observe_duration(Name, LabelValues, Fun) -&gt; any()</tt></p>
-</div>
+</div><p>Equivalent to <a href="#observe_duration-4"><tt>observe_duration(default, Name, LabelValues, Fun)</tt></a>.</p>
+
 
 <h3 class="function"><a name="observe_duration-4">observe_duration/4</a></h3>
 <div class="spec">
-<p><tt>observe_duration(Name, Registry, LabelValues, Fun) -&gt; any()</tt></p>
+<p><tt>observe_duration(Registry, Name, LabelValues, Fun) -&gt; any()</tt></p>
 </div>
 
 <h3 class="function"><a name="reset-1">reset/1</a></h3>
@@ -203,6 +219,6 @@
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Aug 15 2016, 18:56:23.</i></p>
+<p><i>Generated by EDoc, Aug 27 2016, 13:46:54.</i></p>
 </body>
 </html>

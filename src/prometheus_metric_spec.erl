@@ -17,6 +17,7 @@
 %%====================================================================
 
 -spec get_value(Key :: atom(), Spec :: spec()) -> any().
+%% @equiv get_value(Key, Spec, undefined)
 get_value(Key, Spec) ->
   get_value(Key, Spec, undefined).
 

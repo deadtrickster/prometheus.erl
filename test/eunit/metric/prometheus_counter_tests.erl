@@ -33,7 +33,13 @@ test_errors(_) ->
    ?_assertError({invalid_value, 1.5, "inc accepts only integers"}, prometheus_counter:inc(http_requests_total, 1.5)),
    ?_assertError({invalid_value, "qwe", "inc accepts only integers"}, prometheus_counter:inc(http_requests_total, [], "qwe")),
    ?_assertError({invalid_value, -1, "Counters accept only non-negative values"}, prometheus_counter:dinc(http_requests_total, -1)),
-   ?_assertError({invalid_value, "qwe", "dinc accepts only numbers"}, prometheus_counter:dinc(http_requests_total, [], "qwe"))
+   ?_assertError({invalid_value, "qwe", "dinc accepts only numbers"}, prometheus_counter:dinc(http_requests_total, [], "qwe")),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_counter:inc(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_counter:inc(db_query_duration, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_counter:reset(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_counter:reset(db_query_duration, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_counter:value(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_counter:value(db_query_duration, [repo, db]))
   ].
 
 test_int(_) ->

@@ -20,9 +20,11 @@
 %% Collector API
 %%====================================================================
 
+%% @private
 deregister_cleanup(_) -> ok.
 
 -spec collect_mf(prometheus_collector:callback(), atom()) -> ok.
+%% @private
 collect_mf(Callback, _Registry) ->
   Memory = erlang:memory(),
 
@@ -58,6 +60,7 @@ collect_mf(Callback, _Registry) ->
                         "Erlang VM DETS Tables count",
                         Memory)).
 
+%% @private
 collect_metrics(erlang_vm_memory_bytes_total, Memory) ->
   gauge_metrics([
                  {[{kind, system}], proplists:get_value(system,  Memory)},

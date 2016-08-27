@@ -108,6 +108,7 @@ emit_series(Fd, Name, Labels, Value) ->
   LString = labels_string(Labels),
   file:write(Fd, io_lib:format("~s" ++ LString ++ " ~p\n", [Name, Value])).
 
+%% @private
 escape_metric_help(Help) ->
   sub(sub(Help, "\\", "\\\\\\\\"), "\n", "\\\\n").
 
@@ -117,6 +118,7 @@ bound_to_label_value(infinity) ->
   "+Inf".
 
 -spec escape_label_value(binary() | iolist() | undefined) -> string().
+%% @private
 escape_label_value(LValue) when is_list(LValue)->
   sub(sub(sub(LValue, "\\", "\\\\\\\\"), "\n", "\\\\n"), "\"", "\\\\\"");
 escape_label_value(LValue) when is_binary(LValue) ->

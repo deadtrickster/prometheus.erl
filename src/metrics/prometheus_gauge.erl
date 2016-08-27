@@ -56,6 +56,8 @@ new(Spec) ->
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
 
+%% @deprecated Please use {@link new/1} with registry
+%% key instead.
 new(Spec, Registry) ->
   ?DEPRECATED("prometheus_gauge:new/2", "prometheus_gauge:new/1"
               " with registry key"),
@@ -67,6 +69,8 @@ declare(Spec) ->
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
 
+%% @deprecated Please use {@link declare/1} with registry
+%% key instead.
 declare(Spec, Registry) ->
   ?DEPRECATED("prometheus_gauge:declare/2", "prometheus_gauge:declare/1"
               " with registry key"),

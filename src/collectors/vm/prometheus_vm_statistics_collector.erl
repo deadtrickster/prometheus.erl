@@ -35,11 +35,13 @@
 %% Collector API
 %%====================================================================
 
+%% @private
 deregister_cleanup(_) -> ok.
 
 -spec collect_mf(Callback, _) -> Metrics when
     Callback :: prometheus_collector:callback(),
     Metrics  :: [prometheus_model:'Metric'()].
+%% @private
 collect_mf(Callback, _Registry) ->
   [call_if_statistics_exists(MFName,
                              fun(Stat) ->
@@ -82,6 +84,7 @@ add_metric_family(wall_clock, Stat, Callback) ->
 do_add_metric_family(Name, Stat, Callback, Help) ->
   Callback(create_counter(Name, Help, Stat)).
 
+%% @private
 collect_metrics(erlang_vm_statistics_context_switches, {Stat, _}) ->
   counter_metric(Stat);
 collect_metrics(?GC_NUM_GCS, {NumberOfGCs, _, _}) ->

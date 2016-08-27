@@ -75,6 +75,8 @@ new(Spec) ->
   prometheus_metric:insert_new_mf(?TABLE, Registry,
                                   Name, Labels, Help, Buckets).
 
+%% @deprecated Please use {@link new/1} with registry
+%% key instead.
 new(Spec, Registry) ->
   ?DEPRECATED("prometheus_histogram:new/2", "prometheus_histogram:new/1"
               " with registry key"),
@@ -85,6 +87,8 @@ declare(Spec) ->
   prometheus_collector:register(?MODULE, Registry),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help, Buckets).
 
+%% @deprecated Please use {@link declare/1} with registry
+%% key instead.
 declare(Spec, Registry) ->
   ?DEPRECATED("prometheus_histogram:declare/2", "prometheus_histogram:declare/1"
               " with registry key"),
@@ -194,17 +198,20 @@ exponential_buckets(Start, Factor, Count) ->
 %% Collector API
 %%====================================================================
 
+%% @private
 deregister_cleanup(Registry) ->
   [delete_metrics(Registry, Buckets)
    || [_, _, _, Buckets] <- prometheus_metric:metrics(?TABLE, Registry)],
   true = prometheus_metric:deregister_mf(?TABLE, Registry),
   ok.
 
+%% @private
 collect_mf(Callback, Registry) ->
   [Callback(create_histogram(Name, Help, {Labels, Registry, Buckets})) ||
     [Name, Labels, Help, Buckets]
       <- prometheus_metric:metrics(?TABLE, Registry)].
 
+%% @private
 collect_metrics(Name, {Labels, Registry, Buckets}) ->
   BoundPlaceholders = gen_query_bound_placeholders(Buckets),
   SumPlaceholder = gen_query_placeholder(sum_position(Buckets)),
@@ -219,26 +226,33 @@ collect_metrics(Name, {Labels, Registry, Buckets}) ->
 %% Gen_server API
 %%====================================================================
 
+%% @private
 start_link() ->
   gen_server:start_link({local, prometheus_histogram},
                         prometheus_histogram, [], []).
 
+%% @private
 init(_Args) ->
   {ok, []}.
 
+%% @private
 handle_call(_Call, _From, State) ->
   {noreply, State}.
 
+%% @private
 handle_cast({observe, {Registry, Name, LabelValues, Value}}, State) ->
   dobserve_impl(Registry, Name, LabelValues, Value),
   {noreply, State}.
 
+%% @private
 handle_info(_Info, State) ->
   {noreply, State}.
 
+%% @private
 terminate(_Reason, _State) ->
   ok.
 
+%% @private
 code_change(_OldVsn, State, _Extra) ->
   {ok, State}.
 

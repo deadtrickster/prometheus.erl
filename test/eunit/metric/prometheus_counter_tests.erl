@@ -23,6 +23,7 @@ test_registration(_)->
 
 test_errors(_) ->
   prometheus_counter:new([{name, http_requests_total}, {help, "Http request count"}]),
+  prometheus_counter:new([{name, db_query_duration}, {labels, [repo]}, {help, ""}]),
   [%% basic name/labels/help validations test, lets hope new is using extract_common_params
    ?_assertError({invalid_metric_name, 12, "metric name is not a string"}, prometheus_counter:new([{name, 12}, {help, ""}])),
    ?_assertError({invalid_metric_labels, 12, "not list"}, prometheus_counter:new([{name, "qwe"}, {labels, 12}, {help, ""}])),

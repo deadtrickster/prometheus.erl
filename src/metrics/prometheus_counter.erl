@@ -137,6 +137,7 @@ value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
 value(Registry, Name, LabelValues) ->
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   [{_Key, Value}] = ets:lookup(?TABLE, {Registry, Name, LabelValues}),
   Value.
 

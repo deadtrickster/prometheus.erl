@@ -109,13 +109,13 @@ dobserve(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "dobserve accepts only numbers"}).
 
 observe_duration(Name, Fun) ->
-  prometheus_misc:observe_duration(?MODULE, default, Name, [], Fun).
+  prometheus_misc:observe_duration(default, ?MODULE, Name, [], Fun).
 
 observe_duration(Name, LabelValues, Fun) ->
-  prometheus_misc:observe_duration(?MODULE, default, Name, LabelValues, Fun).
+  prometheus_misc:observe_duration(default, ?MODULE, Name, LabelValues, Fun).
 
-observe_duration(Name, Registry, LabelValues, Fun) ->
-  prometheus_misc:observe_duration(?MODULE, Registry, Name, LabelValues, Fun).
+observe_duration(Registry, Name, LabelValues, Fun) ->
+  prometheus_misc:observe_duration(Registry, ?MODULE, Name, LabelValues, Fun).
 
 %% @equiv reset(default, Name, [])
 reset(Name) ->

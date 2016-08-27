@@ -32,7 +32,7 @@ behaviour_modules(Behaviour) ->
                all_module_attributes(behaviour),
              lists:member(Behaviour, Behaviours)].
 
-observe_duration(Metric, Registry, Name, LabelValues, Fun) ->
+observe_duration(Registry, Metric, Name, LabelValues, Fun) ->
   Start = current_time(),
   try
     Fun()

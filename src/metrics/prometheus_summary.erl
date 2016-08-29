@@ -1,3 +1,13 @@
+%% @doc
+%% Summary metric, to track the size of events.
+%%
+%% Example use cases for Summaries:
+%% <ul>
+%%   <li>Response latency</li>
+%%   <li>Request size</li>
+%% </ul>
+%% @end
+
 -module(prometheus_summary).
 
 %%% metric

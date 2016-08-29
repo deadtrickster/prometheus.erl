@@ -1,3 +1,22 @@
+%% @doc
+%% Gauge metric, to report instantaneous values.
+%%
+%% Gauge is a metric that represents a single numerical value that can
+%% arbitrarily go up and down.
+%%
+%% A Gauge is typically used for measured values like temperatures or current
+%% memory usage, but also "counts" that can go up and down, like the number of
+%% running processes.
+%%
+%% Example use cases for Gauges:
+%% <ul>
+%%   <li>Inprogress requests</li>
+%%   <li>Number of items in a queue</li>
+%%   <li>Free memory</li>
+%%   <li>Total memory</li>
+%%   <li>Temperature</li>
+%% </ul>
+%% @end
 -module(prometheus_gauge).
 
 %%% metric
@@ -100,7 +119,7 @@ set(_Registry, _Name, _LabelValues, Value) ->
 set_to_current_time(Name) ->
   set_to_current_time(default, Name, []).
 
-%% @equiv seto_to_current_time(default, Name, LabelValues)
+%% @equiv set_to_current_time(default, Name, LabelValues)
 set_to_current_time(Name, LabelValues) ->
   set_to_current_time(default, Name, LabelValues).
 

@@ -1,3 +1,18 @@
+%% @doc
+%% A collector for a set of metrics.
+%%
+%% Normal users should use {@link prometheus_gauge},
+%% {@link prometheus_counter}, {@link prometheus_summary}
+%% and {@link prometheus_histogram}.
+%%
+%% Implementing `:prometheus_collector' behaviour is for advanced uses,
+%% such as proxying metrics from another monitoring system.
+%% It is it the responsibility of the implementer to ensure produced metrics
+%% are valid.
+%%
+%% You will be working with Prometheus
+%% data model directly (see {@link prometheus_model_helpers}).
+%% @end
 -module(prometheus_collector).
 
 -export([enabled_collectors/0,

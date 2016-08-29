@@ -1,3 +1,21 @@
+%% @doc
+%%
+%% Serializes Prometheus registry using the latest text format.
+%% Example output:
+%% <pre>
+%%   # TYPE http_request_duration_milliseconds histogram
+%%   # HELP http_request_duration_milliseconds Http Request execution time
+%%   http_request_duration_milliseconds_bucket{method="post",le="100"} 0
+%%   http_request_duration_milliseconds_bucket{method="post",le="300"} 1
+%%   http_request_duration_milliseconds_bucket{method="post",le="500"} 3
+%%   http_request_duration_milliseconds_bucket{method="post",le="750"} 4
+%%   http_request_duration_milliseconds_bucket{method="post",le="1000"} 5
+%%   http_request_duration_milliseconds_bucket{method="post",le="+Inf"} 6
+%%   http_request_duration_milliseconds_count{method="post"} 6
+%%   http_request_duration_milliseconds_sum{method="post"} 4350
+%% </pre>
+%% @end
+
 -module(prometheus_text_format).
 -export([content_type/0,
          format/0,
@@ -18,15 +36,24 @@
 %%====================================================================
 
 -spec content_type() -> binary().
+%% @doc
+%% Content type of the latest text format.
+%% @end
 content_type() ->
   <<"text/plain; version=0.0.4">>.
 
 %% @equiv format(default)
 -spec format() -> binary().
+%% @doc
+%% Format `default' registry using the latest text format.
+%% @end
 format() ->
   format(default).
 
 -spec format(Registry :: prometheus_registry:registry()) -> binary().
+%% @doc
+%% Format `registry' using the latest text format.
+%% @end
 format(Registry) ->
   {ok, Fd} = ram_file:open("", [write, read, binary]),
   Callback = fun (_, Collector) ->

@@ -1,3 +1,14 @@
+%% @doc
+%% A Histogram tracks the size and number of events in buckets.
+%% You can use Histograms for aggregatable calculation of quantiles.
+%%
+%% Example use cases for Histograms:
+%% <ul>
+%%   <li>Response latency</li>
+%%   <li>Request size</li>
+%% </ul>
+%% @end
+
 -module(prometheus_histogram).
 
 %%% metric

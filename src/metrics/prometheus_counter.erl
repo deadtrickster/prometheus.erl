@@ -1,3 +1,27 @@
+%% @doc
+%% Counter is a Metric that represents a single numerical value that only ever
+%% goes up. That implies that it cannot be used to count items whose number can
+%% also go down, e.g. the number of currently running processes. Those
+%% "counters" are represented by {@link prometheus_gauge}.
+%%
+%% A Counter is typically used to count requests served, tasks completed, errors
+%% occurred, etc.
+%%
+%% Examople use cases for Counters:
+%% <ul>
+%%   <li>Number of requests processed</li>
+%%   <li>Number of items that were inserted into a queue</li>
+%%   <li>Total amount of data a system has processed</li>
+%% </ul>
+%%
+%% Use the
+%% <a href="https://prometheus.io/docs/querying/functions/#rate()">rate()</a>/<a
+%% href="https://prometheus.io/docs/querying/functions/#irate()">irate()</a>
+%% functions in Prometheus to calculate the rate of increase of a Counter.
+%% By convention, the names of Counters are suffixed by `_total'.
+%%
+%% @end
+
 -module(prometheus_counter).
 
 %%% metric

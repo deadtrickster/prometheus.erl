@@ -1,3 +1,8 @@
+%% @doc
+%% Helpers for working with Prometheus data model. For advanced users.
+%% Probably will be used with {@link prometheus_collector}.
+%% @end
+
 -module(prometheus_model_helpers).
 
 -export([create_mf/5,

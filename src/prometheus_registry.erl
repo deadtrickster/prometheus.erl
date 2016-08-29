@@ -1,3 +1,13 @@
+%% @doc
+%% A registry of Collectors.
+%%
+%% The majority of users should use the `default', rather than their own.
+%%
+%% Creating a registry other than the default is primarily useful for
+%% unit tests, or pushing a subset of metrics to the
+%% <a href="https://github.com/prometheus/pushgateway">Pushgateway</a> from
+%% batch jobs.
+%% @end
 -module(prometheus_registry).
 
 -export([collect/2,
@@ -10,7 +20,7 @@
          collector_registeredp/2]).
 
 -export_type([registry/0,
-             collect_callback/0]).
+              collect_callback/0]).
 
 -include("prometheus.hrl").
 

@@ -46,7 +46,6 @@
          collect_metrics/2]).
 
 -import(prometheus_model_helpers, [create_mf/5,
-                                   label_pairs/1,
                                    gauge_metrics/1,
                                    gauge_metric/1,
                                    gauge_metric/2,

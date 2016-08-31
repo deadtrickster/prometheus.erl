@@ -292,7 +292,7 @@ validate_histogram_buckets([]) ->
 validate_histogram_buckets(undefined) ->
   erlang:error({histogram_no_buckets, undefined});
 validate_histogram_buckets(default) ->
-  default_buckets();
+  default_buckets() ++ [infinity];
 validate_histogram_buckets({linear, Start, Step, Count}) ->
   linear_buckets(Start, Step, Count) ++ [infinity];
 validate_histogram_buckets({exponential, Start, Factor, Count}) ->

@@ -54,6 +54,7 @@ test_errors(_) ->
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:buckets(db_query_duration, [repo, db])),
    %% histogram specific errors
    ?_assertError({histogram_no_buckets, []}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, []}])),
+   ?_assertError({histogram_no_buckets, undefined}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, undefined}])),
    ?_assertError({histogram_invalid_buckets, 1}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, 1}])),
    ?_assertError({histogram_invalid_bound, "qwe"}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, ["qwe"]}])),
    ?_assertError({histogram_invalid_buckets, [1, 3, 2], "Buckets not sorted"}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, [1, 3, 2]}])),
@@ -70,6 +71,10 @@ test_buckets(_) ->
                             {buckets, [100, 300, 500, 750, 1000]},
                             {help, "Http Request execution time"}]),
 
+
+  prometheus_histogram:new([{name, "explicit_default_buckets"}, {help, ""}, {buckets, default}]),
+  ExplicitDefaultBuckets = prometheus_histogram:buckets("explicit_default_buckets"),
+
   prometheus_histogram:new([{name, "linear_buckets"}, {help, ""}, {buckets, {linear, -15, 5, 6}}]),
   LinearBuckets = prometheus_histogram:buckets("linear_buckets"),
 
@@ -78,6 +83,7 @@ test_buckets(_) ->
 
   CustomBuckets = prometheus_histogram:buckets(http_request_duration_milliseconds, [method]),
   [?_assertEqual(prometheus_histogram:default_buckets() ++ [infinity], DefaultBuckets),
+   ?_assertEqual(prometheus_histogram:default_buckets() ++ [infinity], ExplicitDefaultBuckets),
    ?_assertEqual([100, 300, 500, 750, 1000, infinity], CustomBuckets),
    ?_assertEqual([-15, -10, -5, 0, 5, 10], prometheus_histogram:linear_buckets(-15, 5, 6)),
    ?_assertEqual([100, 120, 144], prometheus_histogram:exponential_buckets(100, 1.2, 3)),

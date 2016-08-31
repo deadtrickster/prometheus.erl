@@ -17,11 +17,11 @@ test_registration(_)->
   Name = orders_summary,
   Spec = [{name, Name}, {help, "Track orders count/total sum"}],
   [?_assertEqual(true,
-                 prometheus_counter:declare(Spec)),
+                 prometheus_summary:declare(Spec)),
    ?_assertEqual(false,
-                 prometheus_counter:declare(Spec)),
+                 prometheus_summary:declare(Spec)),
    ?_assertError({mf_already_exists, {default, Name}, "Consider using declare instead."},
-                 prometheus_counter:new(Spec))].
+                 prometheus_summary:new(Spec))].
 
 test_errors(_) ->
   prometheus_summary:new([{name, orders_summary}, {help, "Track orders count/total sum"}]),

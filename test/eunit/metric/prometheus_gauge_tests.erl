@@ -17,11 +17,11 @@ test_registration(_)->
   Name = pool_size,
   Spec = [{name, Name}, {help, ""}],
   [?_assertEqual(true,
-                 prometheus_counter:declare(Spec)),
+                 prometheus_gauge:declare(Spec)),
    ?_assertEqual(false,
-                 prometheus_counter:declare(Spec)),
+                 prometheus_gauge:declare(Spec)),
    ?_assertError({mf_already_exists, {default, Name}, "Consider using declare instead."},
-                 prometheus_counter:new(Spec))].
+                 prometheus_gauge:new(Spec))].
 
 test_errors(_) ->
   prometheus_gauge:new([{name, pool_size}, {help, ""}]),

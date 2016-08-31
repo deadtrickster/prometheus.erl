@@ -18,11 +18,11 @@ test_registration(_)->
   Name = request_duration,
   Spec = [{name, request_duration}, {buckets, [100, 300, 500, 750, 1000]}, {help, "Track requests duration"}],
   [?_assertEqual(true,
-                 prometheus_counter:declare(Spec)),
+                 prometheus_histogram:declare(Spec)),
    ?_assertEqual(false,
-                 prometheus_counter:declare(Spec)),
+                 prometheus_histogram:declare(Spec)),
    ?_assertError({mf_already_exists, {default, Name}, "Consider using declare instead."},
-                 prometheus_counter:new(Spec))].
+                 prometheus_histogram:new(Spec))].
 
 test_errors(_) ->
   prometheus_histogram:new([{name, request_duration}, {buckets, [100, 300, 500, 750, 1000]}, {help, "Track requests duration"}]),

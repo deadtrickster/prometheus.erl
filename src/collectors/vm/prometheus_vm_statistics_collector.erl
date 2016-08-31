@@ -75,7 +75,7 @@ add_metric_family(runtime, Stat, Callback) ->
                        "Can be greater than wall clock time");
 add_metric_family(wall_clock, Stat, Callback) ->
   do_add_metric_family(
-    erlang_vm_statistics_wallclock_time_milliseconds,
+    ?WALLCLOCK_TIME_MS,
     Stat, Callback,
     "Information about wall clock. "
     "Same as erlang_vm_statistics_runtime_milliseconds "
@@ -85,7 +85,7 @@ do_add_metric_family(Name, Stat, Callback, Help) ->
   Callback(create_counter(Name, Help, Stat)).
 
 %% @private
-collect_metrics(erlang_vm_statistics_context_switches, {Stat, _}) ->
+collect_metrics(?CONTEXT_SWITCHES, {Stat, _}) ->
   counter_metric(Stat);
 collect_metrics(?GC_NUM_GCS, {NumberOfGCs, _, _}) ->
   counter_metric(NumberOfGCs);

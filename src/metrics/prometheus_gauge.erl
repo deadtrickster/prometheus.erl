@@ -102,7 +102,8 @@ set(Name, Value) ->
 set(Name, LabelValues, Value) ->
   set(default, Name, LabelValues, Value).
 
-set(Registry, Name, LabelValues, Value) when is_number(Value) ->
+set(Registry, Name, LabelValues, Value) when is_number(Value) orelse
+                                             Value == undefined ->
   case ets:update_element(?TABLE, {Registry, Name, LabelValues},
                           {?GAUGE_POS, Value}) of
     false ->

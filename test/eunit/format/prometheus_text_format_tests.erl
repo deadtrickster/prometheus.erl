@@ -13,6 +13,7 @@ prometheus_format_test_() ->
    fun prometheus_eunit_common:start/0,
    fun prometheus_eunit_common:stop/1,
    [fun test_gauge/1,
+    fun test_nan_gauge/1,
     fun test_counter/1,
     fun test_dcounter/1,
     fun test_summary/1,
@@ -29,6 +30,15 @@ test_gauge(_) ->
   ?_assertEqual(<<"# TYPE pool_size gauge
 # HELP pool_size MongoDB Connections pool size
 pool_size 365
+
+">>, prometheus_text_format:format()).
+
+test_nan_gauge(_) ->
+  prometheus_gauge:new([{name, pool_size}, {help, "MongoDB Connections pool size"}]),
+  prometheus_gauge:set(pool_size, undefined),
+  ?_assertEqual(<<"# TYPE pool_size gauge
+# HELP pool_size MongoDB Connections pool size
+pool_size NaN
 
 ">>, prometheus_text_format:format()).
 

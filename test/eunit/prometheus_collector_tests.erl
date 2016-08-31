@@ -1,0 +1,18 @@
+-module(prometheus_collector_tests).
+
+-include_lib("eunit/include/eunit.hrl").
+
+collector_setup_test() ->
+  prometheus:start(),
+  application:set_env(prometheus, collectors, [qwe]),
+  try
+    ?assertMatch([qwe], prometheus_collector:enabled_collectors())
+  after
+    application:unset_env(prometheus, collectors)
+  end,
+  ?assertMatch([prometheus_vm_statistics_collector,
+                prometheus_vm_memory_collector,
+                prometheus_summary,
+                prometheus_histogram,
+                prometheus_gauge,
+                prometheus_counter], prometheus_collector:enabled_collectors()).

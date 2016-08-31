@@ -20,6 +20,7 @@
          deregister_collector/2,
          clear/0,
          clear/1,
+         collector_registeredp/1,
          collector_registeredp/2]).
 
 -export_type([registry/0,
@@ -105,6 +106,12 @@ clear(Registry) ->
   [Collector:deregister_cleanup(Registry) ||
     {_, Collector} <- ets:take(?TABLE, Registry)],
   ok.
+
+-spec collector_registeredp(Collector) -> boolean() when
+    Collector :: prometheus_collector:collector().
+%% @equiv collector_registeredp(default, Collector)
+collector_registeredp(Collector) ->
+  collector_registeredp(default, Collector).
 
 -spec collector_registeredp(Registry, Collector) -> boolean() when
     Registry  :: prometheus_registry:registry(),

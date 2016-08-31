@@ -16,3 +16,9 @@ collector_setup_test() ->
                 prometheus_histogram,
                 prometheus_gauge,
                 prometheus_counter], prometheus_collector:enabled_collectors()).
+
+collector_deprecations_test() ->
+  ok = prometheus_collector:register(prometheus_registry_tests),
+  ?assertEqual(true,  prometheus_registry:collector_registeredp(prometheus_registry_tests)),
+  prometheus_collector:deregister(prometheus_registry_tests),
+  ?assertEqual(false,  prometheus_registry:collector_registeredp(prometheus_registry_tests)).

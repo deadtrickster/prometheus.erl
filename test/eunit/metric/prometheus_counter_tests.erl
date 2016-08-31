@@ -14,13 +14,17 @@ prometheus_format_test_() ->
 
 test_registration(_)->
   Name = http_requests_total,
-  Spec = [{name, Name}, {help, "Http request count"}],
+  SpecWithRegistry = [{name, Name},
+                      {help, ""},
+                      {registry, qwe}],
+  SpecWithoutRegistry = [{name, Name},
+                         {help, ""}],
   [?_assertEqual(true,
-                 prometheus_counter:declare(Spec)),
+                 prometheus_counter:declare(SpecWithRegistry)),
    ?_assertEqual(false,
-                 prometheus_counter:declare(Spec)),
-   ?_assertError({mf_already_exists, {default, Name}, "Consider using declare instead."},
-                 prometheus_counter:new(Spec))].
+                 prometheus_counter:declare(SpecWithoutRegistry, qwe)),
+   ?_assertError({mf_already_exists, {qwe, Name}, "Consider using declare instead."},
+                 prometheus_counter:new(SpecWithoutRegistry, qwe))].
 
 test_errors(_) ->
   prometheus_counter:new([{name, http_requests_total}, {help, "Http request count"}]),

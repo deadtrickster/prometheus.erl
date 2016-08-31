@@ -15,13 +15,17 @@ prometheus_format_test_() ->
 
 test_registration(_)->
   Name = orders_summary,
-  Spec = [{name, Name}, {help, "Track orders count/total sum"}],
+  SpecWithRegistry = [{name, Name},
+                      {help, ""},
+                      {registry, qwe}],
+  SpecWithoutRegistry = [{name, Name},
+                         {help, ""}],
   [?_assertEqual(true,
-                 prometheus_summary:declare(Spec)),
+                 prometheus_summary:declare(SpecWithRegistry)),
    ?_assertEqual(false,
-                 prometheus_summary:declare(Spec)),
-   ?_assertError({mf_already_exists, {default, Name}, "Consider using declare instead."},
-                 prometheus_summary:new(Spec))].
+                 prometheus_summary:declare(SpecWithoutRegistry, qwe)),
+   ?_assertError({mf_already_exists, {qwe, Name}, "Consider using declare instead."},
+                 prometheus_summary:new(SpecWithoutRegistry, qwe))].
 
 test_errors(_) ->
   prometheus_summary:new([{name, orders_summary}, {help, "Track orders count/total sum"}]),

@@ -7,9 +7,11 @@ start() ->
   prometheus:start(),
   Collectors = prometheus_registry:collectors(default),
   prometheus_registry:clear(default),
+  prometheus_registry:clear(qwe),
   Collectors.
 
 stop(DefaultCollectors) ->
   prometheus_registry:clear(default),
+  prometheus_registry:clear(qwe),
   prometheus_registry:register_collectors(default, DefaultCollectors),
   ok.

@@ -16,13 +16,19 @@ prometheus_format_test_() ->
 
 test_registration(_)->
   Name = request_duration,
-  Spec = [{name, request_duration}, {buckets, [100, 300, 500, 750, 1000]}, {help, "Track requests duration"}],
+  SpecWithRegistry = [{name, Name},
+                      {buckets, [100, 300, 500, 750, 1000]},
+                      {help, ""},
+                      {registry, qwe}],
+  SpecWithoutRegistry = [{name, Name},
+                         {buckets, [100, 300, 500, 750, 1000]},
+                         {help, ""}],
   [?_assertEqual(true,
-                 prometheus_histogram:declare(Spec)),
+                 prometheus_histogram:declare(SpecWithRegistry)),
    ?_assertEqual(false,
-                 prometheus_histogram:declare(Spec)),
-   ?_assertError({mf_already_exists, {default, Name}, "Consider using declare instead."},
-                 prometheus_histogram:new(Spec))].
+                 prometheus_histogram:declare(SpecWithoutRegistry, qwe)),
+   ?_assertError({mf_already_exists, {qwe, Name}, "Consider using declare instead."},
+                 prometheus_histogram:new(SpecWithoutRegistry, qwe))].
 
 test_errors(_) ->
   prometheus_histogram:new([{name, request_duration}, {buckets, [100, 300, 500, 750, 1000]}, {help, "Track requests duration"}]),
@@ -43,9 +49,9 @@ test_errors(_) ->
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:reset(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:reset(db_query_duration, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:value(unknown_metric)),
-   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:value(db_query_duration, [repo, db])),   
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:value(db_query_duration, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:buckets(unknown_metric)),
-   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:buckets(db_query_duration, [repo, db])), 
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:buckets(db_query_duration, [repo, db])),
    %% histogram specific errors
    ?_assertError({histogram_no_buckets, []}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, []}])),
    ?_assertError({histogram_invalid_buckets, 1}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, 1}])),
@@ -138,7 +144,7 @@ test_observe_duration(_) ->
    ?_assertMatch(true, 0.9 < Sum andalso Sum < 1.2),
    ?_assertMatch(true, 0.9 < SumE andalso SumE < 1.2)].
 
-test_undefined_value(_) ->  
+test_undefined_value(_) ->
   prometheus_histogram:new([{name, duraiton_histogram}, {labels, [label]}, {help, ""}]),
   Value = prometheus_histogram:value(duraiton_histogram, [label]),
   [?_assertEqual(undefined, Value)].

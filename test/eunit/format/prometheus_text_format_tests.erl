@@ -65,14 +65,14 @@ orders_summary_sum 25
 ">>, prometheus_text_format:format()).
 
 test_dsummary(_) ->
-  prometheus_summary:new([{name, dsummary}, {help, "qwe"}]),
-  prometheus_summary:dobserve(dsummary, 1.5),
-  prometheus_summary:dobserve(dsummary, 2.7),
+  prometheus_summary:new([{name, dsummary}, {labels, [host]}, {help, "qwe"}]),
+  prometheus_summary:dobserve(dsummary, [123], 1.5),
+  prometheus_summary:dobserve(dsummary, [123], 2.7),
   timer:sleep(10), %% dobserve is async so lets make sure gen_server processed our request
   ?_assertEqual(<<"# TYPE dsummary summary
 # HELP dsummary qwe
-dsummary_count 2
-dsummary_sum 4.2
+dsummary_count{host=\"123\"} 2
+dsummary_sum{host=\"123\"} 4.2
 
 ">>, prometheus_text_format:format()).
 

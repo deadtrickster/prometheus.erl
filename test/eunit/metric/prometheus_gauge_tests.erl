@@ -15,13 +15,17 @@ prometheus_format_test_() ->
 
 test_registration(_)->
   Name = pool_size,
-  Spec = [{name, Name}, {help, ""}],
+  SpecWithRegistry = [{name, Name},
+                      {help, ""},
+                      {registry, qwe}],
+  SpecWithoutRegistry = [{name, Name},
+                         {help, ""}],
   [?_assertEqual(true,
-                 prometheus_gauge:declare(Spec)),
+                 prometheus_gauge:declare(SpecWithRegistry)),
    ?_assertEqual(false,
-                 prometheus_gauge:declare(Spec)),
-   ?_assertError({mf_already_exists, {default, Name}, "Consider using declare instead."},
-                 prometheus_gauge:new(Spec))].
+                 prometheus_gauge:declare(SpecWithoutRegistry, qwe)),
+   ?_assertError({mf_already_exists, {qwe, Name}, "Consider using declare instead."},
+                 prometheus_gauge:new(SpecWithoutRegistry, qwe))].
 
 test_errors(_) ->
   prometheus_gauge:new([{name, pool_size}, {help, ""}]),
@@ -49,9 +53,12 @@ test_set(_) ->
   prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),
   prometheus_gauge:set(pool_size, [mongodb], 100),
   Value = prometheus_gauge:value(pool_size, [mongodb]),
+  prometheus_gauge:set(pool_size, [mongodb], 105),
+  Value1 = prometheus_gauge:value(pool_size, [mongodb]),
   prometheus_gauge:reset(pool_size, [mongodb]),
   RValue = prometheus_gauge:value(pool_size, [mongodb]),
   [?_assertEqual(100, Value),
+   ?_assertEqual(105, Value1),
    ?_assertEqual(0, RValue)].
 
 test_set_to_current_time(_) ->

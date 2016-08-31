@@ -18,9 +18,16 @@
          summary_metric/3,
          histogram_metrics/1,
          histogram_metric/1,
+         histogram_metric/3,
          histogram_metric/4,
          label_pairs/1,
          label_pair/1]).
+
+-ifdef(TEST).
+-export([filter_undefined_metrics/1,
+         ensure_mf_type/1,
+         ensure_binary_or_string/1]).
+-endif.
 
 -include("prometheus_model.hrl").
 
@@ -120,6 +127,10 @@ histogram_metric({Labels, Buckets, Count, Sum}) ->
 histogram_metric({Buckets, Count, Sum}) ->
   histogram_metric([], Buckets, Count, Sum).
 
+%% @equiv histogram_metric([], Buckets, Count, Sum)
+histogram_metric(Buckets, Count, Sum) ->
+  histogram_metric([], Buckets, Count, Sum).
+
 -spec histogram_metric(Labels, Buckets, Count, Sum) -> Metric when
     Labels  :: [label()],
     Buckets :: [{Bound, Count}],
@@ -182,4 +193,4 @@ ensure_mf_type(counter)   -> 'COUNTER';
 ensure_mf_type(summary)   -> 'SUMMARY';
 ensure_mf_type(histogram) -> 'HISTOGRAM';
 ensure_mf_type(untyped)   -> 'UNTYPED';
-ensure_mf_type(Type)      -> Type.
+ensure_mf_type(Type)      -> erlang:error({invalid_metric_type, Type}).

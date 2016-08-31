@@ -12,8 +12,11 @@
 
 -export([collect/2,
          collectors/1,
+         register_collector/1,
          register_collector/2,
+         register_collectors/1,
          register_collectors/2,
+         deregister_collector/1,
          deregister_collector/2,
          clear/0,
          clear/1,
@@ -56,11 +59,22 @@ collect(Registry, Callback) ->
 collectors(Registry) ->
   [Collector || {_, Collector} <- ets:lookup(?TABLE, Registry)].
 
+-spec register_collector(Collector :: prometheus_collector:collector()) -> ok.
+%% @equiv register_collector(default, Collector)
+register_collector(Collector) ->
+  register_collector(default, Collector).
+
 -spec register_collector(Registry :: prometheus_registry:registry(),
                          Collector :: prometheus_collector:collector()) -> ok.
 register_collector(Registry, Collector) ->
   ets:insert(?TABLE, {Registry, Collector}),
   ok.
+
+-spec register_collectors(Collectors :: [prometheus_collector:collector()])
+                         -> ok.
+%% @equiv register_collectors(default, Collectors)
+register_collectors(Collectors) ->
+  register_collectors(default, Collectors).
 
 -spec register_collectors(Registry :: prometheus_registry:registry(),
                           Collectors :: [prometheus_collector:collector()])
@@ -68,6 +82,11 @@ register_collector(Registry, Collector) ->
 register_collectors(Registry, Collectors) ->
   [register_collector(Registry, Collector) || Collector <- Collectors],
   ok.
+
+-spec deregister_collector(Collector :: prometheus_collector:collector()) -> ok.
+%% @equiv deregister_collector(default, Collector)
+deregister_collector(Collector) ->
+  deregister_collector(default, Collector).
 
 -spec deregister_collector(Registry :: prometheus_registry:registry(),
                            Collector :: prometheus_collector:collector()) -> ok.

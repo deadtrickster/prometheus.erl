@@ -45,10 +45,9 @@
 %% Callbacks
 %%====================================================================
 
--callback collect_mf(Callback, Registry) -> Metrics | ok when
-    Callback :: collect_mf_callback(),
+-callback collect_mf(Registry, Callback) -> ok when
     Registry :: prometheus_registry:registry(),
-    Metrics  :: [prometheus_model:'Metric'()].
+    Callback :: collect_mf_callback().
 
 -callback collect_metrics(Name, Data) -> Metrics when
     Name    :: prometheus_metric:name(),
@@ -95,12 +94,12 @@ deregister(Collector, Registry) ->
               "prometheus_register:deregister_collector/2"),
   prometheus_registry:deregister_collector(Registry, Collector).
 
--spec collect_mf(Collector, Callback, Registry) -> list() when
+-spec collect_mf(Registry, Collector, Callback) -> ok when
+    Registry  :: prometheus_registry:registry(),
     Collector :: collector(),
-    Callback  :: collect_mf_callback(),
-    Registry  :: prometheus_registry:registry().
-collect_mf(Collector, Callback, Registry) ->
-  Collector:collect_mf(Callback, Registry).
+    Callback  :: collect_mf_callback().
+collect_mf(Registry, Collector, Callback) ->
+  ok = Collector:collect_mf(Registry, Callback).
 
 %%====================================================================
 %% Private Parts

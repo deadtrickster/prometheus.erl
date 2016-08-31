@@ -22,9 +22,11 @@
 %% @private
 deregister_cleanup(_) -> ok.
 
--spec collect_mf(prometheus_collector:callback(), atom()) -> ok.
+-spec collect_mf(_Registry, Callback) -> ok when
+    _Registry :: prometheus_registry:registry(),
+    Callback :: prometheus_collector:callback().
 %% @private
-collect_mf(Callback, _Registry) ->
+collect_mf(_Registry, Callback) ->
   Memory = erlang:memory(),
 
   Callback(create_gauge(erlang_vm_memory_bytes_total,
@@ -57,7 +59,8 @@ collect_mf(Callback, _Registry) ->
 
   Callback(create_gauge(erlang_vm_dets_tables,
                         "Erlang VM DETS Tables count",
-                        Memory)).
+                        Memory)),
+  ok.
 
 %% @private
 collect_metrics(erlang_vm_memory_bytes_total, Memory) ->

@@ -37,16 +37,17 @@
 %% @private
 deregister_cleanup(_) -> ok.
 
--spec collect_mf(Callback, _) -> Metrics when
-    Callback :: prometheus_collector:callback(),
-    Metrics  :: [prometheus_model:'Metric'()].
+-spec collect_mf(_Registry, Callback) -> ok when
+    _Registry :: prometheus_registry:registry(),
+    Callback :: prometheus_collector:callback().
 %% @private
-collect_mf(Callback, _Registry) ->
+collect_mf(_Registry, Callback) ->
   [call_if_statistics_exists(MFName,
                              fun(Stat) ->
                                  add_metric_family(MFName, Stat, Callback)
                              end)
-   || MFName <- enabled_statistics_metrics()].
+   || MFName <- enabled_statistics_metrics()],
+  ok.
 
 add_metric_family(context_switches, Stat, Callback) ->
   do_add_metric_family(?CONTEXT_SWITCHES, Stat, Callback,

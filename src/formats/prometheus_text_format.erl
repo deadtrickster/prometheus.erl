@@ -75,7 +75,7 @@ registry_collect_callback(Fd, Registry, Collector) ->
                  emit_mf_prologue(Fd, MF),
                  emit_mf_metrics(Fd, MF)
              end,
-  prometheus_collector:collect_mf(Collector, Callback, Registry).
+  prometheus_collector:collect_mf(Registry, Collector, Callback).
 
 emit_mf_prologue(Fd, #'MetricFamily'{name=Name, help=Help, type=Type}) ->
   Bytes = io_lib:format("# TYPE ~s ~s\n# HELP ~s ~s\n",

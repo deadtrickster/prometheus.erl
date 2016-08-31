@@ -177,9 +177,10 @@ deregister_cleanup(Registry) ->
   true = ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_'}),
   ok.
 
-collect_mf(Callback, Registry) ->
+collect_mf(Registry, Callback) ->
   [Callback(create_gauge(Name, Help, {Labels, Registry})) ||
-    [Name, Labels, Help, _] <- prometheus_metric:metrics(?TABLE, Registry)].
+    [Name, Labels, Help, _] <- prometheus_metric:metrics(?TABLE, Registry)],
+  ok.
 
 collect_metrics(Name, {Labels, Registry}) ->
   [gauge_metric(lists:zip(Labels, LabelValues), Value) ||

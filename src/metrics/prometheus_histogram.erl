@@ -216,10 +216,11 @@ deregister_cleanup(Registry) ->
   ok.
 
 %% @private
-collect_mf(Callback, Registry) ->
+collect_mf(Registry, Callback) ->
   [Callback(create_histogram(Name, Help, {Labels, Registry, Buckets})) ||
     [Name, Labels, Help, Buckets]
-      <- prometheus_metric:metrics(?TABLE, Registry)].
+      <- prometheus_metric:metrics(?TABLE, Registry)],
+  ok.
 
 %% @private
 collect_metrics(Name, {Labels, Registry, Buckets}) ->

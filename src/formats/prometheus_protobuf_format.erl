@@ -53,7 +53,7 @@ format(Registry) ->
 
 registry_collect_callback(Fd, Registry, Collector) ->
   Callback = fun (MF) -> file:write(Fd, delimited_encode_mf(MF)) end,
-  prometheus_collector:collect_mf(Collector, Callback, Registry).
+  prometheus_collector:collect_mf(Registry, Collector, Callback).
 
 delimited_encode_mf(MF) ->
   IoRec = prometheus_model:encode_msg(MF),

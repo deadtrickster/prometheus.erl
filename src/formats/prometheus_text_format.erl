@@ -32,6 +32,13 @@
 -behaviour(prometheus_format).
 
 %%====================================================================
+%% Macros
+%%====================================================================
+
+-define(ESCAPE_LVALUE(Value),
+        sub(sub(sub(Value, "\\", "\\\\\\\\"), "\n", "\\\\n"), "\"", "\\\\\"")).
+
+%%====================================================================
 %% Format API
 %%====================================================================
 
@@ -147,15 +154,13 @@ bound_to_label_value(infinity) ->
 -spec escape_label_value(binary() | iolist() | undefined) -> string().
 %% @private
 escape_label_value(LValue) when is_list(LValue)->
-  sub(sub(sub(LValue, "\\", "\\\\\\\\"), "\n", "\\\\n"), "\"", "\\\\\"");
+  ?ESCAPE_LVALUE(LValue);
 escape_label_value(LValue) when is_binary(LValue) ->
-  escape_label_value(binary_to_list(LValue));
+  ?ESCAPE_LVALUE(LValue);
 escape_label_value(LValue) ->
-  escape_label_value(io_lib:format("~p", [LValue])).
+ ?ESCAPE_LVALUE(io_lib:format("~p", [LValue])).
 
--spec sub(string() | atom(), string(), string()) -> string().
-sub(Str, Old, New) when is_atom(Str) ->
-  sub(atom_to_list(Str), Old, New);
+-spec sub(iodata(), string(), string()) -> string().
 sub(Str, Old, New) ->
   RegExp = "\\Q" ++ Old ++ "\\E",
   re:replace(Str, RegExp, New, [global, {return, list}]).

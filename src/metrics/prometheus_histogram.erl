@@ -81,7 +81,7 @@
 
 new(Spec) ->
   {Registry, Name, Labels, Help, Buckets} = parse_histogram_spec(Spec),
-  prometheus_collector:register(?MODULE, Registry),
+  prometheus_registry:register_collector(Registry, ?MODULE),
   prometheus_metric:insert_new_mf(?TABLE, Registry,
                                   Name, Labels, Help, Buckets).
 
@@ -94,7 +94,7 @@ new(Spec, Registry) ->
 
 declare(Spec) ->
   {Registry, Name, Labels, Help, Buckets} = parse_histogram_spec(Spec),
-  prometheus_collector:register(?MODULE, Registry),
+  prometheus_registry:register_collector(Registry, ?MODULE),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help, Buckets).
 
 %% @deprecated Please use {@link declare/1} with registry

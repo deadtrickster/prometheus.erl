@@ -85,7 +85,7 @@
 new(Spec) ->
   {Registry, Name, Labels, Help} =
     prometheus_metric:extract_common_params(Spec),
-  prometheus_collector:register(?MODULE, Registry),
+  prometheus_registry:register_collector(Registry, ?MODULE),
   prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
 
 %% @deprecated Please use {@link new/1} with registry
@@ -98,7 +98,7 @@ new(Spec, Registry) ->
 declare(Spec) ->
   {Registry, Name, Labels, Help} =
     prometheus_metric:extract_common_params(Spec),
-  prometheus_collector:register(?MODULE, Registry),
+  prometheus_registry:register_collector(Registry, ?MODULE),
   prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
 
 %% @deprecated Please use {@link declare/1} with registry

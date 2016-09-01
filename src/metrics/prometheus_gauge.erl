@@ -134,13 +134,16 @@ track_inprogress(Name, Fun) ->
 track_inprogress(Name, LabelValues, Fun) ->
   track_inprogress(default, Name, LabelValues, Fun).
 
-track_inprogress(Registry, Name, LabelValues, Fun) ->
+track_inprogress(Registry, Name, LabelValues, Fun) when is_function(Fun) ->
   inc(Registry, Name, LabelValues),
   try
     Fun()
   after
     dec(Registry, Name, LabelValues)
-  end.
+  end;
+track_inprogress(_Registry, _Name, _LabelValues, Fun) ->
+  erlang:error({invalid_value, Fun, "track_inprogress accepts only functions"}).
+
 
 %% @equiv reset(default, Name, [])
 reset(Name) ->

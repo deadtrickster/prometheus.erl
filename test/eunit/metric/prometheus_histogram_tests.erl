@@ -39,6 +39,7 @@ test_errors(_) ->
    ?_assertError({invalid_metric_label_name, "le", "histogram cannot have a label named \"le\""},
                  prometheus_histogram:new([{name, "qwe"}, {labels, ["qwe", "le"]}, {help, ""}])),
    ?_assertError({invalid_metric_help, 12, "metric help is not a string"}, prometheus_histogram:new([{name, "qwe"}, {help, 12}])),
+   ?_assertError({invalid_value, "qwe", "observe_duration accepts only functions"}, prometheus_histogram:observe_duration(pool_size, "qwe")),
    %% mf/arity errors
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:observe(unknown_metric, 1)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:observe(db_query_duration, [repo, db], 1)),

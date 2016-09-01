@@ -150,9 +150,11 @@ observe_duration(Name, Fun) ->
 observe_duration(Name, LabelValues, Fun) ->
   observe_duration(default, Name, LabelValues, Fun).
 
-observe_duration(Registry, Name, LabelValues, Fun) ->
+observe_duration(Registry, Name, LabelValues, Fun) when is_function(Fun) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  prometheus_misc:observe_duration(Registry, ?MODULE, Name, LabelValues, Fun).
+  prometheus_misc:observe_duration(Registry, ?MODULE, Name, LabelValues, Fun);
+observe_duration(_Regsitry, _Name, _LabelValues, Fun) ->
+  erlang:error({invalid_value, Fun, "observe_duration accepts only functions"}).
 
 %% @equiv reset(default, Name, [])
 reset(Name) ->

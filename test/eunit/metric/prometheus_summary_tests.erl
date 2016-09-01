@@ -36,6 +36,7 @@ test_errors(_) ->
    ?_assertError({invalid_metric_label_name, "quantile", "summary cannot have a label named \"quantile\""},
                  prometheus_summary:new([{name, "qwe"}, {labels, ["qua", "quantile"]}, {help, ""}])),
    ?_assertError({invalid_metric_help, 12, "metric help is not a string"}, prometheus_summary:new([{name, "qwe"}, {help, 12}])),
+   ?_assertError({invalid_value, "qwe", "observe_duration accepts only functions"}, prometheus_summary:observe_duration(pool_size, "qwe")),
    %% mf/arity errors
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_summary:observe(unknown_metric, 1)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_summary:observe(db_query_duration, [repo, db], 1)),
@@ -97,7 +98,7 @@ test_observe_duration(_) ->
    ?_assertMatch(true, 0.9 < Sum andalso Sum < 1.2),
    ?_assertMatch(true, 0.9 < SumE andalso SumE < 1.2)].
 
-test_undefined_value(_) ->  
+test_undefined_value(_) ->
   prometheus_summary:new([{name, orders_summary}, {labels, [department]}, {help, "Track orders count/total sum"}]),
   Value = prometheus_summary:value(orders_summary, [electronics]),
   [?_assertEqual(undefined, Value)].

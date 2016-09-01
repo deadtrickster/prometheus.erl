@@ -1,4 +1,5 @@
-# Prometheus.erl [![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)](https://hex.pm/packages/prometheus) [![Build Status](https://travis-ci.org/deadtrickster/prometheus.erl.svg?branch=master)](https://travis-ci.org/deadtrickster/prometheus.erl) [![Coverage Status](https://coveralls.io/repos/github/deadtrickster/prometheus.erl/badge.svg?branch=master)](https://coveralls.io/github/deadtrickster/prometheus.erl?branch=master)
+# Prometheus.erl
+[![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)](https://hex.pm/packages/prometheus) [![Build Status](https://travis-ci.org/deadtrickster/prometheus.erl.svg?branch=version-3)](https://travis-ci.org/deadtrickster/prometheus.erl) [![Coverage Status](https://coveralls.io/repos/github/deadtrickster/prometheus.erl/badge.svg?branch=version-3)](https://coveralls.io/github/deadtrickster/prometheus.erl?branch=version-3)
 
 [Prometheus.io](https://prometheus.io) monitoring system and time series database client in Erlang.
 
@@ -20,7 +21,7 @@ You can write custom collector/exporter for any library/app you'd like. For exam
 ### Integrations / Collectors / Instrumenters
  - [Ecto collector](https://github.com/deadtrickster/prometheus-ecto)
  - [Elixir client](https://github.com/deadtrickster/prometheus.ex)
- - [Elixir plugs](https://github.com/deadtrickster/prometheus-plugs)
+ - [Plugs Instrumenter/Exporter](https://github.com/deadtrickster/prometheus-plugs)
  - [Elli middleware](https://github.com/elli-lib/elli_prometheus)
  - [Fuse plugin](https://github.com/jlouis/fuse#fuse_stats_prometheus)
  - [Phoenix instrumenter](https://github.com/deadtrickster/prometheus-phoenix)

@@ -34,11 +34,11 @@ test_errors(_) ->
    ?_assertError({invalid_metric_labels, 12, "not list"}, prometheus_counter:new([{name, "qwe"}, {labels, 12}, {help, ""}])),
    ?_assertError({invalid_metric_help, 12, "metric help is not a string"}, prometheus_counter:new([{name, "qwe"}, {help, 12}])),
    %% counter specific errors
-   ?_assertError({invalid_value, -1, "Counters accept only non-negative values"}, prometheus_counter:inc(http_requests_total, -1)),
-   ?_assertError({invalid_value, 1.5, "inc accepts only integers"}, prometheus_counter:inc(http_requests_total, 1.5)),
-   ?_assertError({invalid_value, "qwe", "inc accepts only integers"}, prometheus_counter:inc(http_requests_total, [], "qwe")),
-   ?_assertError({invalid_value, -1, "Counters accept only non-negative values"}, prometheus_counter:dinc(http_requests_total, -1)),
-   ?_assertError({invalid_value, "qwe", "dinc accepts only numbers"}, prometheus_counter:dinc(http_requests_total, [], "qwe")),
+   ?_assertError({invalid_value, -1, "inc accepts only non-negative integers"}, prometheus_counter:inc(http_requests_total, -1)),
+   ?_assertError({invalid_value, 1.5, "inc accepts only non-negative integers"}, prometheus_counter:inc(http_requests_total, 1.5)),
+   ?_assertError({invalid_value, "qwe", "inc accepts only non-negative integers"}, prometheus_counter:inc(http_requests_total, [], "qwe")),
+   ?_assertError({invalid_value, -1, "dinc accepts only non-negative numbers"}, prometheus_counter:dinc(http_requests_total, -1)),
+   ?_assertError({invalid_value, "qwe", "dinc accepts only non-negative numbers"}, prometheus_counter:dinc(http_requests_total, [], "qwe")),
    %% mf/arity errors
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_counter:inc(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_counter:inc(db_query_duration, [repo, db])),

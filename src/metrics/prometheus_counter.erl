@@ -123,7 +123,7 @@ inc(Name, LabelValues, Value) ->
 
 inc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
   erlang:error({invalid_value, Value,
-                "Counters accept only non-negative values"});
+                "inc accepts only non-negative integers"});
 inc(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   try
     ets:update_counter(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, Value})
@@ -132,7 +132,8 @@ inc(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   end,
   ok;
 inc(_Registry, _Name, _LabelValues, Value) ->
-  erlang:error({invalid_value, Value, "inc accepts only integers"}).
+  erlang:error({invalid_value, Value,
+                "inc accepts only non-negative integers"}).
 
 %% @equiv dinc(default, Name, [], 1)
 dinc(Name) ->
@@ -149,14 +150,15 @@ dinc(Name, LabelValues, Value) ->
 
 dinc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
   erlang:error({invalid_value, Value,
-                "Counters accept only non-negative values"});
+                "dinc accepts only non-negative numbers"});
 dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   gen_server:cast(prometheus_counter,
                   {inc, {Registry, Name, LabelValues, Value}}),
   ok;
 dinc(_Registry, _Name, _LabelValues, Value) ->
-  erlang:error({invalid_value, Value, "dinc accepts only numbers"}).
+  erlang:error({invalid_value, Value,
+                "dinc accepts only non-negative numbers"}).
 
 %% @equiv reset(default, Name, [])
 reset(Name) ->

@@ -114,7 +114,7 @@ inc(Name) ->
 
 inc(Name, LabelValues) when is_list(LabelValues)->
   inc(default, Name, LabelValues, 1);
-inc(Name, Value) when is_number(Value) ->
+inc(Name, Value) ->
   inc(default, Name, [], Value).
 
 %% @equiv inc(default, Name, LabelValues, Value)
@@ -153,7 +153,7 @@ dinc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
                 "dinc accepts only non-negative numbers"});
 dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  gen_server:cast(prometheus_counter,
+  gen_server:cast(?MODULE,
                   {inc, {Registry, Name, LabelValues, Value}}),
   ok;
 dinc(_Registry, _Name, _LabelValues, Value) ->

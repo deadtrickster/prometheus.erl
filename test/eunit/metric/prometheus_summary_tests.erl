@@ -36,7 +36,6 @@ test_errors(_) ->
    ?_assertError({invalid_metric_label_name, "quantile", "summary cannot have a label named \"quantile\""},
                  prometheus_summary:new([{name, "qwe"}, {labels, ["qua", "quantile"]}, {help, ""}])),
    ?_assertError({invalid_metric_help, 12, "metric help is not a string"}, prometheus_summary:new([{name, "qwe"}, {help, 12}])),
-   ?_assertError({invalid_value, "qwe", "observe_duration accepts only functions"}, prometheus_summary:observe_duration(pool_size, "qwe")),
    %% mf/arity errors
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_summary:observe(unknown_metric, 1)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_summary:observe(db_query_duration, [repo, db], 1)),
@@ -51,7 +50,8 @@ test_errors(_) ->
    %% summary specific errors
    ?_assertError({invalid_value, 1.5, "observe accepts only integers"}, prometheus_summary:observe(orders_summary, 1.5)),
    ?_assertError({invalid_value, "qwe", "observe accepts only integers"}, prometheus_summary:observe(orders_summary, "qwe")),
-   ?_assertError({invalid_value, "qwe", "dobserve accepts only numbers"}, prometheus_summary:dobserve(orders_summary, "qwe"))
+   ?_assertError({invalid_value, "qwe", "dobserve accepts only numbers"}, prometheus_summary:dobserve(orders_summary, "qwe")),
+   ?_assertError({invalid_value, "qwe", "observe_duration accepts only functions"}, prometheus_summary:observe_duration(pool_size, "qwe"))
   ].
 
 test_int(_) ->

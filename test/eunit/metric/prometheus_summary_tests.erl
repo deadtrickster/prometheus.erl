@@ -11,6 +11,7 @@ prometheus_format_test_() ->
     fun test_int/1,
     fun test_double/1,
     fun test_observe_duration/1,
+    fun test_remove/1,
     fun test_undefined_value/1]}.
 
 test_registration(_)->
@@ -47,6 +48,8 @@ test_errors(_) ->
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_summary:reset(db_query_duration, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_summary:value(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_summary:value(db_query_duration, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_summary:remove(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_summary:remove(db_query_duration, [repo, db])),
    %% summary specific errors
    ?_assertError({invalid_value, 1.5, "observe accepts only integers"}, prometheus_summary:observe(orders_summary, 1.5)),
    ?_assertError({invalid_value, "qwe", "observe accepts only integers"}, prometheus_summary:observe(orders_summary, "qwe")),
@@ -97,6 +100,34 @@ test_observe_duration(_) ->
    ?_assertEqual(2, CountE),
    ?_assertMatch(true, 0.9 < Sum andalso Sum < 1.2),
    ?_assertMatch(true, 0.9 < SumE andalso SumE < 1.2)].
+
+test_remove(_) ->
+  prometheus_summary:new([{name, summary}, {labels, [pool]}, {help, ""}]),
+  prometheus_summary:new([{name, simple_summary}, {help, ""}]),
+
+  prometheus_summary:observe(summary, [mongodb], 1),
+  prometheus_summary:observe(simple_summary, 1),
+
+  BRValue1 = prometheus_summary:value(summary, [mongodb]),
+  BRValue2 = prometheus_summary:value(simple_summary),
+
+  RResult1 = prometheus_summary:remove(summary, [mongodb]),
+  RResult2 = prometheus_summary:remove(simple_summary),
+
+  ARValue1 = prometheus_summary:value(summary, [mongodb]),
+  ARValue2 = prometheus_summary:value(simple_summary),
+
+  RResult3 = prometheus_summary:remove(summary, [mongodb]),
+  RResult4 = prometheus_summary:remove(simple_summary),
+
+  [?_assertEqual({1, 1}, BRValue1),
+   ?_assertEqual({1, 1}, BRValue2),
+   ?_assertEqual(true, RResult1),
+   ?_assertEqual(true, RResult2),
+   ?_assertEqual(undefined, ARValue1),
+   ?_assertEqual(undefined, ARValue2),
+   ?_assertEqual(false, RResult3),
+   ?_assertEqual(false, RResult4)].
 
 test_undefined_value(_) ->
   prometheus_summary:new([{name, orders_summary}, {labels, [department]}, {help, "Track orders count/total sum"}]),

@@ -12,6 +12,7 @@ prometheus_format_test_() ->
     fun test_int/1,
     fun test_double/1,
     fun test_observe_duration/1,
+    fun test_remove/1,
     fun test_undefined_value/1]}.
 
 test_registration(_)->
@@ -52,6 +53,8 @@ test_errors(_) ->
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:value(db_query_duration, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:buckets(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:buckets(db_query_duration, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_histogram:remove(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_histogram:remove(db_query_duration, [repo, db])),
    %% histogram specific errors
    ?_assertError({histogram_no_buckets, []}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, []}])),
    ?_assertError({histogram_no_buckets, undefined}, prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, undefined}])),
@@ -150,6 +153,36 @@ test_observe_duration(_) ->
    ?_assertEqual([1, 1, 0], BucketsE),
    ?_assertMatch(true, 0.9 < Sum andalso Sum < 1.2),
    ?_assertMatch(true, 0.9 < SumE andalso SumE < 1.2)].
+
+test_remove(_) ->
+  prometheus_histogram:new([{name, histogram}, {buckets, [5, 10]}, {labels, [pool]}, {help, ""}]),
+  prometheus_histogram:new([{name, simple_histogram}, {buckets, [5, 10]}, {help, ""}]),
+
+  prometheus_histogram:observe(histogram, [mongodb], 1),
+  prometheus_histogram:observe(simple_histogram, 1),
+  prometheus_histogram:observe(histogram, [mongodb], 6),
+  prometheus_histogram:observe(simple_histogram, 6),
+
+  BRValue1 = prometheus_histogram:value(histogram, [mongodb]),
+  BRValue2 = prometheus_histogram:value(simple_histogram),
+
+  RResult1 = prometheus_histogram:remove(histogram, [mongodb]),
+  RResult2 = prometheus_histogram:remove(simple_histogram),
+
+  ARValue1 = prometheus_histogram:value(histogram, [mongodb]),
+  ARValue2 = prometheus_histogram:value(simple_histogram),
+
+  RResult3 = prometheus_histogram:remove(histogram, [mongodb]),
+  RResult4 = prometheus_histogram:remove(simple_histogram),
+
+  [?_assertEqual({[1, 1, 0], 7}, BRValue1),
+   ?_assertEqual({[1, 1, 0], 7}, BRValue2),
+   ?_assertEqual(true, RResult1),
+   ?_assertEqual(true, RResult2),
+   ?_assertEqual(undefined, ARValue1),
+   ?_assertEqual(undefined, ARValue2),
+   ?_assertEqual(false, RResult3),
+   ?_assertEqual(false, RResult4)].
 
 test_undefined_value(_) ->
   prometheus_histogram:new([{name, duraiton_histogram}, {labels, [label]}, {help, ""}]),

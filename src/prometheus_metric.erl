@@ -8,7 +8,8 @@
          check_mf_exists/4,
          mf_data/1,
          metrics/2,
-         extract_common_params/1]).
+         extract_common_params/1,
+         remove_labels/4]).
 
 -export_type([name/0,
               help/0,
@@ -51,6 +52,13 @@
 -callback new(Spec :: prometheus_metric_spec:spec()) -> ok.
 
 -callback declare(Spec :: prometheus_metric_spec:spec()) -> boolean().
+
+-callback remove(Name :: name()) -> boolean() | no_return().
+-callback remove(Name :: name(), LValues :: list()) -> boolean() | no_return().
+-callback remove(Registry, Name, LValues) -> boolean() | no_return()  when
+    Registry :: prometheus_registry:registry(),
+    Name     :: name(),
+    LValues  :: list().
 
 -callback reset(Name :: name()) -> boolean() | no_return().
 -callback reset(Name :: name(), LValues :: list()) -> boolean() | no_return().
@@ -213,3 +221,17 @@ validate_metric_help(RawHelp) when is_list(RawHelp) ->
   end;
 validate_metric_help(RawHelp) ->
   erlang:error({invalid_metric_help, RawHelp, "metric help is not a string"}).
+
+
+-spec remove_labels(Table, Registry, Name, LValues) ->
+                       boolean() | no_return() when
+    Table    :: atom(),
+    Registry :: prometheus_registry:registry(),
+    Name     :: name(),
+    LValues  :: list().
+remove_labels(Table, Registry, Name, LabelValues) ->  
+  check_mf_exists(Table, Registry, Name, LabelValues),
+  case ets:take(Table, {Registry, Name, LabelValues}) of
+    [] -> false;
+    _ -> true
+  end.

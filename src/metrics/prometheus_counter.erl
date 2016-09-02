@@ -37,6 +37,9 @@
          dinc/2,
          dinc/3,
          dinc/4,
+         remove/1,
+         remove/2,
+         remove/3,
          reset/1,
          reset/2,
          reset/3,
@@ -159,6 +162,17 @@ dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
 dinc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
                 "dinc accepts only non-negative numbers"}).
+
+%% @equiv remove(default, Name, [])
+remove(Name) ->
+  remove(default, Name, []).
+
+%% @equiv remove(default, Name, LabelValues)
+remove(Name, LabelValues) ->
+  remove(default, Name, LabelValues).
+
+remove(Registry, Name, LabelValues) ->
+  prometheus_metric:remove_labels(?TABLE, Registry, Name, LabelValues).
 
 %% @equiv reset(default, Name, [])
 reset(Name) ->

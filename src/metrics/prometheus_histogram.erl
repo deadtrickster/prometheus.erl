@@ -25,6 +25,9 @@
          observe_duration/2,
          observe_duration/3,
          observe_duration/4,
+         remove/1,
+         remove/2,
+         remove/3,
          reset/1,
          reset/2,
          reset/3,
@@ -155,6 +158,17 @@ observe_duration(Registry, Name, LabelValues, Fun) when is_function(Fun) ->
   prometheus_misc:observe_duration(Registry, ?MODULE, Name, LabelValues, Fun);
 observe_duration(_Regsitry, _Name, _LabelValues, Fun) ->
   erlang:error({invalid_value, Fun, "observe_duration accepts only functions"}).
+
+%% @equiv remove(default, Name, [])
+remove(Name) ->
+  remove(default, Name, []).
+
+%% @equiv remove(default, Name, LabelValues)
+remove(Name, LabelValues) ->
+  remove(default, Name, LabelValues).
+
+remove(Registry, Name, LabelValues) ->
+  prometheus_metric:remove_labels(?TABLE, Registry, Name, LabelValues).
 
 %% @equiv reset(default, Name, [])
 reset(Name) ->

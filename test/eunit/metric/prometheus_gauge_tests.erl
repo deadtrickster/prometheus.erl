@@ -16,6 +16,7 @@ prometheus_format_test_() ->
     fun test_set_to_current_time/1,
     fun test_track_inprogress/1,
     fun test_set_duration/1,
+    fun test_remove/1,
     fun test_undefined_value/1]}.
 
 test_registration(_)->
@@ -60,7 +61,9 @@ test_errors(_) ->
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:reset(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:reset(with_label, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:value(unknown_metric)),
-   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:value(with_label, [repo, db])),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:value(with_label, [repo, db])),   
+   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:remove(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:remove(with_label, [repo, db])),
    ?_assertError({invalid_value, "qwe", "set_duration accepts only functions"}, prometheus_gauge:set_duration(pool_size, "qwe"))
   ].
 
@@ -178,6 +181,34 @@ test_set_duration(_) ->
 
   [?_assertMatch(true, 0.9 < Value andalso Value < 1.2),
    ?_assertMatch(true, 0.0 < ValueE andalso ValueE < 0.1)].
+
+test_remove(_) ->
+  prometheus_gauge:new([{name, pool_size}, {labels, [pool]}, {help, "Http request count"}]),
+  prometheus_gauge:new([{name, simple_gauge}, {help, ""}]),
+
+  prometheus_gauge:inc(pool_size, [mongodb]),
+  prometheus_gauge:inc(simple_gauge),
+
+  BRValue1 = prometheus_gauge:value(pool_size, [mongodb]),
+  BRValue2 = prometheus_gauge:value(simple_gauge),
+
+  RResult1 = prometheus_gauge:remove(pool_size, [mongodb]),
+  RResult2 = prometheus_gauge:remove(simple_gauge),
+
+  ARValue1 = prometheus_gauge:value(pool_size, [mongodb]),
+  ARValue2 = prometheus_gauge:value(simple_gauge),
+
+  RResult3 = prometheus_gauge:remove(pool_size, [mongodb]),
+  RResult4 = prometheus_gauge:remove(simple_gauge),
+
+  [?_assertEqual(1, BRValue1),
+   ?_assertEqual(1, BRValue2),
+   ?_assertEqual(true, RResult1),
+   ?_assertEqual(true, RResult2),
+   ?_assertEqual(undefined, ARValue1),
+   ?_assertEqual(undefined, ARValue2),
+   ?_assertEqual(false, RResult3),
+   ?_assertEqual(false, RResult4)].
 
 test_undefined_value(_) ->
   prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),

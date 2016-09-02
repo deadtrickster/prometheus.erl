@@ -23,7 +23,10 @@
 
 -ifdef(TEST).
 -export([escape_metric_help/1,
-         escape_label_value/1]).
+         escape_label_value/1,
+         emit_mf_prologue/2,
+         emit_mf_metrics/2
+        ]).
 -endif.
 
 -include("prometheus.hrl").
@@ -96,7 +99,11 @@ emit_mf_metrics(Fd, #'MetricFamily'{name=Name, metric = Metrics}) ->
 emit_metric(Fd, Name, #'Metric'{label=Labels,
                                 counter=#'Counter'{value=Value}}) ->
   emit_series(Fd, Name, Labels, Value);
-emit_metric(Fd, Name, #'Metric'{label=Labels, gauge=#'Gauge'{value=Value}}) ->
+emit_metric(Fd, Name, #'Metric'{label=Labels,
+                                gauge=#'Gauge'{value=Value}}) ->
+  emit_series(Fd, Name, Labels, Value);
+emit_metric(Fd, Name, #'Metric'{label=Labels,
+                                untyped=#'Untyped'{value=Value}}) ->
   emit_series(Fd, Name, Labels, Value);
 emit_metric(Fd, Name, #'Metric'{label=Labels,
                                 summary=#'Summary'{sample_count=Count,
@@ -158,7 +165,7 @@ escape_label_value(LValue) when is_list(LValue)->
 escape_label_value(LValue) when is_binary(LValue) ->
   ?ESCAPE_LVALUE(LValue);
 escape_label_value(LValue) ->
- ?ESCAPE_LVALUE(io_lib:format("~p", [LValue])).
+  ?ESCAPE_LVALUE(io_lib:format("~p", [LValue])).
 
 -spec sub(iodata(), string(), string()) -> string().
 sub(Str, Old, New) ->

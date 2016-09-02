@@ -49,6 +49,9 @@
          track_inprogress/2,
          track_inprogress/3,
          track_inprogress/4,
+         set_duration/2,
+         set_duration/3,
+         set_duration/4,
          reset/1,
          reset/2,
          reset/3,
@@ -262,6 +265,19 @@ track_inprogress(Registry, Name, LabelValues, Fun) when is_function(Fun) ->
 track_inprogress(_Registry, _Name, _LabelValues, Fun) ->
   erlang:error({invalid_value, Fun, "track_inprogress accepts only functions"}).
 
+%% @equiv set_duration(default, Name, [], Fun)
+set_duration(Name, Fun) ->
+  set_duration(default, Name, [], Fun).
+
+%% @equiv set_duration(default, Name, LabelValues, Fun)
+set_duration(Name, LabelValues, Fun) ->
+  set_duration(default, Name, LabelValues, Fun).
+
+set_duration(Registry, Name, LabelValues, Fun) when is_function(Fun) ->
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  prometheus_misc:set_duration(Registry, ?MODULE, Name, LabelValues, Fun);
+set_duration(_Registry, _Name, _LabelValues, Fun) ->
+  erlang:error({invalid_value, Fun, "set_duration accepts only functions"}).
 
 %% @equiv reset(default, Name, [])
 reset(Name) ->

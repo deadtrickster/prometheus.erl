@@ -20,7 +20,8 @@
 -module(prometheus_misc).
 
 -export([behaviour_modules/1,
-         observe_duration/5]).
+         observe_duration/5,
+         set_duration/5]).
 
 %%====================================================================
 %% Public API
@@ -38,6 +39,14 @@ observe_duration(Registry, Metric, Name, LabelValues, Fun) ->
     Fun()
   after
     Metric:dobserve(Registry, Name, LabelValues, time_diff_seconds(Start))
+  end.
+
+set_duration(Registry, Metric, Name, LabelValues, Fun) -> %% FIXME: copy-paste
+  Start = current_time(),
+  try
+    Fun()
+  after
+    Metric:set(Registry, Name, LabelValues, time_diff_seconds(Start))
   end.
 
 %%====================================================================

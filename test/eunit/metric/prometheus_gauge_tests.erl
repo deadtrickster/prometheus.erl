@@ -15,6 +15,7 @@ prometheus_format_test_() ->
     fun test_ddec/1,
     fun test_set_to_current_time/1,
     fun test_track_inprogress/1,
+    fun test_set_duration/1,
     fun test_undefined_value/1]}.
 
 test_registration(_)->
@@ -59,7 +60,8 @@ test_errors(_) ->
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:reset(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:reset(with_label, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:value(unknown_metric)),
-   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:value(with_label, [repo, db]))
+   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:value(with_label, [repo, db])),
+   ?_assertError({invalid_value, "qwe", "set_duration accepts only functions"}, prometheus_gauge:set_duration(pool_size, "qwe"))
   ].
 
 test_set(_) ->
@@ -156,6 +158,26 @@ test_track_inprogress(_) ->
 
   [?_assertEqual(1, Value),
    ?_assertEqual(0, prometheus_gauge:value(fun_executing_gauge))].
+
+test_set_duration(_) ->
+  prometheus_gauge:new([{name, fun_executing_gauge}, {help, ""}]),
+  prometheus_gauge:set_duration(fun_executing_gauge, fun () ->
+                                                         timer:sleep(1000)
+                                                     end),
+  timer:sleep(10),
+  Value = prometheus_gauge:value(fun_executing_gauge),
+
+  try prometheus_gauge:set_duration(fun_executing_gauge, fun () ->
+                                                             erlang:error({qwe})
+                                                         end)
+  catch _:_ -> ok
+  end,
+
+  timer:sleep(10),
+  ValueE = prometheus_gauge:value(fun_executing_gauge),
+
+  [?_assertMatch(true, 0.9 < Value andalso Value < 1.2),
+   ?_assertMatch(true, 0.0 < ValueE andalso ValueE < 0.1)].
 
 test_undefined_value(_) ->
   prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),

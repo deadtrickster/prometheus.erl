@@ -27,6 +27,22 @@
          set/2,
          set/3,
          set/4,
+         inc/1,
+         inc/2,
+         inc/3,
+         inc/4,
+         dinc/1,
+         dinc/2,
+         dinc/3,
+         dinc/4,
+         dec/1,
+         dec/2,
+         dec/3,
+         dec/4,
+         ddec/1,
+         ddec/2,
+         ddec/3,
+         ddec/4,
          set_to_current_time/1,
          set_to_current_time/2,
          set_to_current_time/3,
@@ -45,6 +61,15 @@
          collect_mf/2,
          collect_metrics/2]).
 
+%%% gen_server
+-export([init/1,
+         handle_call/3,
+         handle_cast/2,
+         handle_info/2,
+         terminate/2,
+         code_change/3,
+         start_link/0]).
+
 -import(prometheus_model_helpers, [create_mf/5,
                                    gauge_metrics/1,
                                    gauge_metric/1,
@@ -56,6 +81,7 @@
 
 -behaviour(prometheus_metric).
 -behaviour(prometheus_collector).
+-behaviour(gen_server).
 
 %%====================================================================
 %% Macros
@@ -115,6 +141,98 @@ set(Registry, Name, LabelValues, Value) when is_number(Value) orelse
 set(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "set accepts only numbers"}).
 
+inc(Name) ->
+  inc(default, Name, [], 1).
+
+inc(Name, LabelValues) when is_list(LabelValues)->
+  inc(default, Name, LabelValues, 1);
+inc(Name, Value) ->
+  inc(default, Name, [], Value).
+
+%% @equiv inc(default, Name, LabelValues, Value)
+inc(Name, LabelValues, Value) ->
+  inc(default, Name, LabelValues, Value).
+
+inc(Registry, Name, LabelValues, Value) when is_integer(Value) ->
+  try
+    ets:update_counter(?TABLE, {Registry, Name, LabelValues},
+                       {?GAUGE_POS, Value})
+  catch error:badarg ->
+      insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
+  end,
+  ok;
+inc(_Registry, _Name, _LabelValues, Value) ->
+  erlang:error({invalid_value, Value,
+                "inc accepts only integers"}).
+
+%% @equiv dinc(default, Name, [], 1)
+dinc(Name) ->
+  dinc(default, Name, [], 1).
+
+dinc(Name, LabelValues) when is_list(LabelValues)->
+  dinc(default, Name, LabelValues, 1);
+dinc(Name, Value) when is_number(Value) ->
+  dinc(default, Name, [], Value).
+
+%% @equiv dinc(default, Name, LabelValues, Value)
+dinc(Name, LabelValues, Value) ->
+  dinc(default, Name, LabelValues, Value).
+
+dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  gen_server:cast(?MODULE,
+                  {inc, {Registry, Name, LabelValues, Value}}),
+  ok;
+dinc(_Registry, _Name, _LabelValues, Value) ->
+  erlang:error({invalid_value, Value,
+                "dinc accepts only numbers"}).
+
+dec(Name) ->
+  inc(default, Name, [], -1).
+
+dec(Name, LabelValues) when is_list(LabelValues)->
+  inc(default, Name, LabelValues, -1);
+dec(Name, Value)  when is_integer(Value) ->
+  inc(default, Name, [], -1*Value);
+dec(_Name, Value) ->
+  erlang:error({invalid_value, Value,
+                "dec accepts only integers"}).
+
+dec(Name, LabelValues, Value) when is_integer(Value) ->
+  inc(default, Name, LabelValues, -1*Value);
+dec(_Name, _LabelValues, Value) ->
+  erlang:error({invalid_value, Value,
+                "dec accepts only integers"}).
+
+dec(Registry, Name, LabelValues, Value) when is_integer(Value) ->
+  inc(Registry, Name, LabelValues, -1*Value);
+dec(_Registry, _Name, _LabelValues, Value) ->
+  erlang:error({invalid_value, Value,
+                "dec accepts only integers"}).
+
+ddec(Name) ->
+  dinc(default, Name, [], -1).
+
+ddec(Name, LabelValues) when is_list(LabelValues)->
+  dinc(default, Name, LabelValues, -1);
+ddec(Name, Value)  when is_number(Value) ->
+  dinc(default, Name, [], -1*Value);
+ddec(_Name, Value) ->
+  erlang:error({invalid_value, Value,
+                "ddec accepts only numbers"}).
+
+ddec(Name, LabelValues, Value) when is_number(Value) ->
+  dinc(default, Name, LabelValues, -1*Value);
+ddec(_Name, _LabelValues, Value) ->
+  erlang:error({invalid_value, Value,
+                "ddec accepts only numbers"}).
+
+ddec(Registry, Name, LabelValues, Value) when is_number(Value) ->
+  dinc(Registry, Name, LabelValues, -1*Value);
+ddec(_Registry, _Name, _LabelValues, Value) ->
+  erlang:error({invalid_value, Value,
+                "ddec accepts only numbers"}).
+
 %% @equiv set_to_current_time(default, Name, [])
 set_to_current_time(Name) ->
   set_to_current_time(default, Name, []).
@@ -135,11 +253,11 @@ track_inprogress(Name, LabelValues, Fun) ->
   track_inprogress(default, Name, LabelValues, Fun).
 
 track_inprogress(Registry, Name, LabelValues, Fun) when is_function(Fun) ->
-  inc(Registry, Name, LabelValues),
+  inc(Registry, Name, LabelValues, 1),
   try
     Fun()
   after
-    dec(Registry, Name, LabelValues)
+    dec(Registry, Name, LabelValues, 1)
   end;
 track_inprogress(_Registry, _Name, _LabelValues, Fun) ->
   erlang:error({invalid_value, Fun, "track_inprogress accepts only functions"}).
@@ -190,24 +308,54 @@ collect_metrics(Name, {Labels, Registry}) ->
   [gauge_metric(lists:zip(Labels, LabelValues), Value) ||
     [LabelValues, Value] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'})].
 
+
+%%====================================================================
+%% Gen_server API
+%%====================================================================
+
+%% @private
+init(_Args) ->
+  {ok, []}.
+
+%% @private
+handle_call(_Call, _From, State) ->
+  {noreply, State}.
+
+%% @private
+handle_cast({inc, {Registry, Name, LabelValues, Value}}, State) ->
+  dinc_impl(Registry, Name, LabelValues, Value),
+  {noreply, State}.
+
+%% @private
+handle_info(_Info, State) ->
+  {noreply, State}.
+
+%% @private
+terminate(_Reason, _State) ->
+  ok.
+
+%% @private
+code_change(_OldVsn, State, _Extra) ->
+  {ok, State}.
+
+%% @private
+start_link() ->
+  gen_server:start_link({local, prometheus_gauge},
+                        prometheus_gauge, [], []).
+
+
 %%====================================================================
 %% Private Parts
 %%====================================================================
 
-inc(Registry, Name, LabelValues) ->
-  inc(Registry, Name, LabelValues, 1).
-
-inc(Registry, Name, LabelValues, Inc) ->
-  try
-    ets:update_counter(?TABLE, {Registry, Name, LabelValues},
-                       {?GAUGE_POS, Inc})
-  catch error:badarg ->
-      insert_metric(Registry, Name, LabelValues, Inc, fun inc/4)
-  end,
-  ok.
-
-dec(Registry, Name, LabelValues) ->
-  inc(Registry, Name, LabelValues, -1).
+dinc_impl(Registry, Name, LabelValues, Value) ->
+  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
+    [{_Key, OldValue}] ->
+      ets:update_element(?TABLE, {Registry, Name, LabelValues},
+                         {?GAUGE_POS, Value + OldValue});
+    [] ->
+      insert_metric(Registry, Name, LabelValues, Value, fun dinc_impl/4)
+  end.
 
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),

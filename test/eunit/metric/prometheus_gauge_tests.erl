@@ -9,6 +9,10 @@ prometheus_format_test_() ->
    [fun test_registration/1,
     fun test_errors/1,
     fun test_set/1,
+    fun test_inc/1,
+    fun test_dinc/1,
+    fun test_dec/1,
+    fun test_ddec/1,
     fun test_set_to_current_time/1,
     fun test_track_inprogress/1,
     fun test_undefined_value/1]}.
@@ -36,6 +40,14 @@ test_errors(_) ->
    ?_assertError({invalid_metric_help, 12, "metric help is not a string"}, prometheus_gauge:new([{name, "qwe"}, {help, 12}])),
    %% gauge specific errors,
    ?_assertError({invalid_value, "qwe", "set accepts only numbers"}, prometheus_gauge:set(pool_size, "qwe")),
+   ?_assertError({invalid_value, 1.5, "inc accepts only integers"}, prometheus_gauge:inc(pool_size, 1.5)),
+   ?_assertError({invalid_value, "qwe", "dinc accepts only numbers"}, prometheus_gauge:dinc(pool_size, [], "qwe")),
+   ?_assertError({invalid_value, 1.5, "dec accepts only integers"}, prometheus_gauge:dec(pool_size, 1.5)),
+   ?_assertError({invalid_value, "qwe", "dec accepts only integers"}, prometheus_gauge:dec(pool_size, [], "qwe")),
+   ?_assertError({invalid_value, 1.5, "dec accepts only integers"}, prometheus_gauge:dec(default, pool_size, [], 1.5)),
+   ?_assertError({invalid_value, qwe, "ddec accepts only numbers"}, prometheus_gauge:ddec(pool_size, qwe)),
+   ?_assertError({invalid_value, "qwe", "ddec accepts only numbers"}, prometheus_gauge:ddec(pool_size, [], "qwe")),
+   ?_assertError({invalid_value, "qwe", "ddec accepts only numbers"}, prometheus_gauge:ddec(default, pool_size, [], "qwe")),
    ?_assertError({invalid_value, "qwe", "track_inprogress accepts only functions"}, prometheus_gauge:track_inprogress(pool_size, "qwe")),
    %% mf/arity errors
    ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:set(unknown_metric, 2)),
@@ -61,6 +73,67 @@ test_set(_) ->
   [?_assertEqual(100, Value),
    ?_assertEqual(105, Value1),
    ?_assertEqual(0, RValue)].
+
+test_inc(_) ->
+  prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),
+  prometheus_gauge:new([{name, temperature}, {help, ""}]),
+  prometheus_gauge:inc(pool_size, [mongodb]),
+  prometheus_gauge:inc(pool_size, [mongodb], 3),
+  prometheus_gauge:inc(temperature),
+  prometheus_gauge:inc(temperature, 3),
+
+  PSValue = prometheus_gauge:value(pool_size, [mongodb]),
+  TValue = prometheus_gauge:value(temperature),
+  [?_assertEqual(4, PSValue),
+   ?_assertEqual(4, TValue)].
+
+test_dinc(_) ->
+  prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),
+  prometheus_gauge:new([{name, temperature}, {help, ""}]),
+  prometheus_gauge:dinc(pool_size, [mongodb]),
+  prometheus_gauge:dinc(pool_size, [mongodb], 3.5),
+  prometheus_gauge:dinc(temperature),
+  prometheus_gauge:dinc(temperature, 3.5),
+
+  timer:sleep(10), %% dinc is async so lets make sure gen_server processed our increment request
+
+  PSValue = prometheus_gauge:value(pool_size, [mongodb]),
+  TValue = prometheus_gauge:value(temperature),
+  [?_assertEqual(4.5, PSValue),
+   ?_assertEqual(4.5, TValue)].
+
+test_dec(_) ->
+  prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),
+  prometheus_gauge:new([{name, temperature}, {help, ""}]),
+  prometheus_gauge:inc(pool_size, [mongodb]),
+  prometheus_gauge:inc(pool_size, [mongodb], 10),
+  prometheus_gauge:dec(pool_size, [mongodb]),
+  prometheus_gauge:dec(pool_size, [mongodb], 6),
+  prometheus_gauge:inc(temperature),
+  prometheus_gauge:inc(temperature, 10),
+  prometheus_gauge:dec(temperature),
+  prometheus_gauge:dec(temperature, 6),
+
+  PSValue = prometheus_gauge:value(pool_size, [mongodb]),
+  TValue = prometheus_gauge:value(temperature),
+  [?_assertEqual(4, PSValue),
+   ?_assertEqual(4, TValue)].
+
+test_ddec(_) ->
+  prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),
+  prometheus_gauge:new([{name, temperature}, {help, ""}]),
+  prometheus_gauge:ddec(pool_size, [mongodb]),
+  prometheus_gauge:ddec(pool_size, [mongodb], 6.5),
+  prometheus_gauge:ddec(temperature),
+  prometheus_gauge:ddec(temperature, 6.5),
+  prometheus_gauge:ddec(default, temperature, [], 6.5),
+
+  timer:sleep(10), %% ddec is async so lets make sure gen_server processed our increment request
+
+  PSValue = prometheus_gauge:value(pool_size, [mongodb]),
+  TValue = prometheus_gauge:value(temperature),
+  [?_assertEqual(-7.5, PSValue),
+   ?_assertEqual(-14.0, TValue)].
 
 test_set_to_current_time(_) ->
   prometheus_gauge:new([{name, cur_time}, {labels, []}, {help, ""}]),
@@ -88,4 +161,3 @@ test_undefined_value(_) ->
   prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),
   UndefinedValue = prometheus_gauge:value(pool_size, [post]),
   [?_assertEqual(undefined, UndefinedValue)].
-

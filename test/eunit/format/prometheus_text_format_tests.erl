@@ -2,6 +2,24 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-export([deregister_cleanup/1,
+         collect_mf/2,
+         collect_metrics/2]).
+
+deregister_cleanup(_) -> ok.
+
+collect_mf(_Registry, Callback) ->
+  Callback(create_untyped(pool_size,
+                          "MongoDB Connections pool size")),
+
+  ok.
+
+collect_metrics(pool_size, _) ->
+  prometheus_model_helpers:untyped_metric(365).
+
+create_untyped(Name, Help) ->
+  prometheus_model_helpers:create_mf(Name, Help, untyped, ?MODULE, undefined).
+
 escape_metric_help_test() ->
   ?assertEqual("qwe\\\\qwe\\nqwe", prometheus_text_format:escape_metric_help("qwe\\qwe\nqwe")).
 
@@ -13,6 +31,7 @@ prometheus_format_test_() ->
    fun prometheus_eunit_common:start/0,
    fun prometheus_eunit_common:stop/1,
    [fun test_gauge/1,
+    fun test_untyped/1,
     fun test_nan_gauge/1,
     fun test_counter/1,
     fun test_dcounter/1,
@@ -28,6 +47,14 @@ test_gauge(_) ->
   prometheus_gauge:new([{name, pool_size}, {help, "MongoDB Connections pool size"}]),
   prometheus_gauge:set(pool_size, 365),
   ?_assertEqual(<<"# TYPE pool_size gauge
+# HELP pool_size MongoDB Connections pool size
+pool_size 365
+
+">>, prometheus_text_format:format()).
+
+test_untyped(_) ->
+  prometheus_registry:register_collector(?MODULE),
+  ?_assertEqual(<<"# TYPE pool_size untyped
 # HELP pool_size MongoDB Connections pool size
 pool_size 365
 

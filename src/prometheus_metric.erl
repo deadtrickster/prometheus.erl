@@ -229,7 +229,7 @@ validate_metric_help(RawHelp) ->
     Registry :: prometheus_registry:registry(),
     Name     :: name(),
     LValues  :: list().
-remove_labels(Table, Registry, Name, LabelValues) ->  
+remove_labels(Table, Registry, Name, LabelValues) ->
   check_mf_exists(Table, Registry, Name, LabelValues),
   case ets:take(Table, {Registry, Name, LabelValues}) of
     [] -> false;

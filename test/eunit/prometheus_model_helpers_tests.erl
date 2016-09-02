@@ -25,6 +25,27 @@ gauge_metric_test() ->
                           gauge=#'Gauge'{value=Value}}],
                prometheus_model_helpers:gauge_metrics([{Labels, Value}])).
 
+untyped_metric_test() ->
+  Value = 11,
+  NoLabels = [],
+  LName = <<"label">>,
+  LValue = <<"value">>,
+  Labels = [{LName, LValue}],
+  ?assertMatch(#'Metric'{label=NoLabels,
+                         untyped=#'Untyped'{value=Value}},
+               prometheus_model_helpers:untyped_metric(Value)),
+  ?assertMatch(#'Metric'{label=NoLabels,
+                         untyped=#'Untyped'{value=Value}},
+               prometheus_model_helpers:untyped_metric({Value})),
+  ?assertMatch(#'Metric'{label=[#'LabelPair'{name=LName,
+                                             value=LValue}],
+                         untyped=#'Untyped'{value=Value}},
+               prometheus_model_helpers:untyped_metric(Labels, Value)),
+  ?assertMatch([#'Metric'{label=[#'LabelPair'{name=LName,
+                                              value=LValue}],
+                          untyped=#'Untyped'{value=Value}}],
+               prometheus_model_helpers:untyped_metrics([{Labels, Value}])).
+
 counter_metric_test() ->
   Value = 11,
   NoLabels = [],

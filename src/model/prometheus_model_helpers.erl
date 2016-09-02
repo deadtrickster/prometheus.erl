@@ -9,6 +9,9 @@
          gauge_metrics/1,
          gauge_metric/1,
          gauge_metric/2,
+         untyped_metrics/1,
+         untyped_metric/1,
+         untyped_metric/2,
          counter_metrics/1,
          counter_metric/1,
          counter_metric/2,
@@ -73,6 +76,23 @@ gauge_metric(Value)           -> gauge_metric([], Value).
 gauge_metric(Labels, Value) ->
   #'Metric'{label = label_pairs(Labels),
             gauge = #'Gauge'{value = Value}}.
+
+%% @doc Equivalent to
+%% {@link untyped_metric/1. `lists:map(fun untyped_metric/1, Values)'}.
+untyped_metrics(Values) -> lists:map(fun untyped_metric/1, Values).
+
+-spec untyped_metric(Value) -> prometheus_model:'Metric'() when
+    Value :: integer().
+untyped_metric({Labels, Value}) -> untyped_metric(Labels, Value);
+untyped_metric({Value})         -> untyped_metric([], Value);
+untyped_metric(Value)           -> untyped_metric([], Value).
+
+-spec untyped_metric(Labels, Value) -> prometheus_model:'Metric'() when
+    Labels :: [label()],
+    Value  :: non_neg_integer().
+untyped_metric(Labels, Value) ->
+  #'Metric'{label = label_pairs(Labels),
+            untyped = #'Untyped'{value = Value}}.
 
 %% @doc Equivalent to
 %% {@link counter_metric/1. `lists:map(fun counter_metric/1, Specs)'}.

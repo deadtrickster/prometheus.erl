@@ -319,10 +319,10 @@ validate_histogram_buckets(RawBuckets) when is_list(RawBuckets) ->
     Buckets ->
       Buckets ++ [infinity];
     _ ->
-      erlang:error({histogram_invalid_buckets, Buckets, "Buckets not sorted"})
+      erlang:error({histogram_invalid_buckets, Buckets, "buckets not sorted"})
   end;
 validate_histogram_buckets(Buckets) ->
-  erlang:error({histogram_invalid_buckets, Buckets}). %% FIXME: why no message?
+  erlang:error({histogram_invalid_buckets, Buckets, "not a list"}).
 
 validate_histogram_bound(Bound) when is_number(Bound) ->
   Bound;

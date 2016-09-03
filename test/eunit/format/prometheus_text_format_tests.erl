@@ -21,10 +21,12 @@ create_untyped(Name, Help) ->
   prometheus_model_helpers:create_mf(Name, Help, untyped, ?MODULE, undefined).
 
 escape_metric_help_test() ->
-  ?assertEqual("qwe\\\\qwe\\nqwe", prometheus_text_format:escape_metric_help("qwe\\qwe\nqwe")).
+  ?assertEqual("qwe\\\\qwe\\nqwe",
+               prometheus_text_format:escape_metric_help("qwe\\qwe\nqwe")).
 
 escape_label_value_test()->
-  ?assertEqual("qwe\\\\qwe\\nq\\\"we\\\"qwe", prometheus_text_format:escape_label_value("qwe\\qwe\nq\"we\"qwe")).
+  ?assertEqual("qwe\\\\qwe\\nq\\\"we\\\"qwe",
+               prometheus_text_format:escape_label_value("qwe\\qwe\nq\"we\"qwe")).
 
 prometheus_format_test_() ->
   {foreach,
@@ -83,7 +85,9 @@ test_dcounter(_) ->
   prometheus_counter:dinc(dtest, 1.5),
   prometheus_counter:dinc(dtest, 3.5),
   prometheus_counter:dinc(dtest, 1.5),
-  timer:sleep(10), %% dinc is async so lets make sure gen_server processed our request
+
+  %% dinc is async so lets make sure gen_server processed our request
+  timer:sleep(10),
   ?_assertEqual(<<"# TYPE dtest counter
 # HELP dtest qw\"\\\\e
 dtest 6.5
@@ -91,7 +95,8 @@ dtest 6.5
 ">>, prometheus_text_format:format()).
 
 test_summary(_) ->
-  prometheus_summary:new([{name, orders_summary}, {help, "Track orders count/total sum"}]),
+  prometheus_summary:new([{name, orders_summary},
+                          {help, "Track orders count/total sum"}]),
   prometheus_summary:observe(orders_summary,  10),
   prometheus_summary:observe(orders_summary,  15),
   ?_assertEqual(<<"# TYPE orders_summary summary
@@ -105,7 +110,9 @@ test_dsummary(_) ->
   prometheus_summary:new([{name, dsummary}, {labels, [host]}, {help, "qwe"}]),
   prometheus_summary:dobserve(dsummary, [123], 1.5),
   prometheus_summary:dobserve(dsummary, [123], 2.7),
-  timer:sleep(10), %% dobserve is async so lets make sure gen_server processed our request
+
+  %% dobserve is async so lets make sure gen_server processed our request
+  timer:sleep(10),
   ?_assertEqual(<<"# TYPE dsummary summary
 # HELP dsummary qwe
 dsummary_count{host=\"123\"} 2
@@ -151,7 +158,9 @@ test_dhistogram(_) ->
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 850.3),
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 750.9),
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 1650.23),
-  timer:sleep(10), %% dobserve is async so lets make sure gen_server processed our request
+
+  %% dobserve is async so lets make sure gen_server processed our request
+  timer:sleep(10),
   ?_assertEqual(<<"# TYPE http_request_duration_milliseconds histogram
 # HELP http_request_duration_milliseconds Http Request execution time
 http_request_duration_milliseconds_bucket{method=\"post\",le=\"100\"} 0

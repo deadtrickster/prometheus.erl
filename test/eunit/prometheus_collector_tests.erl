@@ -19,6 +19,8 @@ collector_setup_test() ->
 
 collector_deprecations_test() ->
   ok = prometheus_collector:register(prometheus_registry_tests),
-  ?assertEqual(true,  prometheus_registry:collector_registeredp(prometheus_registry_tests)),
+  ?assertEqual(true,
+               prometheus_registry:collector_registeredp(prometheus_registry_tests)),
   prometheus_collector:deregister(prometheus_registry_tests),
-  ?assertEqual(false,  prometheus_registry:collector_registeredp(prometheus_registry_tests)).
+  ?assertEqual(false,
+               prometheus_registry:collector_registeredp(prometheus_registry_tests)).

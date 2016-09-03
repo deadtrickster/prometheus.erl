@@ -2,7 +2,7 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
-instrumenter_setup_test() ->  
+instrumenter_setup_test() ->
   prometheus:start(),
   ?assertNotMatch(undefined, ets:info(prometheus_instrumenter_tests)),
   application:set_env(prometheus, instrumenters, [qwe]),
@@ -11,4 +11,5 @@ instrumenter_setup_test() ->
   after
     application:unset_env(prometheus, instrumenters)
   end,
-  ?assertMatch([prometheus_test_instrumenter], prometheus_instrumenter:enabled_instrumenters()).
+  ?assertMatch([prometheus_test_instrumenter],
+               prometheus_instrumenter:enabled_instrumenters()).

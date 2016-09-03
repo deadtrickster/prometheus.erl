@@ -34,37 +34,73 @@ test_registration(_)->
                  prometheus_gauge:new(SpecWithoutRegistry, qwe))].
 
 test_errors(_) ->
-  prometheus_gauge:new([{name, pool_size}, {help, ""}]),
   prometheus_gauge:new([{name, with_label}, {labels, [label]}, {help, ""}]),
-  [%% basic name/labels/help validations test, lets hope new is using extract_common_params
-   ?_assertError({invalid_metric_name, 12, "metric name is not a string"}, prometheus_gauge:new([{name, 12}, {help, ""}])),
-   ?_assertError({invalid_metric_labels, 12, "not list"}, prometheus_gauge:new([{name, "qwe"}, {labels, 12}, {help, ""}])),
-   ?_assertError({invalid_metric_help, 12, "metric help is not a string"}, prometheus_gauge:new([{name, "qwe"}, {help, 12}])),
+
+  [%% basic name/labels/help validations test
+   ?_assertError({invalid_metric_name, 12, "metric name is not a string"},
+                 prometheus_gauge:new([{name, 12}, {help, ""}])),
+   ?_assertError({invalid_metric_labels, 12, "not list"},
+                 prometheus_gauge:new([{name, "qwe"}, {labels, 12}, {help, ""}])),
+   ?_assertError({invalid_metric_help, 12, "metric help is not a string"},
+                 prometheus_gauge:new([{name, "qwe"}, {help, 12}])),
+
    %% gauge specific errors,
-   ?_assertError({invalid_value, "qwe", "set accepts only numbers"}, prometheus_gauge:set(pool_size, "qwe")),
-   ?_assertError({invalid_value, 1.5, "inc accepts only integers"}, prometheus_gauge:inc(pool_size, 1.5)),
-   ?_assertError({invalid_value, "qwe", "dinc accepts only numbers"}, prometheus_gauge:dinc(pool_size, [], "qwe")),
-   ?_assertError({invalid_value, 1.5, "dec accepts only integers"}, prometheus_gauge:dec(pool_size, 1.5)),
-   ?_assertError({invalid_value, "qwe", "dec accepts only integers"}, prometheus_gauge:dec(pool_size, [], "qwe")),
-   ?_assertError({invalid_value, 1.5, "dec accepts only integers"}, prometheus_gauge:dec(default, pool_size, [], 1.5)),
-   ?_assertError({invalid_value, qwe, "ddec accepts only numbers"}, prometheus_gauge:ddec(pool_size, qwe)),
-   ?_assertError({invalid_value, "qwe", "ddec accepts only numbers"}, prometheus_gauge:ddec(pool_size, [], "qwe")),
-   ?_assertError({invalid_value, "qwe", "ddec accepts only numbers"}, prometheus_gauge:ddec(default, pool_size, [], "qwe")),
-   ?_assertError({invalid_value, "qwe", "track_inprogress accepts only functions"}, prometheus_gauge:track_inprogress(pool_size, "qwe")),
+   ?_assertError({invalid_value, "qwe", "set accepts only numbers"},
+                 prometheus_gauge:set(pool_size, "qwe")),
+   ?_assertError({invalid_value, 1.5, "inc accepts only integers"},
+                 prometheus_gauge:inc(pool_size, 1.5)),
+   ?_assertError({invalid_value, "qwe", "dinc accepts only numbers"},
+                 prometheus_gauge:dinc(pool_size, [], "qwe")),
+   ?_assertError({invalid_value, 1.5, "dec accepts only integers"},
+                 prometheus_gauge:dec(pool_size, 1.5)),
+   ?_assertError({invalid_value, "qwe", "dec accepts only integers"},
+                 prometheus_gauge:dec(pool_size, [], "qwe")),
+   ?_assertError({invalid_value, 1.5, "dec accepts only integers"},
+                 prometheus_gauge:dec(default, pool_size, [], 1.5)),
+   ?_assertError({invalid_value, qwe, "ddec accepts only numbers"},
+                 prometheus_gauge:ddec(pool_size, qwe)),
+   ?_assertError({invalid_value, "qwe", "ddec accepts only numbers"},
+                 prometheus_gauge:ddec(pool_size, [], "qwe")),
+   ?_assertError({invalid_value, "qwe", "ddec accepts only numbers"},
+                 prometheus_gauge:ddec(default, pool_size, [], "qwe")),
+   ?_assertError({invalid_value, "qwe", "track_inprogress accepts only functions"},
+                 prometheus_gauge:track_inprogress(pool_size, "qwe")),
+   ?_assertError({invalid_value, "qwe", "set_duration accepts only functions"},
+                 prometheus_gauge:set_duration(pool_size, "qwe")),
+
    %% mf/arity errors
-   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:set(unknown_metric, 2)),
-   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:set(with_label, [repo, db], 2)),
-   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:set_to_current_time(unknown_metric)),
-   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:set_to_current_time(with_label, [repo, db])),
-   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:track_inprogress(unknown_metric, fun() -> ok end)),
-   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:track_inprogress(with_label, [repo, db], fun() -> ok end)),
-   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:reset(unknown_metric)),
-   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:reset(with_label, [repo, db])),
-   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:value(unknown_metric)),
-   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:value(with_label, [repo, db])),   
-   ?_assertError({unknown_metric, default, unknown_metric}, prometheus_gauge:remove(unknown_metric)),
-   ?_assertError({invalid_metric_arity, 2, 1}, prometheus_gauge:remove(with_label, [repo, db])),
-   ?_assertError({invalid_value, "qwe", "set_duration accepts only functions"}, prometheus_gauge:set_duration(pool_size, "qwe"))
+   ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_gauge:set(unknown_metric, 2)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_gauge:set(with_label, [repo, db], 2)),
+   ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_gauge:set_to_current_time(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_gauge:set_to_current_time(with_label, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_gauge:track_inprogress(unknown_metric,
+                                                   fun() -> 1 end)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_gauge:track_inprogress(with_label, [repo, db],
+                                                   fun() -> 1 end)),
+   ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_gauge:set_duration(unknown_metric,
+                                               fun() -> 1 end)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_gauge:set_duration(with_label, [repo, db],
+                                               fun() -> 1 end)),
+   ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_gauge:reset(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_gauge:reset(with_label, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_gauge:value(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_gauge:value(with_label, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_gauge:remove(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_gauge:remove(with_label, [repo, db]))
   ].
 
 test_set(_) ->
@@ -100,7 +136,8 @@ test_dinc(_) ->
   prometheus_gauge:dinc(temperature),
   prometheus_gauge:dinc(temperature, 3.5),
 
-  timer:sleep(10), %% dinc is async so lets make sure gen_server processed our increment request
+  %% dinc is async so lets make sure gen_server processed our increment request
+  timer:sleep(10),
 
   PSValue = prometheus_gauge:value(pool_size, [mongodb]),
   TValue = prometheus_gauge:value(temperature),
@@ -133,7 +170,8 @@ test_ddec(_) ->
   prometheus_gauge:ddec(temperature, 6.5),
   prometheus_gauge:ddec(default, temperature, [], 6.5),
 
-  timer:sleep(10), %% ddec is async so lets make sure gen_server processed our increment request
+  %% ddec is async so lets make sure gen_server processed our increment request
+  timer:sleep(10),
 
   PSValue = prometheus_gauge:value(pool_size, [mongodb]),
   TValue = prometheus_gauge:value(temperature),
@@ -148,42 +186,47 @@ test_set_to_current_time(_) ->
   [?_assertEqual(Timestamp, STimestamp)].
 
 test_track_inprogress(_) ->
-  prometheus_gauge:new([{name, fun_executing_gauge}, {help, ""}]),
-  Value = prometheus_gauge:track_inprogress(fun_executing_gauge, fun () ->
-                                                                     prometheus_gauge:value(fun_executing_gauge)
-                                                                 end),
+  prometheus_gauge:new([{name, gauge}, {help, ""}]),
+  Value = prometheus_gauge:track_inprogress(gauge,
+                                            fun () ->
+                                                prometheus_gauge:value(gauge)
+                                            end),
 
-  try prometheus_gauge:track_inprogress(fun_executing_gauge, fun () ->
-                                                                 erlang:error({qwe})
-                                                             end)
+  try prometheus_gauge:track_inprogress(gauge, fun () ->
+                                                   erlang:error({qwe})
+                                               end)
   catch _:_ -> ok
   end,
 
   [?_assertEqual(1, Value),
-   ?_assertEqual(0, prometheus_gauge:value(fun_executing_gauge))].
+   ?_assertEqual(0, prometheus_gauge:value(gauge))].
 
 test_set_duration(_) ->
-  prometheus_gauge:new([{name, fun_executing_gauge}, {help, ""}]),
-  prometheus_gauge:set_duration(fun_executing_gauge, fun () ->
-                                                         timer:sleep(1000)
-                                                     end),
+  prometheus_gauge:new([{name, gauge}, {help, ""}]),
+  ValueF = prometheus_gauge:set_duration(gauge, fun () ->
+                                                    timer:sleep(1000),
+                                                    1
+                                                end),
   timer:sleep(10),
-  Value = prometheus_gauge:value(fun_executing_gauge),
+  Value = prometheus_gauge:value(gauge),
 
-  try prometheus_gauge:set_duration(fun_executing_gauge, fun () ->
-                                                             erlang:error({qwe})
-                                                         end)
+  try prometheus_gauge:set_duration(gauge, fun () ->
+                                               erlang:error({qwe})
+                                           end)
   catch _:_ -> ok
   end,
 
   timer:sleep(10),
-  ValueE = prometheus_gauge:value(fun_executing_gauge),
+  ValueE = prometheus_gauge:value(gauge),
 
-  [?_assertMatch(true, 0.9 < Value andalso Value < 1.2),
+  [?_assertMatch(1, ValueF),
+   ?_assertMatch(true, 0.9 < Value andalso Value < 1.2),
    ?_assertMatch(true, 0.0 < ValueE andalso ValueE < 0.1)].
 
 test_remove(_) ->
-  prometheus_gauge:new([{name, pool_size}, {labels, [pool]}, {help, "Http request count"}]),
+  prometheus_gauge:new([{name, pool_size},
+                        {labels, [pool]},
+                        {help, "Http request count"}]),
   prometheus_gauge:new([{name, simple_gauge}, {help, ""}]),
 
   prometheus_gauge:inc(pool_size, [mongodb]),

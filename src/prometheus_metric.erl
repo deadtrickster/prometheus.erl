@@ -93,21 +93,29 @@ insert_new_mf(Table, Module, Spec) ->
 
 %% @private
 insert_mf(Table, Module, Spec) ->
-  {Registry, Name, Labels, Help, Data} =
+  {Registry, Name, Labels, Help, UseCall, DurationUnit, Data} =
     prometheus_metric_spec:extract_common_params(Spec),
   prometheus_registry:register_collector(Registry, Module),
-  ets:insert_new(Table, {{Registry, mf, Name}, Labels, Help, Data}).
+  ets:insert_new(Table, {{Registry, mf, Name},
+                         {Labels, Help},
+                         UseCall,
+                         DurationUnit,
+                         Data}).
 
 %% @private
 deregister_mf(Table, Registry) ->
-  ets:match_delete(Table, {{Registry, mf, '_'}, '_', '_', '_'}).
+  ets:match_delete(Table, {{Registry, mf, '_'},
+                           '_',
+                           '_',
+                           '_',
+                           '_'}).
 
 %% @private
 check_mf_exists(Table, Registry, Name, LabelValues) ->
   case ets:lookup(Table, {Registry, mf, Name}) of
     [] ->
       erlang:error({unknown_metric, Registry, Name});
-    [{_, Labels, _, _} = MF] ->
+    [{_, {Labels, _}, _, _, _} = MF] ->
       LVLength = length(LabelValues),
       case length(Labels) of
         LVLength ->
@@ -119,11 +127,11 @@ check_mf_exists(Table, Registry, Name, LabelValues) ->
 
 %% @private
 mf_data(MF) ->
-  element(4, MF).
+  element(5, MF).
 
 %% @private
 metrics(Table, Registry) ->
-  ets:match(Table, {{Registry, mf, '$1'}, '$2', '$3', '$4'}).
+  ets:match(Table, {{Registry, mf, '$1'}, '$2', '$3', '$4', '$5'}).
 
 %%====================================================================
 %% Private Parts

@@ -208,7 +208,8 @@ deregister_cleanup(Registry) ->
 %% @private
 collect_mf(Registry, Callback) ->
   [Callback(create_counter(Name, Help, {Labels, Registry})) ||
-    [Name, Labels, Help, _] <- prometheus_metric:metrics(?TABLE, Registry)],
+    [Name, {Labels, Help}, _, _, _] <- prometheus_metric:metrics(?TABLE,
+                                                                 Registry)],
   ok.
 
 %% @private

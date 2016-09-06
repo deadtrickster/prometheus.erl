@@ -125,11 +125,11 @@ extract_common_params(Spec) ->
 
   Data = data(Spec),
 
-  %% UseCall = use_call(Spec),
+  UseCall = use_call(Spec),
 
-  %% DurationUnit = duration_unit(Spec),
+  DurationUnit = duration_unit(Spec),
 
-  {Registry, Name, Labels, Help, Data}.
+  {Registry, Name, Labels, Help, UseCall, DurationUnit, Data}.
 
 -spec get_value(Key :: atom(), Spec :: spec()) -> any().
 %% @private

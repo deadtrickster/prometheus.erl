@@ -224,14 +224,14 @@ exponential_buckets(Start, Factor, Count) ->
 %% @private
 deregister_cleanup(Registry) ->
   [delete_metrics(Registry, Buckets)
-   || [_, _, _, Buckets] <- prometheus_metric:metrics(?TABLE, Registry)],
+   || [_, _, _, _, Buckets] <- prometheus_metric:metrics(?TABLE, Registry)],
   true = prometheus_metric:deregister_mf(?TABLE, Registry),
   ok.
 
 %% @private
 collect_mf(Registry, Callback) ->
   [Callback(create_histogram(Name, Help, {Labels, Registry, Buckets})) ||
-    [Name, Labels, Help, Buckets]
+    [Name, {Labels, Help}, _, _, Buckets]
       <- prometheus_metric:metrics(?TABLE, Registry)],
   ok.
 

@@ -75,9 +75,8 @@
 %%====================================================================
 
 new(Spec) ->
-  {Registry, Name, Labels, Help} = parse_summary_spec(Spec),
-  prometheus_registry:register_collector(Registry, ?MODULE),
-  prometheus_metric:insert_new_mf(?TABLE, Registry, Name, Labels, Help).
+  validate_summary_spec(Spec),
+  prometheus_metric:insert_new_mf(?TABLE, ?MODULE, Spec).
 
 %% @deprecated Please use {@link new/1} with registry
 %% key instead.
@@ -87,9 +86,8 @@ new(Spec, Registry) ->
   new([{registry, Registry} | Spec]).
 
 declare(Spec) ->
-  {Registry, Name, Labels, Help} = parse_summary_spec(Spec),
-  prometheus_registry:register_collector(Registry, ?MODULE),
-  prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help).
+  Spec1 = validate_summary_spec(Spec),
+  prometheus_metric:insert_mf(?TABLE, ?MODULE, Spec1).
 
 %% @deprecated Please use {@link declare/1} with registry
 %% key instead.
@@ -246,11 +244,10 @@ start_link() ->
 %% Private Parts
 %%====================================================================
 
-parse_summary_spec(Spec) ->
-  {Registry, Name, Labels, Help} =
-    prometheus_metric:extract_common_params(Spec),
+validate_summary_spec(Spec) ->
+  Labels = prometheus_metric_spec:labels(Spec),
   validate_summary_labels(Labels),
-  {Registry, Name, Labels, Help}.
+  Spec.
 
 validate_summary_labels(Labels) ->
   [raise_error_if_quantile_label_found(Label) || Label <- Labels].

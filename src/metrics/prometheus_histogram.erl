@@ -83,10 +83,8 @@
 %%====================================================================
 
 new(Spec) ->
-  {Registry, Name, Labels, Help, Buckets} = parse_histogram_spec(Spec),
-  prometheus_registry:register_collector(Registry, ?MODULE),
-  prometheus_metric:insert_new_mf(?TABLE, Registry,
-                                  Name, Labels, Help, Buckets).
+  Spec1 = validate_histogram_spec(Spec),
+  prometheus_metric:insert_new_mf(?TABLE, ?MODULE, Spec1).
 
 %% @deprecated Please use {@link new/1} with registry
 %% key instead.
@@ -96,9 +94,8 @@ new(Spec, Registry) ->
   new([{registry, Registry} | Spec]).
 
 declare(Spec) ->
-  {Registry, Name, Labels, Help, Buckets} = parse_histogram_spec(Spec),
-  prometheus_registry:register_collector(Registry, ?MODULE),
-  prometheus_metric:insert_mf(?TABLE, Registry, Name, Labels, Help, Buckets).
+  Spec1 = validate_histogram_spec(Spec),
+  prometheus_metric:insert_mf(?TABLE, ?MODULE, Spec1).
 
 %% @deprecated Please use {@link declare/1} with registry
 %% key instead.
@@ -287,12 +284,11 @@ code_change(_OldVsn, State, _Extra) ->
 %% Private Parts
 %%====================================================================
 
-parse_histogram_spec(Spec) ->
-  {Registry, Name, Labels, Help} =
-    prometheus_metric:extract_common_params(Spec),
+validate_histogram_spec(Spec) ->
+  Labels = prometheus_metric_spec:labels(Spec),
   validate_histogram_labels(Labels),
   Buckets = prometheus_metric_spec:get_value(buckets, Spec, default_buckets()),
-  {Registry, Name, Labels, Help, validate_histogram_buckets(Buckets)}.
+  [{data, validate_buckets(Buckets)}|Spec].
 
 validate_histogram_labels(Labels) ->
   [raise_error_if_le_label_found(Label) || Label <- Labels].
@@ -303,17 +299,17 @@ raise_error_if_le_label_found("le") ->
 raise_error_if_le_label_found(Label) ->
   Label.
 
-validate_histogram_buckets([]) ->
+validate_buckets([]) ->
   erlang:error({histogram_no_buckets, []});
-validate_histogram_buckets(undefined) ->
+validate_buckets(undefined) ->
   erlang:error({histogram_no_buckets, undefined});
-validate_histogram_buckets(default) ->
+validate_buckets(default) ->
   default_buckets() ++ [infinity];
-validate_histogram_buckets({linear, Start, Step, Count}) ->
+validate_buckets({linear, Start, Step, Count}) ->
   linear_buckets(Start, Step, Count) ++ [infinity];
-validate_histogram_buckets({exponential, Start, Factor, Count}) ->
+validate_buckets({exponential, Start, Factor, Count}) ->
   exponential_buckets(Start, Factor, Count) ++ [infinity];
-validate_histogram_buckets(RawBuckets) when is_list(RawBuckets) ->
+validate_buckets(RawBuckets) when is_list(RawBuckets) ->
   Buckets = lists:map(fun validate_histogram_bound/1, RawBuckets),
   case lists:sort(Buckets) of
     Buckets ->
@@ -321,7 +317,7 @@ validate_histogram_buckets(RawBuckets) when is_list(RawBuckets) ->
     _ ->
       erlang:error({histogram_invalid_buckets, Buckets, "buckets not sorted"})
   end;
-validate_histogram_buckets(Buckets) ->
+validate_buckets(Buckets) ->
   erlang:error({histogram_invalid_buckets, Buckets, "not a list"}).
 
 validate_histogram_bound(Bound) when is_number(Bound) ->

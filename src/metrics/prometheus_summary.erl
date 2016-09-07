@@ -140,8 +140,12 @@ observe_duration(Name, LabelValues, Fun) ->
   observe_duration(default, Name, LabelValues, Fun).
 
 observe_duration(Registry, Name, LabelValues, Fun) when is_function(Fun)->
-  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  prometheus_misc:observe_duration(Registry, ?MODULE, Name, LabelValues, Fun);
+  Start = erlang:monotonic_time(),
+  try
+    Fun()
+  after
+    observe(Registry, Name, LabelValues, erlang:monotonic_time() - Start)
+  end;
 observe_duration(_Regsitry, _Name, _LabelValues, Fun) ->
   erlang:error({invalid_value, Fun, "observe_duration accepts only functions"}).
 
@@ -178,9 +182,11 @@ value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
 value(Registry, Name, LabelValues) ->
-  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  DU = prometheus_metric:mf_duration_unit(MF),
   case  ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
-    [{_Key, Count, Sum}] -> {Count, Sum};
+    [{_Key, Count, Sum}] -> {Count,
+                             prometheus_time:maybe_convert_to_du(DU, Sum)};
     [] -> undefined
   end.
 
@@ -196,14 +202,15 @@ deregister_cleanup(Registry) ->
 
 %% @private
 collect_mf(Registry, Callback) ->
-  [Callback(create_summary(Name, Help, {Labels, Registry})) ||
-    [Name, {Labels, Help}, _, _, _] <- prometheus_metric:metrics(?TABLE,
-                                                                 Registry)],
+  [Callback(create_summary(Name, Help, {Labels, Registry, DU})) ||
+    [Name, {Labels, Help}, _, DU, _] <- prometheus_metric:metrics(?TABLE,
+                                                                  Registry)],
   ok.
 
 %% @private
-collect_metrics(Name, {Labels, Registry}) ->
-  [summary_metric(lists:zip(Labels, LabelValues), Count, Sum) ||
+collect_metrics(Name, {Labels, Registry, DU}) ->
+  [summary_metric(lists:zip(Labels, LabelValues), Count,
+                  prometheus_time:maybe_convert_to_du(DU, Sum)) ||
     [LabelValues, Count, Sum] <- ets:match(?TABLE, {{Registry, Name, '$1'},
                                                     '$2', '$3'})].
 

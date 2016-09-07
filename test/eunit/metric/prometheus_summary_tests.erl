@@ -10,7 +10,8 @@ prometheus_format_test_() ->
     fun test_errors/1,
     fun test_observe/1,
     fun test_dobserve/1,
-    fun test_observe_duration/1,
+    fun test_observe_duration_seconds/1,
+    fun test_observe_duration_milliseconds/1,
     fun test_remove/1,
     fun test_undefined_value/1]}.
 
@@ -110,27 +111,51 @@ test_dobserve(_) ->
   [?_assertEqual({2, 4.2}, Value),
    ?_assertEqual({0, 0}, RValue)].
 
-test_observe_duration(_) ->
-  prometheus_summary:new([{name, fun_executing_summary}, {help, ""}]),
-  prometheus_summary:observe_duration(fun_executing_summary, fun () ->
-                                                                 timer:sleep(1000)
-                                                             end),
-  timer:sleep(10),
-  {Count, Sum} = prometheus_summary:value(fun_executing_summary),
+test_observe_duration_seconds(_) ->
+  prometheus_summary:new([{name, <<"fun_duration_seconds">>},
+                          {help, ""},
+                          {duration_unit, seconds}]),
+  prometheus_summary:observe_duration(<<"fun_duration_seconds">>, fun () ->
+                                                                timer:sleep(1000)
+                                                            end),
 
-  try prometheus_summary:observe_duration(fun_executing_summary, fun () ->
-                                                                     erlang:error({qwe})
-                                                                 end)
+  {Count, Sum} = prometheus_summary:value(<<"fun_duration_seconds">>),
+
+  try prometheus_summary:observe_duration(<<"fun_duration_seconds">>, fun () ->
+                                                                    erlang:error({qwe})
+                                                                end)
   catch _:_ -> ok
   end,
 
-  timer:sleep(10),
-  {CountE, SumE} = prometheus_summary:value(fun_executing_summary),
+  {CountE, SumE} = prometheus_summary:value(<<"fun_duration_seconds">>),
 
   [?_assertEqual(1, Count),
    ?_assertEqual(2, CountE),
    ?_assertMatch(true, 0.9 < Sum andalso Sum < 1.2),
    ?_assertMatch(true, 0.9 < SumE andalso SumE < 1.2)].
+
+test_observe_duration_milliseconds(_) ->
+  prometheus_summary:new([{name, fun_duration},
+                          {help, ""},
+                          {duration_unit, milliseconds}]),
+  prometheus_summary:observe_duration(fun_duration, fun () ->
+                                                        timer:sleep(1100)
+                                                    end),
+
+  {Count, Sum} = prometheus_summary:value(fun_duration),
+
+  try prometheus_summary:observe_duration(fun_duration, fun () ->
+                                                            erlang:error({qwe})
+                                                        end)
+  catch _:_ -> ok
+  end,
+
+  {CountE, SumE} = prometheus_summary:value(fun_duration),
+
+  [?_assertEqual(1, Count),
+   ?_assertEqual(2, CountE),
+   ?_assertMatch(true, 900 < Sum andalso Sum < 1200),
+   ?_assertMatch(true, 900 < SumE andalso SumE < 1200)].
 
 test_remove(_) ->
   prometheus_summary:new([{name, summary}, {labels, [pool]}, {help, ""}]),

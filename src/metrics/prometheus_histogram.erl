@@ -151,8 +151,12 @@ observe_duration(Name, LabelValues, Fun) ->
   observe_duration(default, Name, LabelValues, Fun).
 
 observe_duration(Registry, Name, LabelValues, Fun) when is_function(Fun) ->
-  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  prometheus_misc:observe_duration(Registry, ?MODULE, Name, LabelValues, Fun);
+  Start = erlang:monotonic_time(),
+  try
+    Fun()
+  after
+    observe(Registry, Name, LabelValues, erlang:monotonic_time() - Start)
+  end;
 observe_duration(_Regsitry, _Name, _LabelValues, Fun) ->
   erlang:error({invalid_value, Fun, "observe_duration accepts only functions"}).
 
@@ -190,9 +194,9 @@ value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
 value(Registry, Name, LabelValues) ->
-  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
-    [Metric] -> {buckets_counters(Metric), sum(Metric)};
+    [Metric] -> {buckets_counters(Metric), sum(MF, Metric)};
     [] -> undefined
   end.
 
@@ -230,20 +234,20 @@ deregister_cleanup(Registry) ->
 
 %% @private
 collect_mf(Registry, Callback) ->
-  [Callback(create_histogram(Name, Help, {Labels, Registry, Buckets})) ||
-    [Name, {Labels, Help}, _, _, Buckets]
+  [Callback(create_histogram(Name, Help, {Labels, Registry, DU, Buckets})) ||
+    [Name, {Labels, Help}, _, DU, Buckets]
       <- prometheus_metric:metrics(?TABLE, Registry)],
   ok.
 
 %% @private
-collect_metrics(Name, {Labels, Registry, Buckets}) ->
+collect_metrics(Name, {Labels, Registry, DU, Buckets}) ->
   BoundPlaceholders = gen_query_bound_placeholders(Buckets),
   SumPlaceholder = gen_query_placeholder(sum_position(Buckets)),
   QuerySpec =
     [{Registry, Name, '$1'}, '$2']
     ++ BoundPlaceholders
     ++ [SumPlaceholder],
-  [create_histogram_metric(Labels, Value) ||
+  [create_histogram_metric(Labels, DU, Value) ||
     Value <- ets:match(?TABLE, list_to_tuple(QuerySpec))].
 
 %%====================================================================
@@ -287,8 +291,9 @@ code_change(_OldVsn, State, _Extra) ->
 validate_histogram_spec(Spec) ->
   Labels = prometheus_metric_spec:labels(Spec),
   validate_histogram_labels(Labels),
-  Buckets = prometheus_metric_spec:get_value(buckets, Spec, default_buckets()),
-  [{data, validate_buckets(Buckets)}|Spec].
+  RBuckets = prometheus_metric_spec:get_value(buckets, Spec, default_buckets()),
+  Buckets = validate_buckets(RBuckets),
+  [{data, Buckets}|Spec].
 
 validate_histogram_labels(Labels) ->
   [raise_error_if_le_label_found(Label) || Label <- Labels].
@@ -341,9 +346,13 @@ dobserve_impl(Registry, Name, LabelValues, Value) ->
 insert_metric(Registry, Name, LabelValues, Value, CB) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   MFBuckets = prometheus_metric:mf_data(MF),
+  DU = prometheus_metric:mf_duration_unit(MF),
+  Fun = fun (Bucket) ->
+            prometheus_time:maybe_convert_to_native(DU, Bucket)
+        end,
   BoundCounters = lists:duplicate(length(MFBuckets), 0),
   MetricSpec =
-    [{Registry, Name, LabelValues}, MFBuckets]
+    [{Registry, Name, LabelValues}, lists:map(Fun, MFBuckets)]
     ++ BoundCounters
     ++ [0],
   ets:insert(?TABLE, list_to_tuple(MetricSpec)),
@@ -368,8 +377,6 @@ gen_query_bound_placeholders(Buckets) ->
   [gen_query_placeholder(Index) ||
     Index <- lists:seq(?BUCKETS_START, ?BUCKETS_POS + length(Buckets))].
 
-augment_counters([]) ->
-  0;
 augment_counters([Start | Counters]) ->
   augment_counters(Counters, [Start], Start).
 
@@ -381,7 +388,7 @@ augment_counters([Counter | Counters], LAcc, CAcc) ->
 metric_buckets(Metric) ->
   element(?BUCKETS_POS, Metric).
 
-buckets_counters(Metric) ->
+buckets_counters( Metric) ->
   sub_tuple_to_list(Metric, ?BUCKETS_START,
                     ?BUCKETS_START + length(metric_buckets(Metric))).
 
@@ -393,15 +400,25 @@ sum_position(Buckets) when is_list(Buckets) ->
 sum(Metric) ->
   element(sum_position(Metric), Metric).
 
-create_histogram_metric(Labels, [LabelValues, Buckets | Stat]) ->
+sum(MF, Metric) ->
+  DU = prometheus_metric:mf_duration_unit(MF),
+  prometheus_time:maybe_convert_to_du(DU,
+                                      element(sum_position(Metric), Metric)).
+
+create_histogram_metric(Labels, DU, [LabelValues, Buckets | Stat]) ->
+  Fun = fun(Bound) ->
+            prometheus_time:maybe_convert_to_du(DU, Bound)
+        end,
   BoundValues = lists:sublist(Stat, 1, length(Buckets)),
   BCounters = augment_counters(BoundValues),
   Buckets1 = lists:zipwith(fun(Bound, BCounter) ->
                                {Bound, BCounter}
                            end,
-                           Buckets, BCounters),
+                           lists:map(Fun, Buckets), BCounters),
   histogram_metric(lists:zip(Labels, LabelValues),
-                   Buckets1, lists:last(BCounters), lists:last(Stat)).
+                   Buckets1,
+                   lists:last(BCounters),
+                   prometheus_time:maybe_convert_to_du(DU, lists:last(Stat))).
 
 delete_metrics(Registry, Buckets) ->
   BoundCounters = lists:duplicate(length(Buckets), '_'),
@@ -412,8 +429,6 @@ sub_tuple_to_list(Tuple, Pos, Size) when Pos < Size ->
   [element(Pos, Tuple) | sub_tuple_to_list(Tuple, Pos + 1, Size)];
 sub_tuple_to_list(_Tuple, _Pos, _Size) -> [].
 
-position([], _Pred) ->
-  0;
 position(List, Pred) ->
   position(List, Pred, 1).
 

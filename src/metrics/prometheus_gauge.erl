@@ -271,8 +271,12 @@ set_duration(Name, LabelValues, Fun) ->
   set_duration(default, Name, LabelValues, Fun).
 
 set_duration(Registry, Name, LabelValues, Fun) when is_function(Fun) ->
-  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  prometheus_misc:set_duration(Registry, ?MODULE, Name, LabelValues, Fun);
+  Start = erlang:monotonic_time(),
+  try
+    Fun()
+  after
+    set(Registry, Name, LabelValues, erlang:monotonic_time() - Start)
+  end;
 set_duration(_Registry, _Name, _LabelValues, Fun) ->
   erlang:error({invalid_value, Fun, "set_duration accepts only functions"}).
 
@@ -308,9 +312,10 @@ value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
 value(Registry, Name, LabelValues) ->
-  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  MF =  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  DU = prometheus_metric:mf_duration_unit(MF),
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
-    [{_Key, Value}] -> Value;
+    [{_Key, Value}] -> prometheus_time:maybe_convert_to_du(DU, Value);
     [] -> undefined
   end.
 
@@ -324,13 +329,14 @@ deregister_cleanup(Registry) ->
   ok.
 
 collect_mf(Registry, Callback) ->
-  [Callback(create_gauge(Name, Help, {Labels, Registry})) ||
-    [Name, {Labels, Help}, _, _, _] <- prometheus_metric:metrics(?TABLE,
-                                                                  Registry)],
+  [Callback(create_gauge(Name, Help, {Labels, Registry, DU})) ||
+    [Name, {Labels, Help}, _, DU, _] <- prometheus_metric:metrics(?TABLE,
+                                                                 Registry)],
   ok.
 
-collect_metrics(Name, {Labels, Registry}) ->
-  [gauge_metric(lists:zip(Labels, LabelValues), Value) ||
+collect_metrics(Name, {Labels, Registry, DU}) ->
+  [gauge_metric(lists:zip(Labels, LabelValues),
+                prometheus_time:maybe_convert_to_du(DU, Value)) ||
     [LabelValues, Value] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'})].
 
 

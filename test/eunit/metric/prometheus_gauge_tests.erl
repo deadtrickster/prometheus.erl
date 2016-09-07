@@ -15,7 +15,8 @@ prometheus_format_test_() ->
     fun test_ddec/1,
     fun test_set_to_current_time/1,
     fun test_track_inprogress/1,
-    fun test_set_duration/1,
+    fun test_set_duration_seconds/1,
+    fun test_set_duration_milliseconds/1,
     fun test_remove/1,
     fun test_undefined_value/1]}.
 
@@ -201,13 +202,35 @@ test_track_inprogress(_) ->
   [?_assertEqual(1, Value),
    ?_assertEqual(0, prometheus_gauge:value(gauge))].
 
-test_set_duration(_) ->
-  prometheus_gauge:new([{name, gauge}, {help, ""}]),
-  ValueF = prometheus_gauge:set_duration(gauge, fun () ->
+test_set_duration_seconds(_) ->
+  prometheus_gauge:new([{name, gauge_seconds},
+                        {help, ""}]),
+  ValueF = prometheus_gauge:set_duration(gauge_seconds, fun () ->
                                                     timer:sleep(1000),
                                                     1
                                                 end),
-  timer:sleep(10),
+  Value = prometheus_gauge:value(gauge_seconds),
+
+  try prometheus_gauge:set_duration(gauge_seconds, fun () ->
+                                               erlang:error({qwe})
+                                           end)
+  catch _:_ -> ok
+  end,
+
+  ValueE = prometheus_gauge:value(gauge_seconds),
+
+  [?_assertMatch(1, ValueF),
+   ?_assertMatch(true, 0.9 < Value andalso Value < 1.2),
+   ?_assertMatch(true, 0.0 < ValueE andalso ValueE < 0.1)].
+
+test_set_duration_milliseconds(_) ->
+  prometheus_gauge:new([{name, gauge},
+                        {help, ""},
+                        {duration_unit, milliseconds}]),
+  ValueF = prometheus_gauge:set_duration(gauge, fun () ->
+                                                    timer:sleep(1100),
+                                                    1
+                                                end),
   Value = prometheus_gauge:value(gauge),
 
   try prometheus_gauge:set_duration(gauge, fun () ->
@@ -220,8 +243,8 @@ test_set_duration(_) ->
   ValueE = prometheus_gauge:value(gauge),
 
   [?_assertMatch(1, ValueF),
-   ?_assertMatch(true, 0.9 < Value andalso Value < 1.2),
-   ?_assertMatch(true, 0.0 < ValueE andalso ValueE < 0.1)].
+   ?_assertMatch(true, 900 < Value andalso Value < 1200),
+   ?_assertMatch(true, 0 < ValueE andalso ValueE < 100)].
 
 test_remove(_) ->
   prometheus_gauge:new([{name, pool_size},

@@ -2,6 +2,8 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-include("prometheus_model.hrl").
+
 prometheus_format_test_() ->
   {foreach,
    fun prometheus_eunit_common:start/0,
@@ -11,7 +13,8 @@ prometheus_format_test_() ->
     fun test_buckets/1,
     fun test_observe/1,
     fun test_dobserve/1,
-    fun test_observe_duration/1,
+    fun test_observe_duration_seconds/1,
+    fun test_observe_duration_milliseconds/1,
     fun test_remove/1,
     fun test_undefined_value/1]}.
 
@@ -116,7 +119,8 @@ test_buckets(_) ->
   prometheus_histogram:new([{name, http_request_duration_milliseconds},
                             {labels, [method]},
                             {buckets, [100, 300, 500, 750, 1000]},
-                            {help, "Http Request execution time"}]),
+                            {help, "Http Request execution time"},
+                            {duration_unit, false}]),
 
 
   prometheus_histogram:new([{name, "explicit_default_buckets"},
@@ -152,7 +156,8 @@ test_observe(_) ->
   prometheus_histogram:new([{name, http_request_duration_milliseconds},
                             {labels, [method]},
                             {buckets, [100, 300, 500, 750, 1000]},
-                            {help, "Http Request execution time"}]),
+                            {help, "Http Request execution time"},
+                            {duration_unit, false}]),
   prometheus_histogram:observe(http_request_duration_milliseconds, [get], 95),
   prometheus_histogram:observe(http_request_duration_milliseconds, [get], 100),
   prometheus_histogram:observe(http_request_duration_milliseconds, [get], 102),
@@ -172,7 +177,8 @@ test_dobserve(_) ->
   prometheus_histogram:new([{name, http_request_duration_milliseconds},
                             {labels, [method]},
                             {buckets, [100, 300, 500, 750, 1000]},
-                            {help, "Http Request execution time"}]),
+                            {help, "Http Request execution time"},
+                            {duration_unit, false}]),
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 500.2),
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 150.4),
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 450.5),
@@ -189,30 +195,69 @@ test_dobserve(_) ->
   [?_assertEqual({[0, 1, 1, 1, 2, 1], 4352.53}, Value),
    ?_assertEqual({[0, 0, 0, 0, 0, 0], 0}, RValue)].
 
-test_observe_duration(_) ->
-  prometheus_histogram:new([{name, fun_executing_histogram},
+test_observe_duration_seconds(_) ->
+  prometheus_histogram:new([{name, fun_duration_seconds},
                             {buckets, [0.5, 1.1]},
                             {help, ""}]),
-  prometheus_histogram:observe_duration(fun_executing_histogram, fun () ->
-                                                                     timer:sleep(1000)
-                                                                 end),
-  timer:sleep(10),
-  {Buckets, Sum} = prometheus_histogram:value(fun_executing_histogram),
+  prometheus_histogram:observe_duration(fun_duration_seconds, fun () ->
+                                                                  timer:sleep(1000)
+                                                              end),
+  {Buckets, Sum} = prometheus_histogram:value(fun_duration_seconds),
 
-  try prometheus_histogram:observe_duration(fun_executing_histogram,
+  try prometheus_histogram:observe_duration(fun_duration_seconds,
                                             fun () ->
                                                 erlang:error({qwe})
                                             end)
   catch _:_ -> ok
   end,
 
-  timer:sleep(10),
-  {BucketsE, SumE} = prometheus_histogram:value(fun_executing_histogram),
+  {BucketsE, SumE} = prometheus_histogram:value(fun_duration_seconds),
+
+  [MF] = prometheus_eunit_common:collect_mf_to_list(prometheus_histogram),
+
+  MBuckets = [#'Bucket'{cumulative_count=1,
+                       upper_bound=0.5},
+             #'Bucket'{cumulative_count=2,
+                       upper_bound=1.1},
+             #'Bucket'{cumulative_count=2,
+                       upper_bound=infinity}],
+
+  #'MetricFamily'{metric=
+                    [#'Metric'{histogram=
+                                 #'Histogram'{sample_sum=MFSum,
+                                              sample_count=MFCount,
+                                              bucket=MBuckets}}]} = MF,
 
   [?_assertEqual([0, 1, 0], Buckets),
    ?_assertEqual([1, 1, 0], BucketsE),
-   ?_assertMatch(true, 0.9 < Sum andalso Sum < 1.2),
-   ?_assertMatch(true, 0.9 < SumE andalso SumE < 1.2)].
+   ?_assertEqual(true, 0.9 < Sum andalso Sum < 1.2),
+   ?_assertEqual(true, 0.9 < SumE andalso SumE < 1.2),
+   ?_assertEqual(2, MFCount),
+   ?_assertEqual(true, 0.9 < MFSum andalso MFSum < 1.2)].
+
+test_observe_duration_milliseconds(_) ->
+  prometheus_histogram:new([{name, fun_duration_histogram},
+                            {buckets, [500, 1100]},
+                            {help, ""},
+                            {duration_unit, milliseconds}]),
+  prometheus_histogram:observe_duration(fun_duration_histogram, fun () ->
+                                                                    timer:sleep(1000)
+                                                                end),
+  {Buckets, Sum} = prometheus_histogram:value(fun_duration_histogram),
+
+  try prometheus_histogram:observe_duration(fun_duration_histogram,
+                                            fun () ->
+                                                erlang:error({qwe})
+                                            end)
+  catch _:_ -> ok
+  end,
+
+  {BucketsE, SumE} = prometheus_histogram:value(fun_duration_histogram),
+
+  [?_assertEqual([0, 1, 0], Buckets),
+   ?_assertEqual([1, 1, 0], BucketsE),
+   ?_assertMatch(true, 900 < Sum andalso Sum < 1200),
+   ?_assertMatch(true, 900 < SumE andalso SumE < 1200)].
 
 test_remove(_) ->
   prometheus_histogram:new([{name, histogram},

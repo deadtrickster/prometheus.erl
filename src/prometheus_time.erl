@@ -1,6 +1,8 @@
 -module(prometheus_time).
 
--export([maybe_convert_to_native/2,
+-export([duration_unit_from_string/1,
+         validate_duration_unit/1,
+         maybe_convert_to_native/2,
          maybe_convert_to_du/2]).
 
 -ifdef(TEST).
@@ -9,8 +11,37 @@
 -endif.
 
 %%====================================================================
+%% Macros
+%%====================================================================
+
+-define(DURATION_UNITS, [{"microseconds", microseconds},
+                         {"milliseconds", milliseconds},
+                         {"seconds", seconds},
+                         {"minutes", minutes},
+                         {"hours", hours},
+                         {"days", days}]).
+
+%%====================================================================
 %% Public API
 %%====================================================================
+
+duration_unit_from_string(Str) ->
+  duration_unit_from_string(Str, ?DURATION_UNITS).
+
+validate_duration_unit(false) ->
+  false;
+validate_duration_unit(undefined) ->
+  undefined;
+validate_duration_unit(SDU) ->
+  case lists:any(fun({_, DU}) ->
+                     DU == SDU
+                 end,
+                 ?DURATION_UNITS) of
+    true ->
+      SDU;
+    _ ->
+      erlang:error({unknown_duration_unit, SDU})
+  end.
 
 maybe_convert_to_native(_, infinity) ->
   infinity;
@@ -31,6 +62,15 @@ maybe_convert_to_du(DU, Value) ->
 %%====================================================================
 %% Private Parts
 %%====================================================================
+
+duration_unit_from_string(Str, [{SDU, DU}|Rest]) ->
+  case string:rstr(Str, SDU) of
+    0 -> duration_unit_from_string(Str, Rest);
+    _ -> DU
+  end;
+duration_unit_from_string(_, []) ->
+  undefined.
+
 from_native(Value) ->
   erlang:convert_time_unit(trunc(Value), native, nano_seconds).
 

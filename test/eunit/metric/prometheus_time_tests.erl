@@ -2,6 +2,30 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+duration_unit_from_string_test() ->
+  ?assertEqual(microseconds,
+               prometheus_time:duration_unit_from_string("duration_microseconds")),
+  ?assertEqual(milliseconds,
+               prometheus_time:duration_unit_from_string("duration_milliseconds")),
+  ?assertEqual(seconds,
+               prometheus_time:duration_unit_from_string("duration_seconds")),
+  ?assertEqual(minutes,
+               prometheus_time:duration_unit_from_string("duration_minutes")),
+  ?assertEqual(hours,
+               prometheus_time:duration_unit_from_string("duration_hours")),
+  ?assertEqual(days,
+               prometheus_time:duration_unit_from_string("duration_days")).
+
+validate_duration_unit_test() ->
+  ?assertEqual(microseconds, prometheus_time:validate_duration_unit(microseconds)),
+  ?assertEqual(milliseconds, prometheus_time:validate_duration_unit(milliseconds)),
+  ?assertEqual(seconds, prometheus_time:validate_duration_unit(seconds)),
+  ?assertEqual(minutes, prometheus_time:validate_duration_unit(minutes)),
+  ?assertEqual(hours, prometheus_time:validate_duration_unit(hours)),
+  ?assertEqual(days, prometheus_time:validate_duration_unit(days)),
+   ?assertError({unknown_duration_unit, invalid},
+               prometheus_time:validate_duration_unit(invalid)).
+
 from_native_test() ->
   NativeInUS = erlang:convert_time_unit(1, micro_seconds, native),
   ?assertEqual(2.5, prometheus_time:from_native(2.5 * NativeInUS, microseconds)),

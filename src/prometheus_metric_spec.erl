@@ -26,17 +26,6 @@
 -type spec() :: proplists:proplist().
 
 %%====================================================================
-%% Macros
-%%====================================================================
-
--define(DURATION_UNITS, [{"microseconds", microseconds},
-                         {"milliseconds", milliseconds},
-                         {"seconds", seconds},
-                         {"minutes", minutes},
-                         {"hours", hours},
-                         {"days", days}]).
-
-%%====================================================================
 %% Public API
 %%====================================================================
 
@@ -71,7 +60,7 @@ use_call(Spec) ->
 duration_unit(Spec) ->
   Name = to_string(name(Spec)),
 
-  NameDU = duration_unit_from_name(Name),
+  NameDU = prometheus_time:duration_unit_from_string(Name),
 
   case duration_unit_from_spec(Spec) of
     false -> undefined;
@@ -83,35 +72,9 @@ duration_unit(Spec) ->
           end
   end.
 
-duration_unit_from_name(Name) ->
-  duration_unit_from_name(Name, ?DURATION_UNITS).
-
-duration_unit_from_name(Name, [{SDU, DU}|Rest]) ->
-  case string:rstr(Name, SDU) of
-    0 -> duration_unit_from_name(Name, Rest);
-    _ -> DU
-  end;
-duration_unit_from_name(_, []) ->
-  undefined.
-
 duration_unit_from_spec(Spec) ->
   SDU = get_value(duration_unit, Spec, undefined),
-  validate_duration_unit(SDU).
-
-validate_duration_unit(false) ->
-  false;
-validate_duration_unit(undefined) ->
-  undefined;
-validate_duration_unit(SDU) ->
-  case lists:any(fun({_, DU}) ->
-                     DU == SDU
-                 end,
-                 ?DURATION_UNITS) of
-    true ->
-      SDU;
-    _ ->
-      erlang:error({unknown_duration_unit, SDU})
-  end.
+  prometheus_time:validate_duration_unit(SDU).
 
 %% @private
 extract_common_params(Spec) ->

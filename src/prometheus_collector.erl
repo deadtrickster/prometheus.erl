@@ -22,6 +22,10 @@
          deregister/2,
          collect_mf/3]).
 
+-ifdef(TEST).
+-export([collect_mf_to_list/1]).
+-endif.
+
 -export_type([collector/0,
               data/0,
               collect_mf_callback/0]).
@@ -100,6 +104,36 @@ deregister(Collector, Registry) ->
     Callback  :: collect_mf_callback().
 collect_mf(Registry, Collector, Callback) ->
   ok = Collector:collect_mf(Registry, Callback).
+
+%%====================================================================
+%% Test only
+%%====================================================================
+
+-ifdef(TEST).
+
+collect_mf_to_list(Collector) ->
+  collect_mf_to_list(default, Collector).
+
+collect_mf_to_list(Registry, Collector) ->
+  try
+    Callback = fun (MF) ->
+                   put(Collector, [MF|get_list(Collector)])
+               end,
+    prometheus_collector:collect_mf(Registry, Collector, Callback),
+
+    get_list(Collector)
+  after
+    erase(Collector)
+  end.
+
+get_list(Key) ->
+  case get(Key) of
+    undefined ->
+      [];
+    Value ->
+      Value
+  end.
+-endif.
 
 %%====================================================================
 %% Private Parts

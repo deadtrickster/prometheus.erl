@@ -2,6 +2,8 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-include("prometheus_model.hrl").
+
 prometheus_format_test_() ->
   {foreach,
    fun prometheus_eunit_common:start/0,
@@ -116,22 +118,32 @@ test_observe_duration_seconds(_) ->
                           {help, ""},
                           {duration_unit, seconds}]),
   prometheus_summary:observe_duration(<<"fun_duration_seconds">>, fun () ->
-                                                                timer:sleep(1000)
-                                                            end),
+                                                                      timer:sleep(1000)
+                                                                  end),
 
   {Count, Sum} = prometheus_summary:value(<<"fun_duration_seconds">>),
 
-  try prometheus_summary:observe_duration(<<"fun_duration_seconds">>, fun () ->
-                                                                    erlang:error({qwe})
-                                                                end)
+  [MF] = prometheus_collector:collect_mf_to_list(prometheus_summary),
+
+  #'MetricFamily'{metric=
+                    [#'Metric'{summary=
+                                 #'Summary'{sample_sum=MFSum,
+                                            sample_count=MFCount}}]} = MF,
+
+  try prometheus_summary:observe_duration(<<"fun_duration_seconds">>,
+                                          fun () ->
+                                              erlang:error({qwe})
+                                          end)
   catch _:_ -> ok
   end,
 
   {CountE, SumE} = prometheus_summary:value(<<"fun_duration_seconds">>),
 
   [?_assertEqual(1, Count),
+   ?_assertEqual(1, MFCount),
    ?_assertEqual(2, CountE),
    ?_assertMatch(true, 0.9 < Sum andalso Sum < 1.2),
+   ?_assertMatch(true, 0.9 < MFSum andalso MFSum < 1.2),
    ?_assertMatch(true, 0.9 < SumE andalso SumE < 1.2)].
 
 test_observe_duration_milliseconds(_) ->

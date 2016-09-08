@@ -2,6 +2,8 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-include("prometheus_model.hrl").
+
 prometheus_format_test_() ->
   {foreach,
    fun prometheus_eunit_common:start/0,
@@ -206,14 +208,20 @@ test_set_duration_seconds(_) ->
   prometheus_gauge:new([{name, gauge_seconds},
                         {help, ""}]),
   ValueF = prometheus_gauge:set_duration(gauge_seconds, fun () ->
-                                                    timer:sleep(1000),
-                                                    1
-                                                end),
+                                                            timer:sleep(1000),
+                                                            1
+                                                        end),
   Value = prometheus_gauge:value(gauge_seconds),
 
+  [MF] = prometheus_collector:collect_mf_to_list(prometheus_gauge),
+
+  #'MetricFamily'{metric=
+                    [#'Metric'{gauge=
+                                 #'Gauge'{value=MFValue}}]} = MF,
+
   try prometheus_gauge:set_duration(gauge_seconds, fun () ->
-                                               erlang:error({qwe})
-                                           end)
+                                                       erlang:error({qwe})
+                                                   end)
   catch _:_ -> ok
   end,
 
@@ -221,6 +229,7 @@ test_set_duration_seconds(_) ->
 
   [?_assertMatch(1, ValueF),
    ?_assertMatch(true, 0.9 < Value andalso Value < 1.2),
+   ?_assertMatch(true, 0.9 < MFValue andalso MFValue < 1.2),
    ?_assertMatch(true, 0.0 < ValueE andalso ValueE < 0.1)].
 
 test_set_duration_milliseconds(_) ->

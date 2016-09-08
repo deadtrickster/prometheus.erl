@@ -213,7 +213,7 @@ test_observe_duration_seconds(_) ->
 
   {BucketsE, SumE} = prometheus_histogram:value(fun_duration_seconds),
 
-  [MF] = prometheus_eunit_common:collect_mf_to_list(prometheus_histogram),
+  [MF] = prometheus_collector:collect_mf_to_list(prometheus_histogram),
 
   MBuckets = [#'Bucket'{cumulative_count=1,
                        upper_bound=0.5},

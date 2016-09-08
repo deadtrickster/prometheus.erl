@@ -21,12 +21,11 @@
 -spec default() -> buckets().
 default() -> [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 10].
 
--spec linear(integer(), pos_integer(), pos_integer()) -> buckets().
+-spec linear(number(), number(), pos_integer()) -> buckets().
 linear(_Start, _Step, Count) when Count < 1 ->
   erlang:error({invalid_value, Count, "Buckets count should be positive"});
 linear(Start, Step, Count) ->
-  Bounds = lists:seq(Start, Start + Step*(Count - 1), Step),
-  [try_to_maintain_integer_bounds(Bound) || Bound <- Bounds].
+  linear(Start, Step, Count, []).
 
 -spec exponential(number(), number(), pos_integer()) -> buckets().
 exponential(_Start, _Factor, Count) when Count < 1 ->
@@ -43,6 +42,14 @@ exponential(Start, Factor, Count) ->
 %%====================================================================
 %% Private Parts
 %%====================================================================
+
+linear(_Current, _Step, 0, Acc) ->
+  lists:reverse(Acc);
+linear(Current, Step, Count, Acc) ->
+  linear(try_to_maintain_integer_bounds(Current + Step),
+         Step,
+         Count - 1,
+         [Current|Acc]).
 
 -spec try_to_maintain_integer_bounds(integer()) -> integer();
                                     (float())   -> integer() | float().

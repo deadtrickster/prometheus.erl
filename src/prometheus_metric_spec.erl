@@ -78,7 +78,8 @@ duration_unit(Spec) ->
     NameDU -> NameDU;
     DU -> case NameDU of
             undefined -> DU;
-            _ -> erlang:error({duration_unit_no_match, NameDU, DU})
+            _ -> erlang:error({invalid_value, DU,
+                               "duration unit doesn't match metric name"})
           end
   end.
 

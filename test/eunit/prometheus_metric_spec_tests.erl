@@ -89,7 +89,7 @@ duration_unit_test() ->
   ?assertEqual(microseconds,
                prometheus_metric_spec:duration_unit([{name, "qwe"},
                                                      {duration_unit, microseconds}])),
-  ?assertError({unknown_duration_unit, invalid},
+  ?assertError({invalid_value, invalid, "unknown duration unit"},
                prometheus_metric_spec:duration_unit([{name, "qwe"},
                                                      {duration_unit, invalid}])),
   ?assertError({duration_unit_no_match, milliseconds, microseconds},

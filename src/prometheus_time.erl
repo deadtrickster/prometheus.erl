@@ -1,3 +1,4 @@
+%% @hidden
 -module(prometheus_time).
 
 -export([duration_unit_from_string/1,
@@ -40,7 +41,7 @@ validate_duration_unit(SDU) ->
     true ->
       SDU;
     _ ->
-      erlang:error({unknown_duration_unit, SDU})
+      erlang:error({invalid_value, SDU, "unknown duration unit"})
   end.
 
 maybe_convert_to_native(_, infinity) ->

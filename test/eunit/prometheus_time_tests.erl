@@ -23,7 +23,7 @@ validate_duration_unit_test() ->
   ?assertEqual(minutes, prometheus_time:validate_duration_unit(minutes)),
   ?assertEqual(hours, prometheus_time:validate_duration_unit(hours)),
   ?assertEqual(days, prometheus_time:validate_duration_unit(days)),
-   ?assertError({unknown_duration_unit, invalid},
+  ?assertError({invalid_value, invalid, "unknown duration unit"},
                prometheus_time:validate_duration_unit(invalid)).
 
 from_native_test() ->

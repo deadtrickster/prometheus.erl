@@ -65,9 +65,17 @@ validate_metric_help_test() ->
   ?assertEqual("qwe_:qwe", prometheus_metric_spec:validate_metric_help("qwe_:qwe")),
   ?assertEqual("qwe_:qwe", prometheus_metric_spec:validate_metric_help(<<"qwe_:qwe">>)).
 
-use_call_test() ->
-  ?assertEqual(true, prometheus_metric_spec:use_call([{use_call, true}])),
-  ?assertEqual(false, prometheus_metric_spec:use_call([])).
+call_timeout_test() ->
+  ?assertEqual(5000, prometheus_metric_spec:call_timeout([{call_timeout, true}])),
+  ?assertEqual(1000, prometheus_metric_spec:call_timeout([{call_timeout, 1000}])),
+  ?assertEqual(infinity, prometheus_metric_spec:call_timeout([{call_timeout, infinity}])),
+  ?assertEqual(false, prometheus_metric_spec:call_timeout([])),
+  ?assertEqual(false, prometheus_metric_spec:call_timeout([{call_timeout, false}])),
+
+  ?assertError({invalid_value, invalid,
+                "call timeout must be 'false', 'true', 'infinity' "
+                "or a positive integer"},
+               prometheus_metric_spec:call_timeout([{call_timeout, invalid}])).
 
 duration_unit_test() ->
   ?assertEqual(undefined, prometheus_metric_spec:duration_unit([{name, "qwe"}])),

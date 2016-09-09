@@ -7,7 +7,7 @@
          name/1,
          labels/1,
          help/1,
-         use_call/1,
+         call_timeout/1,
          duration_unit/1,
          extract_common_params/1]).
 
@@ -53,8 +53,18 @@ data(Spec) ->
   get_value(data, Spec).
 
 %% @private
-use_call(Spec) ->
-  get_value(use_call, Spec, false).
+call_timeout(Spec) ->
+  case get_value(call_timeout, Spec, false) of
+    false -> false;
+    true -> 5000;
+    infinity -> infinity;
+    Timeout when is_integer(Timeout) andalso Timeout > 0
+                 -> Timeout;
+    Something ->
+      erlang:error({invalid_value, Something,
+                    "call timeout must be 'false', 'true', 'infinity' "
+                    "or a positive integer"})
+  end.
 
 %% @private
 duration_unit(Spec) ->
@@ -88,11 +98,11 @@ extract_common_params(Spec) ->
 
   Data = data(Spec),
 
-  UseCall = use_call(Spec),
+  CallTimeout = call_timeout(Spec),
 
   DurationUnit = duration_unit(Spec),
 
-  {Registry, Name, Labels, Help, UseCall, DurationUnit, Data}.
+  {Registry, Name, Labels, Help, CallTimeout, DurationUnit, Data}.
 
 -spec get_value(Key :: atom(), Spec :: spec()) -> any().
 %% @private

@@ -4,8 +4,9 @@
          insert_mf/3,
          deregister_mf/2,
          check_mf_exists/4,
-         mf_data/1,
+         mf_call_timeout/1,
          mf_duration_unit/1,
+         mf_data/1,
          metrics/2,
          remove_labels/4]).
 
@@ -129,6 +130,9 @@ check_mf_exists(Table, Registry, Name, LabelValues) ->
 %% @private
 mf_data(MF) ->
   element(5, MF).
+
+mf_call_timeout(MF) ->
+  element(3, MF).
 
 mf_duration_unit(MF) ->
   element(4, MF).

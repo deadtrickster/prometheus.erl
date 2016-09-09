@@ -179,9 +179,16 @@ dinc(Name, LabelValues, Value) ->
   dinc(default, Name, LabelValues, Value).
 
 dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  gen_server:cast(?MODULE,
-                  {inc, {Registry, Name, LabelValues, Value}}),
+  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  CallTimeout = prometheus_metric:mf_call_timeout(MF),
+  case CallTimeout of
+    false ->
+      gen_server:cast(?MODULE,
+                      {inc, {Registry, Name, LabelValues, Value}});
+    _ -> gen_server:call(?MODULE,
+                         {inc, {Registry, Name, LabelValues, Value}},
+                         CallTimeout)
+  end,
   ok;
 dinc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
@@ -331,7 +338,7 @@ deregister_cleanup(Registry) ->
 collect_mf(Registry, Callback) ->
   [Callback(create_gauge(Name, Help, {Labels, Registry, DU})) ||
     [Name, {Labels, Help}, _, DU, _] <- prometheus_metric:metrics(?TABLE,
-                                                                 Registry)],
+                                                                  Registry)],
   ok.
 
 collect_metrics(Name, {Labels, Registry, DU}) ->
@@ -349,8 +356,9 @@ init(_Args) ->
   {ok, []}.
 
 %% @private
-handle_call(_Call, _From, State) ->
-  {noreply, State}.
+handle_call({inc, {Registry, Name, LabelValues, Value}}, _From, State) ->
+  dinc_impl(Registry, Name, LabelValues, Value),
+  {reply, ok, State}.
 
 %% @private
 handle_cast({inc, {Registry, Name, LabelValues, Value}}, State) ->

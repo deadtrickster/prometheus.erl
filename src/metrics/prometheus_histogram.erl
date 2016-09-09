@@ -135,9 +135,17 @@ dobserve(Name, LabelValues, Value) ->
   dobserve(default, Name, LabelValues, Value).
 
 dobserve(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  gen_server:cast(?MODULE,
-                  {observe, {Registry, Name, LabelValues, Value}}),
+  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  CallTimeout = prometheus_metric:mf_call_timeout(MF),
+  case prometheus_metric:mf_call_timeout(MF) of
+    false ->
+      gen_server:cast(?MODULE,
+                      {observe, {Registry, Name, LabelValues, Value}});
+    _ ->
+      gen_server:call(?MODULE,
+                      {observe, {Registry, Name, LabelValues, Value}},
+                      CallTimeout)
+  end,
   ok;
 dobserve(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "dobserve accepts only numbers"}).
@@ -264,8 +272,9 @@ init(_Args) ->
   {ok, []}.
 
 %% @private
-handle_call(_Call, _From, State) ->
-  {noreply, State}.
+handle_call({observe, {Registry, Name, LabelValues, Value}}, _From, State) ->
+  dobserve_impl(Registry, Name, LabelValues, Value),
+  {reply, ok, State}.
 
 %% @private
 handle_cast({observe, {Registry, Name, LabelValues, Value}}, State) ->

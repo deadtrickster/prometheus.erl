@@ -149,9 +149,16 @@ dinc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
   erlang:error({invalid_value, Value,
                 "dinc accepts only non-negative numbers"});
 dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  gen_server:cast(?MODULE,
-                  {inc, {Registry, Name, LabelValues, Value}}),
+  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  CallTimeout = prometheus_metric:mf_call_timeout(MF),
+  case CallTimeout of
+    false ->
+      gen_server:cast(?MODULE,
+                      {inc, {Registry, Name, LabelValues, Value}});
+    _ -> gen_server:call(?MODULE,
+                         {inc, {Registry, Name, LabelValues, Value}},
+                         CallTimeout)
+  end,
   ok;
 dinc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
@@ -226,8 +233,9 @@ init(_Args) ->
   {ok, []}.
 
 %% @private
-handle_call(_Call, _From, State) ->
-  {noreply, State}.
+handle_call({inc, {Registry, Name, LabelValues, Value}}, _From, State) ->
+  dinc_impl(Registry, Name, LabelValues, Value),
+  {reply, ok, State}.
 
 %% @private
 handle_cast({inc, {Registry, Name, LabelValues, Value}}, State) ->

@@ -195,6 +195,39 @@ test_dobserve(_) ->
   [?_assertEqual({[0, 1, 1, 1, 2, 1], 4352.53}, Value),
    ?_assertEqual({[0, 0, 0, 0, 0, 0], 0}, RValue)].
 
+call_cast_test() ->
+  prometheus_histogram:declare([{name, cast},
+                                {help, ""},
+                                {buckets, [2]}]),
+  prometheus_histogram:declare([{name, call},
+                                {help, ""},
+                                {buckets, [2]},
+                                {call_timeout, 1000}]),
+  prometheus_histogram:dobserve(cast, 1),
+  prometheus_histogram:dobserve(call, 1),
+
+  ?assertEqual({[1, 0], 1}, prometheus_histogram:value(cast)),
+  ?assertEqual({[1, 0], 1}, prometheus_histogram:value(call)),
+
+  try
+    sys:suspend(prometheus_histogram),
+
+    prometheus_histogram:dobserve(cast, 1),
+    ?assertException(exit, {timeout, _}, prometheus_histogram:dobserve(call, 1)),
+
+    ?assertEqual({[1, 0], 1}, prometheus_histogram:value(cast)),
+    ?assertEqual({[1, 0], 1}, prometheus_histogram:value(call))
+
+  after
+    sys:resume(prometheus_histogram)
+  end,
+
+  %% wait for genserver
+  timer:sleep(10),
+
+  ?assertEqual({[2, 0], 2}, prometheus_histogram:value(cast)),
+  ?assertEqual({[2, 0], 2}, prometheus_histogram:value(call)).
+
 test_observe_duration_seconds(_) ->
   prometheus_histogram:new([{name, fun_duration_seconds},
                             {buckets, [0.5, 1.1]},
@@ -216,11 +249,11 @@ test_observe_duration_seconds(_) ->
   [MF] = prometheus_collector:collect_mf_to_list(prometheus_histogram),
 
   MBuckets = [#'Bucket'{cumulative_count=1,
-                       upper_bound=0.5},
-             #'Bucket'{cumulative_count=2,
-                       upper_bound=1.1},
-             #'Bucket'{cumulative_count=2,
-                       upper_bound=infinity}],
+                        upper_bound=0.5},
+              #'Bucket'{cumulative_count=2,
+                        upper_bound=1.1},
+              #'Bucket'{cumulative_count=2,
+                        upper_bound=infinity}],
 
   #'MetricFamily'{metric=
                     [#'Metric'{histogram=

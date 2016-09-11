@@ -23,7 +23,8 @@ stop(ok) ->
 %% this should be moved to app-level tests [as well as default instrumenters]
 %% maybe after migration to CT
 default_registry() ->
-  ?_assertEqual([prometheus_vm_statistics_collector,
+  ?_assertEqual([prometheus_vm_system_info_collector,
+                 prometheus_vm_statistics_collector,
                  prometheus_vm_memory_collector,
                  prometheus_summary,
                  prometheus_histogram,

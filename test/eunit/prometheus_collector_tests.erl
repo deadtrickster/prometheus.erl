@@ -10,7 +10,8 @@ collector_setup_test() ->
   after
     application:unset_env(prometheus, collectors)
   end,
-  ?assertMatch([prometheus_vm_statistics_collector,
+  ?assertMatch([prometheus_vm_system_info_collector,
+                prometheus_vm_statistics_collector,
                 prometheus_vm_memory_collector,
                 prometheus_summary,
                 prometheus_histogram,

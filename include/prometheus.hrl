@@ -6,14 +6,6 @@
 
 -define(PROMETHEUS_COUNTER_DEFAULT, 0).
 
--define(PROMETHEUS_VM_STATISTICS, [context_switches,
-                                   garbage_collection,
-                                   io,
-                                   reductions,
-                                   run_queue,
-                                   runtime,
-                                   wall_clock]).
-
 -define(PROMETHEUS_STANDARD_METRICS, [prometheus_counter,
                                       prometheus_gauge,
                                       prometheus_summary,

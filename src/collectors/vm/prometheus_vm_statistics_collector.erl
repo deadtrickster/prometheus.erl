@@ -30,6 +30,14 @@
 -define(CONTEXT_SWITCHES, erlang_vm_statistics_context_switches).
 -define(WALLCLOCK_TIME_MS, erlang_vm_statistics_wallclock_time_milliseconds).
 
+-define(PROMETHEUS_VM_STATISTICS, [context_switches,
+                                   garbage_collection,
+                                   io,
+                                   reductions,
+                                   run_queue,
+                                   runtime,
+                                   wall_clock]).
+
 %%====================================================================
 %% Collector API
 %%====================================================================
@@ -81,9 +89,6 @@ add_metric_family(wall_clock, Stat, Callback) ->
     "Same as erlang_vm_statistics_runtime_milliseconds "
     "except that real time is measured").
 
-do_add_metric_family(Name, Stat, Callback, Help) ->
-  Callback(create_counter(Name, Help, Stat)).
-
 %% @private
 collect_metrics(?CONTEXT_SWITCHES, {Stat, _}) ->
   counter_metric(Stat);
@@ -119,6 +124,9 @@ call_if_statistics_exists(StatItem, Fun) ->
 enabled_statistics_metrics() ->
   application:get_env(prometheus, vm_statistics_collector_metrics,
                       ?PROMETHEUS_VM_STATISTICS).
+
+do_add_metric_family(Name, Stat, Callback, Help) ->
+  Callback(create_counter(Name, Help, Stat)).
 
 create_counter(Name, Help, Data) ->
   create_mf(Name, Help, counter, ?MODULE, Data).

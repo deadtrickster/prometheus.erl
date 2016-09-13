@@ -1,3 +1,91 @@
+%% @doc
+%% Collects Erlang VM metrics using
+%% <a href="http://erlang.org/doc/man/erlang.html#statistics-1">
+%%   erlang:statistics/1
+%% </a>.
+%%
+%% ==Exported metrics==
+%% <ul>
+%%   <li>
+%%     <pre>erlang_vm_statistics_bytes_output_total</pre>
+%%     The total number of bytes output to ports.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_statistics_bytes_received_total</pre>
+%%     The total number of bytes received through ports.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_statistics_context_switches</pre>
+%%     The total number of context switches since the system started.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_statistics_garbage_collection_number_of_gcs</pre>
+%%     The total number of garbage collections since the system started.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_statistics_garbage_collection_words_reclaimed</pre>
+%%     The total number of words reclaimed by GC since the system started.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_statistics_reductions_total</pre>
+%%     Total reductions count.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_statistics_run_queues_length_total</pre>
+%%     The total length of the run-queues. That is, the number of
+%%     processes and ports that are ready to run on all available run-queues.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_statistics_runtime_milliseconds</pre>
+%%     The sum of the runtime for all threads in the Erlang runtime system.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_statistics_wallclock_time_milliseconds</pre>
+%%     Can be used in the same manner as
+%%     `erlang_vm_statistics_runtime_milliseconds', except that real time is
+%%     measured as opposed to runtime or CPU time.
+%%   </li>
+%% </ul>
+%%
+%% ==Configuration==
+%%
+%% Metrics exported by this collector can be configured via
+%% `vm_statistics_collector_metrics' of `prometheus' app environment key.
+%%
+%% Options are the same as Item parameter values for
+%% <a href="http://erlang.org/doc/man/erlang.html#statistics-1">
+%%   erlang:statistics/1
+%% </a>:
+%% <ul>
+%%   <li>
+%%     `context_switches' for `erlang_vm_statistics_context_switches'.
+%%   </li>
+%%   <li>
+%%     `garbage_collection'
+%%      for `erlang_vm_statistics_garbage_collection_number_of_gcs' and
+%%      `erlang_vm_statistics_garbage_collection_words_reclaimed'.
+%%   </li>
+%%   <li>
+%%     `io' for `erlang_vm_statistics_bytes_output_total' and
+%%     `erlang_vm_statistics_bytes_received_total'.
+%%   </li>
+%%   <li>
+%%     `reductions' for `erlang_vm_statistics_reductions_total'.
+%%   </li>
+%%   <li>
+%%     `run_queue' for `erlang_vm_statistics_run_queues_length_total'.
+%%   </li>
+%%   <li>
+%%     `runtime' for `erlang_vm_statistics_runtime_milliseconds'.
+%%   </li>
+%%   <li>
+%%     `wall_clock' for `erlang_vm_statistics_wallclock_time_milliseconds'.
+%%   </li>
+%% </ul>
+%%
+%% By default all metrics are enabled.
+%% @end
+
 -module(prometheus_vm_statistics_collector).
 
 -export([deregister_cleanup/1,
@@ -18,16 +106,15 @@
 %% Macros
 %%====================================================================
 
--define(GC_NUM_GCS,
-        erlang_vm_statistics_garbage_collection_number_of_gcs).
+-define(BYTES_OUTPUT, erlang_vm_statistics_bytes_output_total).
+-define(BYTES_RECEIVED, erlang_vm_statistics_bytes_received_total).
+-define(CONTEXT_SWITCHES, erlang_vm_statistics_context_switches).
+-define(GC_NUM_GCS, erlang_vm_statistics_garbage_collection_number_of_gcs).
 -define(GC_WORDS_RECLAIMED,
         erlang_vm_statistics_garbage_collection_words_reclaimed).
--define(BYTES_RECEIVED, erlang_vm_statistics_bytes_received_total).
--define(BYTES_OUTPUT, erlang_vm_statistics_bytes_output_total).
 -define(REDUCTIONS, erlang_vm_statistics_reductions_total).
 -define(RUN_QUEUES_LENGTH, erlang_vm_statistics_run_queues_length_total).
 -define(RUNTIME_MS, erlang_vm_statistics_runtime_milliseconds).
--define(CONTEXT_SWITCHES, erlang_vm_statistics_context_switches).
 -define(WALLCLOCK_TIME_MS, erlang_vm_statistics_wallclock_time_milliseconds).
 
 -define(PROMETHEUS_VM_STATISTICS, [context_switches,
@@ -125,11 +212,13 @@ enabled_statistics_metrics() ->
   application:get_env(prometheus, vm_statistics_collector_metrics,
                       ?PROMETHEUS_VM_STATISTICS).
 
+do_add_metric_family(?RUN_QUEUES_LENGTH, Stat, Callback, Help) ->
+  Callback(create_gauge(?RUN_QUEUES_LENGTH, Help, Stat));
 do_add_metric_family(Name, Stat, Callback, Help) ->
   Callback(create_counter(Name, Help, Stat)).
 
 create_counter(Name, Help, Data) ->
   create_mf(Name, Help, counter, ?MODULE, Data).
 
-%% create_gauge(Name, Help, Data) ->
-%%   create_mf(Name, Help, gauge, ?MODULE, Data).
+create_gauge(Name, Help, Data) ->
+  create_mf(Name, Help, gauge, ?MODULE, Data).

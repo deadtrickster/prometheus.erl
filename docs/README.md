@@ -14,6 +14,7 @@
 <tr><td><a href="prometheus_gauge.md" class="module">prometheus_gauge</a></td></tr>
 <tr><td><a href="prometheus_histogram.md" class="module">prometheus_histogram</a></td></tr>
 <tr><td><a href="prometheus_http.md" class="module">prometheus_http</a></td></tr>
+<tr><td><a href="prometheus_instrumenter.md" class="module">prometheus_instrumenter</a></td></tr>
 <tr><td><a href="prometheus_metric.md" class="module">prometheus_metric</a></td></tr>
 <tr><td><a href="prometheus_metric_spec.md" class="module">prometheus_metric_spec</a></td></tr>
 <tr><td><a href="prometheus_model_helpers.md" class="module">prometheus_model_helpers</a></td></tr>
@@ -22,5 +23,6 @@
 <tr><td><a href="prometheus_summary.md" class="module">prometheus_summary</a></td></tr>
 <tr><td><a href="prometheus_text_format.md" class="module">prometheus_text_format</a></td></tr>
 <tr><td><a href="prometheus_vm_memory_collector.md" class="module">prometheus_vm_memory_collector</a></td></tr>
-<tr><td><a href="prometheus_vm_statistics_collector.md" class="module">prometheus_vm_statistics_collector</a></td></tr></table>
+<tr><td><a href="prometheus_vm_statistics_collector.md" class="module">prometheus_vm_statistics_collector</a></td></tr>
+<tr><td><a href="prometheus_vm_system_info_collector.md" class="module">prometheus_vm_system_info_collector</a></td></tr></table>
 

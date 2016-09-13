@@ -1,10 +1,23 @@
 
 
 # Module prometheus_registry #
+* [Description](#description)
 * [Data Types](#types)
 * [Function Index](#index)
 * [Function Details](#functions)
 
+A registry of Collectors.
+
+<a name="description"></a>
+
+## Description ##
+
+The majority of users should use the `default`, rather than their own.
+
+Creating a registry other than the default is primarily useful for
+unit tests, or pushing a subset of metrics to the
+[Pushgateway](https://github.com/prometheus/pushgateway) from
+batch jobs.
 <a name="types"></a>
 
 ## Data Types ##
@@ -34,7 +47,7 @@ registry() = atom()
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#clear-0">clear/0</a></td><td>Equivalent to <a href="#clear-1"><tt>clear(default)</tt></a>.</td></tr><tr><td valign="top"><a href="#clear-1">clear/1</a></td><td></td></tr><tr><td valign="top"><a href="#collect-2">collect/2</a></td><td></td></tr><tr><td valign="top"><a href="#collector_registeredp-2">collector_registeredp/2</a></td><td></td></tr><tr><td valign="top"><a href="#collectors-1">collectors/1</a></td><td></td></tr><tr><td valign="top"><a href="#deregister_collector-2">deregister_collector/2</a></td><td></td></tr><tr><td valign="top"><a href="#register_collector-2">register_collector/2</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#clear-0">clear/0</a></td><td>Equivalent to <a href="#clear-1"><tt>clear(default)</tt></a>.</td></tr><tr><td valign="top"><a href="#clear-1">clear/1</a></td><td></td></tr><tr><td valign="top"><a href="#collect-2">collect/2</a></td><td></td></tr><tr><td valign="top"><a href="#collector_registeredp-1">collector_registeredp/1</a></td><td>Equivalent to <a href="#collector_registeredp-2"><tt>collector_registeredp(default, Collector)</tt></a>.</td></tr><tr><td valign="top"><a href="#collector_registeredp-2">collector_registeredp/2</a></td><td></td></tr><tr><td valign="top"><a href="#collectors-1">collectors/1</a></td><td></td></tr><tr><td valign="top"><a href="#deregister_collector-1">deregister_collector/1</a></td><td>Equivalent to <a href="#deregister_collector-2"><tt>deregister_collector(default, Collector)</tt></a>.</td></tr><tr><td valign="top"><a href="#deregister_collector-2">deregister_collector/2</a></td><td></td></tr><tr><td valign="top"><a href="#register_collector-1">register_collector/1</a></td><td>Equivalent to <a href="#register_collector-2"><tt>register_collector(default, Collector)</tt></a>.</td></tr><tr><td valign="top"><a href="#register_collector-2">register_collector/2</a></td><td></td></tr><tr><td valign="top"><a href="#register_collectors-1">register_collectors/1</a></td><td>Equivalent to <a href="#register_collectors-2"><tt>register_collectors(default, Collectors)</tt></a>.</td></tr><tr><td valign="top"><a href="#register_collectors-2">register_collectors/2</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -71,6 +84,18 @@ collect(Registry, Callback) -&gt; ok
 
 <ul class="definitions"><li><code>Registry = <a href="prometheus_registry.md#type-registry">prometheus_registry:registry()</a></code></li><li><code>Callback = <a href="#type-collect_callback">collect_callback()</a></code></li></ul>
 
+<a name="collector_registeredp-1"></a>
+
+### collector_registeredp/1 ###
+
+<pre><code>
+collector_registeredp(Collector) -&gt; boolean()
+</code></pre>
+
+<ul class="definitions"><li><code>Collector = <a href="prometheus_collector.md#type-collector">prometheus_collector:collector()</a></code></li></ul>
+
+Equivalent to [`collector_registeredp(default, Collector)`](#collector_registeredp-2).
+
 <a name="collector_registeredp-2"></a>
 
 ### collector_registeredp/2 ###
@@ -90,6 +115,17 @@ collectors(Registry::<a href="prometheus_registry.md#type-registry">prometheus_r
 </code></pre>
 <br />
 
+<a name="deregister_collector-1"></a>
+
+### deregister_collector/1 ###
+
+<pre><code>
+deregister_collector(Collector::<a href="prometheus_collector.md#type-collector">prometheus_collector:collector()</a>) -&gt; ok
+</code></pre>
+<br />
+
+Equivalent to [`deregister_collector(default, Collector)`](#deregister_collector-2).
+
 <a name="deregister_collector-2"></a>
 
 ### deregister_collector/2 ###
@@ -99,12 +135,43 @@ deregister_collector(Registry::<a href="prometheus_registry.md#type-registry">pr
 </code></pre>
 <br />
 
+<a name="register_collector-1"></a>
+
+### register_collector/1 ###
+
+<pre><code>
+register_collector(Collector::<a href="prometheus_collector.md#type-collector">prometheus_collector:collector()</a>) -&gt; ok
+</code></pre>
+<br />
+
+Equivalent to [`register_collector(default, Collector)`](#register_collector-2).
+
 <a name="register_collector-2"></a>
 
 ### register_collector/2 ###
 
 <pre><code>
 register_collector(Registry::<a href="prometheus_registry.md#type-registry">prometheus_registry:registry()</a>, Collector::<a href="prometheus_collector.md#type-collector">prometheus_collector:collector()</a>) -&gt; ok
+</code></pre>
+<br />
+
+<a name="register_collectors-1"></a>
+
+### register_collectors/1 ###
+
+<pre><code>
+register_collectors(Collectors::[<a href="prometheus_collector.md#type-collector">prometheus_collector:collector()</a>]) -&gt; ok
+</code></pre>
+<br />
+
+Equivalent to [`register_collectors(default, Collectors)`](#register_collectors-2).
+
+<a name="register_collectors-2"></a>
+
+### register_collectors/2 ###
+
+<pre><code>
+register_collectors(Registry::<a href="prometheus_registry.md#type-registry">prometheus_registry:registry()</a>, Collectors::[<a href="prometheus_collector.md#type-collector">prometheus_collector:collector()</a>]) -&gt; ok
 </code></pre>
 <br />
 

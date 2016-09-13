@@ -1,42 +1,117 @@
 
 
 # Module prometheus_vm_statistics_collector #
-* [Function Index](#index)
-* [Function Details](#functions)
+* [Description](#description)
+
+Collects Erlang VM metrics using
+[
+erlang:statistics/1
+](http://erlang.org/doc/man/erlang.md#statistics-1).
 
 __Behaviours:__ [`prometheus_collector`](prometheus_collector.md).
 
-<a name="index"></a>
+<a name="description"></a>
 
-## Function Index ##
-
-
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#collect_metrics-2">collect_metrics/2</a></td><td></td></tr><tr><td valign="top"><a href="#collect_mf-2">collect_mf/2</a></td><td></td></tr><tr><td valign="top"><a href="#deregister_cleanup-1">deregister_cleanup/1</a></td><td></td></tr></table>
+## Description ##
 
 
-<a name="functions"></a>
+### <a name="Exported_metrics">Exported metrics</a> ###
 
-## Function Details ##
 
-<a name="collect_metrics-2"></a>
+* 
+```
+erlang_vm_statistics_bytes_output_total
+```
 
-### collect_metrics/2 ###
+The total number of bytes output to ports.
 
-`collect_metrics(X1, Total) -> any()`
+* 
+```
+erlang_vm_statistics_bytes_received_total
+```
 
-<a name="collect_mf-2"></a>
+The total number of bytes received through ports.
 
-### collect_mf/2 ###
+* 
+```
+erlang_vm_statistics_context_switches
+```
 
-<pre><code>
-collect_mf(Callback, Registry::term()) -&gt; Metrics
-</code></pre>
+The total number of context switches since the system started.
 
-<ul class="definitions"><li><code>Callback = <a href="prometheus_collector.md#type-callback">prometheus_collector:callback()</a></code></li><li><code>Metrics = [<a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>]</code></li></ul>
+* 
+```
+erlang_vm_statistics_garbage_collection_number_of_gcs
+```
 
-<a name="deregister_cleanup-1"></a>
+The total number of garbage collections since the system started.
 
-### deregister_cleanup/1 ###
+* 
+```
+erlang_vm_statistics_garbage_collection_words_reclaimed
+```
 
-`deregister_cleanup(X1) -> any()`
+The total number of words reclaimed by GC since the system started.
 
+* 
+```
+erlang_vm_statistics_reductions_total
+```
+
+Total reductions count.
+
+* 
+```
+erlang_vm_statistics_run_queues_length_total
+```
+
+The total length of the run-queues. That is, the number of
+processes and ports that are ready to run on all available run-queues.
+
+* 
+```
+erlang_vm_statistics_runtime_milliseconds
+```
+
+The sum of the runtime for all threads in the Erlang runtime system.
+
+* 
+```
+erlang_vm_statistics_wallclock_time_milliseconds
+```
+
+Can be used in the same manner as
+`erlang_vm_statistics_runtime_milliseconds`, except that real time is
+measured as opposed to runtime or CPU time.
+
+
+
+### <a name="Configuration">Configuration</a> ###
+
+Metrics exported my this collector can be configured via
+`vm_statistics_collector_metrics` of `prometheus` app environment key.
+
+Options are the same as Item parameter values for
+[
+erlang:statistics/1
+](http://erlang.org/doc/man/erlang.md#statistics-1):
+
+* `context_switches` for `context_switches`.
+
+* `garbage_collection`
+for `erlang_vm_statistics_garbage_collection_number_of_gcs` and
+`erlang_vm_statistics_garbage_collection_words_reclaimed`.
+
+* `io` for `erlang_vm_statistics_bytes_output_total` and
+`erlang_vm_statistics_bytes_received_total`.
+
+* `reductions` for `erlang_vm_statistics_reductions_total`.
+
+* `run_queue` for `erlang_vm_statistics_run_queues_length_total`.
+
+* `runtime` for `erlang_vm_statistics_runtime_milliseconds`.
+
+* `wall_clock` for `erlang_vm_statistics_wallclock_time_milliseconds`.
+
+
+By default all metrics are enabled.

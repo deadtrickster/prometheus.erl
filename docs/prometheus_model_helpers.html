@@ -37,11 +37,16 @@
 <tr><td valign="top"><a href="#counter_metrics-1">counter_metrics/1</a></td><td>Equivalent to
   <a href="#counter_metric-1"><code>lists:map(fun counter_metric/1, Specs)</code></a>.</td></tr>
 <tr><td valign="top"><a href="#create_mf-5">create_mf/5</a></td><td></td></tr>
+<tr><td valign="top"><a href="#ensure_binary_or_string-1">ensure_binary_or_string/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#ensure_mf_type-1">ensure_mf_type/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#filter_undefined_metrics-1">filter_undefined_metrics/1</a></td><td></td></tr>
 <tr><td valign="top"><a href="#gauge_metric-1">gauge_metric/1</a></td><td></td></tr>
 <tr><td valign="top"><a href="#gauge_metric-2">gauge_metric/2</a></td><td></td></tr>
 <tr><td valign="top"><a href="#gauge_metrics-1">gauge_metrics/1</a></td><td>Equivalent to
   <a href="#gauge_metric-1"><code>lists:map(fun gauge_metric/1, Values)</code></a>.</td></tr>
 <tr><td valign="top"><a href="#histogram_metric-1">histogram_metric/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#histogram_metric-3">histogram_metric/3</a></td><td>Equivalent to <a href="#histogram_metric-4"><tt>histogram_metric([], Buckets, Count, Sum)</tt></a>.
+</td></tr>
 <tr><td valign="top"><a href="#histogram_metric-4">histogram_metric/4</a></td><td></td></tr>
 <tr><td valign="top"><a href="#histogram_metrics-1">histogram_metrics/1</a></td><td>Equivalent to
   <a href="#histogram_metric-1"><code>lists:map(fun histogram_metric/1, Specs)</code></a>.</td></tr>
@@ -54,6 +59,10 @@
 <tr><td valign="top"><a href="#summary_metric-3">summary_metric/3</a></td><td></td></tr>
 <tr><td valign="top"><a href="#summary_metrics-1">summary_metrics/1</a></td><td>Equivalent to
   <a href="#summary_metric-1"><code>lists:map(fun summary_metric/1, Specs)</code></a>.</td></tr>
+<tr><td valign="top"><a href="#untyped_metric-1">untyped_metric/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#untyped_metric-2">untyped_metric/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#untyped_metrics-1">untyped_metrics/1</a></td><td>Equivalent to
+  <a href="#untyped_metric-1"><code>lists:map(fun untyped_metric/1, Values)</code></a>.</td></tr>
 </table>
 
 <h2><a name="functions">Function Details</a></h2>
@@ -82,6 +91,21 @@
 <ul class="definitions"><li><tt>Name = <a href="prometheus_metric.html#type-name">prometheus_metric:name()</a></tt></li><li><tt>Help = <a href="prometheus_metric.html#type-help">prometheus_metric:help()</a></tt></li><li><tt>Type = atom()</tt></li><li><tt>Collector = <a href="prometheus_collector.html#type-collector">prometheus_collector:collector()</a></tt></li><li><tt>CollectorData = <a href="prometheus_collector.html#type-data">prometheus_collector:data()</a></tt></li><li><tt>MetricFamily = <a href="prometheus_model.html#type-MetricFamily">prometheus_model:'MetricFamily'()</a></tt></li></ul></p>
 </div>
 
+<h3 class="function"><a name="ensure_binary_or_string-1">ensure_binary_or_string/1</a></h3>
+<div class="spec">
+<p><tt>ensure_binary_or_string(Val::term()) -&gt; binary() | string()</tt><br></p>
+</div>
+
+<h3 class="function"><a name="ensure_mf_type-1">ensure_mf_type/1</a></h3>
+<div class="spec">
+<p><tt>ensure_mf_type(Type::atom()) -&gt; atom()</tt><br></p>
+</div>
+
+<h3 class="function"><a name="filter_undefined_metrics-1">filter_undefined_metrics/1</a></h3>
+<div class="spec">
+<p><tt>filter_undefined_metrics(Metrics) -&gt; any()</tt></p>
+</div>
+
 <h3 class="function"><a name="gauge_metric-1">gauge_metric/1</a></h3>
 <div class="spec">
 <p><tt>gauge_metric(Value) -&gt; <a href="prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a></tt>
@@ -104,6 +128,12 @@
 <div class="spec">
 <p><tt>histogram_metric(X1) -&gt; any()</tt></p>
 </div>
+
+<h3 class="function"><a name="histogram_metric-3">histogram_metric/3</a></h3>
+<div class="spec">
+<p><tt>histogram_metric(Buckets, Count, Sum) -&gt; any()</tt></p>
+</div><p>Equivalent to <a href="#histogram_metric-4"><tt>histogram_metric([], Buckets, Count, Sum)</tt></a>.</p>
+
 
 <h3 class="function"><a name="histogram_metric-4">histogram_metric/4</a></h3>
 <div class="spec">
@@ -151,9 +181,27 @@
 <p><tt>summary_metrics(Specs) -&gt; any()</tt></p>
 </div><p>Equivalent to
   <a href="#summary_metric-1"><code>lists:map(fun summary_metric/1, Specs)</code></a>.</p>
+
+<h3 class="function"><a name="untyped_metric-1">untyped_metric/1</a></h3>
+<div class="spec">
+<p><tt>untyped_metric(Value) -&gt; <a href="prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a></tt>
+<ul class="definitions"><li><tt>Value = integer()</tt></li></ul></p>
+</div>
+
+<h3 class="function"><a name="untyped_metric-2">untyped_metric/2</a></h3>
+<div class="spec">
+<p><tt>untyped_metric(Labels, Value) -&gt; <a href="prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a></tt>
+<ul class="definitions"><li><tt>Labels = [<a href="#type-label">label()</a>]</tt></li><li><tt>Value = non_neg_integer()</tt></li></ul></p>
+</div>
+
+<h3 class="function"><a name="untyped_metrics-1">untyped_metrics/1</a></h3>
+<div class="spec">
+<p><tt>untyped_metrics(Values) -&gt; any()</tt></p>
+</div><p>Equivalent to
+  <a href="#untyped_metric-1"><code>lists:map(fun untyped_metric/1, Values)</code></a>.</p>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Aug 29 2016, 23:53:53.</i></p>
+<p><i>Generated by EDoc, Sep 13 2016, 20:35:12.</i></p>
 </body>
 </html>

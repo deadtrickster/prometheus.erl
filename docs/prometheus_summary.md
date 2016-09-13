@@ -1,40 +1,34 @@
 
 
 # Module prometheus_summary #
+* [Description](#description)
 * [Function Index](#index)
 * [Function Details](#functions)
 
+Summary metric, to track the size of events.
+
 __Behaviours:__ [`gen_server`](gen_server.md), [`prometheus_collector`](prometheus_collector.md), [`prometheus_metric`](prometheus_metric.md).
+
+<a name="description"></a>
+
+## Description ##
+Example use cases for Summaries:
+
+* Response latency
+
+* Request size
 
 <a name="index"></a>
 
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#code_change-3">code_change/3</a></td><td></td></tr><tr><td valign="top"><a href="#collect_metrics-2">collect_metrics/2</a></td><td></td></tr><tr><td valign="top"><a href="#collect_mf-2">collect_mf/2</a></td><td></td></tr><tr><td valign="top"><a href="#declare-1">declare/1</a></td><td></td></tr><tr><td valign="top"><a href="#declare-2">declare/2</a></td><td></td></tr><tr><td valign="top"><a href="#deregister_cleanup-1">deregister_cleanup/1</a></td><td></td></tr><tr><td valign="top"><a href="#dobserve-2">dobserve/2</a></td><td></td></tr><tr><td valign="top"><a href="#dobserve-3">dobserve/3</a></td><td></td></tr><tr><td valign="top"><a href="#dobserve-4">dobserve/4</a></td><td></td></tr><tr><td valign="top"><a href="#handle_call-3">handle_call/3</a></td><td></td></tr><tr><td valign="top"><a href="#handle_cast-2">handle_cast/2</a></td><td></td></tr><tr><td valign="top"><a href="#handle_info-2">handle_info/2</a></td><td></td></tr><tr><td valign="top"><a href="#init-1">init/1</a></td><td></td></tr><tr><td valign="top"><a href="#new-1">new/1</a></td><td></td></tr><tr><td valign="top"><a href="#new-2">new/2</a></td><td></td></tr><tr><td valign="top"><a href="#observe-2">observe/2</a></td><td></td></tr><tr><td valign="top"><a href="#observe-3">observe/3</a></td><td></td></tr><tr><td valign="top"><a href="#observe-4">observe/4</a></td><td></td></tr><tr><td valign="top"><a href="#observe_duration-2">observe_duration/2</a></td><td></td></tr><tr><td valign="top"><a href="#observe_duration-3">observe_duration/3</a></td><td></td></tr><tr><td valign="top"><a href="#observe_duration-4">observe_duration/4</a></td><td></td></tr><tr><td valign="top"><a href="#reset-1">reset/1</a></td><td>Equivalent to <a href="#reset-3"><tt>reset(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#reset-2">reset/2</a></td><td>Equivalent to <a href="#reset-3"><tt>reset(default, Name, LabelValues)</tt></a>.</td></tr><tr><td valign="top"><a href="#reset-3">reset/3</a></td><td></td></tr><tr><td valign="top"><a href="#start_link-0">start_link/0</a></td><td></td></tr><tr><td valign="top"><a href="#terminate-2">terminate/2</a></td><td></td></tr><tr><td valign="top"><a href="#value-1">value/1</a></td><td>Equivalent to <a href="#value-3"><tt>value(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#value-2">value/2</a></td><td>Equivalent to <a href="#value-3"><tt>value(default, Name, LabelValues)</tt></a>.</td></tr><tr><td valign="top"><a href="#value-3">value/3</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#declare-1">declare/1</a></td><td></td></tr><tr><td valign="top"><a href="#declare-2">declare/2</a></td><td>(<em>Deprecated</em>.) </td></tr><tr><td valign="top"><a href="#dobserve-2">dobserve/2</a></td><td>Equivalent to <a href="#dobserve-4"><tt>dobserve(default, Name, [], Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dobserve-3">dobserve/3</a></td><td>Equivalent to <a href="#dobserve-4"><tt>dobserve(default, Name, LabelValues, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dobserve-4">dobserve/4</a></td><td></td></tr><tr><td valign="top"><a href="#new-1">new/1</a></td><td></td></tr><tr><td valign="top"><a href="#new-2">new/2</a></td><td>(<em>Deprecated</em>.) </td></tr><tr><td valign="top"><a href="#observe-2">observe/2</a></td><td>Equivalent to <a href="#observe-4"><tt>observe(default, Name, [], Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#observe-3">observe/3</a></td><td>Equivalent to <a href="#observe-4"><tt>observe(default, Name, LabelValues, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#observe-4">observe/4</a></td><td></td></tr><tr><td valign="top"><a href="#observe_duration-2">observe_duration/2</a></td><td>Equivalent to <a href="#observe_duration-4"><tt>observe_duration(default, Name, [], Fun)</tt></a>.</td></tr><tr><td valign="top"><a href="#observe_duration-3">observe_duration/3</a></td><td>Equivalent to <a href="#observe_duration-4"><tt>observe_duration(default, Name, LabelValues, Fun)</tt></a>.</td></tr><tr><td valign="top"><a href="#observe_duration-4">observe_duration/4</a></td><td></td></tr><tr><td valign="top"><a href="#remove-1">remove/1</a></td><td>Equivalent to <a href="#remove-3"><tt>remove(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#remove-2">remove/2</a></td><td>Equivalent to <a href="#remove-3"><tt>remove(default, Name, LabelValues)</tt></a>.</td></tr><tr><td valign="top"><a href="#remove-3">remove/3</a></td><td></td></tr><tr><td valign="top"><a href="#reset-1">reset/1</a></td><td>Equivalent to <a href="#reset-3"><tt>reset(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#reset-2">reset/2</a></td><td>Equivalent to <a href="#reset-3"><tt>reset(default, Name, LabelValues)</tt></a>.</td></tr><tr><td valign="top"><a href="#reset-3">reset/3</a></td><td></td></tr><tr><td valign="top"><a href="#value-1">value/1</a></td><td>Equivalent to <a href="#value-3"><tt>value(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#value-2">value/2</a></td><td>Equivalent to <a href="#value-3"><tt>value(default, Name, LabelValues)</tt></a>.</td></tr><tr><td valign="top"><a href="#value-3">value/3</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
 
 ## Function Details ##
-
-<a name="code_change-3"></a>
-
-### code_change/3 ###
-
-`code_change(OldVsn, State, Extra) -> any()`
-
-<a name="collect_metrics-2"></a>
-
-### collect_metrics/2 ###
-
-`collect_metrics(Name, X2) -> any()`
-
-<a name="collect_mf-2"></a>
-
-### collect_mf/2 ###
-
-`collect_mf(Callback, Registry) -> any()`
 
 <a name="declare-1"></a>
 
@@ -48,11 +42,8 @@ __Behaviours:__ [`gen_server`](gen_server.md), [`prometheus_collector`](promethe
 
 `declare(Spec, Registry) -> any()`
 
-<a name="deregister_cleanup-1"></a>
-
-### deregister_cleanup/1 ###
-
-`deregister_cleanup(Registry) -> any()`
+__This function is deprecated:__ Please use [`declare/1`](#declare-1) with registry
+key instead.
 
 <a name="dobserve-2"></a>
 
@@ -60,41 +51,21 @@ __Behaviours:__ [`gen_server`](gen_server.md), [`prometheus_collector`](promethe
 
 `dobserve(Name, Value) -> any()`
 
+Equivalent to [`dobserve(default, Name, [], Value)`](#dobserve-4).
+
 <a name="dobserve-3"></a>
 
 ### dobserve/3 ###
 
 `dobserve(Name, LabelValues, Value) -> any()`
 
+Equivalent to [`dobserve(default, Name, LabelValues, Value)`](#dobserve-4).
+
 <a name="dobserve-4"></a>
 
 ### dobserve/4 ###
 
 `dobserve(Registry, Name, LabelValues, Value) -> any()`
-
-<a name="handle_call-3"></a>
-
-### handle_call/3 ###
-
-`handle_call(Call, From, State) -> any()`
-
-<a name="handle_cast-2"></a>
-
-### handle_cast/2 ###
-
-`handle_cast(X1, State) -> any()`
-
-<a name="handle_info-2"></a>
-
-### handle_info/2 ###
-
-`handle_info(Info, State) -> any()`
-
-<a name="init-1"></a>
-
-### init/1 ###
-
-`init(Args) -> any()`
 
 <a name="new-1"></a>
 
@@ -108,17 +79,24 @@ __Behaviours:__ [`gen_server`](gen_server.md), [`prometheus_collector`](promethe
 
 `new(Spec, Registry) -> any()`
 
+__This function is deprecated:__ Please use [`new/1`](#new-1) with registry
+key instead.
+
 <a name="observe-2"></a>
 
 ### observe/2 ###
 
 `observe(Name, Value) -> any()`
 
+Equivalent to [`observe(default, Name, [], Value)`](#observe-4).
+
 <a name="observe-3"></a>
 
 ### observe/3 ###
 
 `observe(Name, LabelValues, Value) -> any()`
+
+Equivalent to [`observe(default, Name, LabelValues, Value)`](#observe-4).
 
 <a name="observe-4"></a>
 
@@ -132,17 +110,43 @@ __Behaviours:__ [`gen_server`](gen_server.md), [`prometheus_collector`](promethe
 
 `observe_duration(Name, Fun) -> any()`
 
+Equivalent to [`observe_duration(default, Name, [], Fun)`](#observe_duration-4).
+
 <a name="observe_duration-3"></a>
 
 ### observe_duration/3 ###
 
 `observe_duration(Name, LabelValues, Fun) -> any()`
 
+Equivalent to [`observe_duration(default, Name, LabelValues, Fun)`](#observe_duration-4).
+
 <a name="observe_duration-4"></a>
 
 ### observe_duration/4 ###
 
-`observe_duration(Name, Registry, LabelValues, Fun) -> any()`
+`observe_duration(Registry, Name, LabelValues, Fun) -> any()`
+
+<a name="remove-1"></a>
+
+### remove/1 ###
+
+`remove(Name) -> any()`
+
+Equivalent to [`remove(default, Name, [])`](#remove-3).
+
+<a name="remove-2"></a>
+
+### remove/2 ###
+
+`remove(Name, LabelValues) -> any()`
+
+Equivalent to [`remove(default, Name, LabelValues)`](#remove-3).
+
+<a name="remove-3"></a>
+
+### remove/3 ###
+
+`remove(Registry, Name, LabelValues) -> any()`
 
 <a name="reset-1"></a>
 
@@ -165,18 +169,6 @@ Equivalent to [`reset(default, Name, LabelValues)`](#reset-3).
 ### reset/3 ###
 
 `reset(Registry, Name, LabelValues) -> any()`
-
-<a name="start_link-0"></a>
-
-### start_link/0 ###
-
-`start_link() -> any()`
-
-<a name="terminate-2"></a>
-
-### terminate/2 ###
-
-`terminate(Reason, State) -> any()`
 
 <a name="value-1"></a>
 

@@ -38,10 +38,18 @@ A registry of Collectors.</p>
 </td></tr>
 <tr><td valign="top"><a href="#clear-1">clear/1</a></td><td></td></tr>
 <tr><td valign="top"><a href="#collect-2">collect/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#collector_registeredp-1">collector_registeredp/1</a></td><td>Equivalent to <a href="#collector_registeredp-2"><tt>collector_registeredp(default, Collector)</tt></a>.
+</td></tr>
 <tr><td valign="top"><a href="#collector_registeredp-2">collector_registeredp/2</a></td><td></td></tr>
 <tr><td valign="top"><a href="#collectors-1">collectors/1</a></td><td></td></tr>
+<tr><td valign="top"><a href="#deregister_collector-1">deregister_collector/1</a></td><td>Equivalent to <a href="#deregister_collector-2"><tt>deregister_collector(default, Collector)</tt></a>.
+</td></tr>
 <tr><td valign="top"><a href="#deregister_collector-2">deregister_collector/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#register_collector-1">register_collector/1</a></td><td>Equivalent to <a href="#register_collector-2"><tt>register_collector(default, Collector)</tt></a>.
+</td></tr>
 <tr><td valign="top"><a href="#register_collector-2">register_collector/2</a></td><td></td></tr>
+<tr><td valign="top"><a href="#register_collectors-1">register_collectors/1</a></td><td>Equivalent to <a href="#register_collectors-2"><tt>register_collectors(default, Collectors)</tt></a>.
+</td></tr>
 <tr><td valign="top"><a href="#register_collectors-2">register_collectors/2</a></td><td></td></tr>
 </table>
 
@@ -64,6 +72,13 @@ A registry of Collectors.</p>
 <ul class="definitions"><li><tt>Registry = <a href="prometheus_registry.html#type-registry">prometheus_registry:registry()</a></tt></li><li><tt>Callback = <a href="#type-collect_callback">collect_callback()</a></tt></li></ul></p>
 </div>
 
+<h3 class="function"><a name="collector_registeredp-1">collector_registeredp/1</a></h3>
+<div class="spec">
+<p><tt>collector_registeredp(Collector) -&gt; boolean()</tt>
+<ul class="definitions"><li><tt>Collector = <a href="prometheus_collector.html#type-collector">prometheus_collector:collector()</a></tt></li></ul></p>
+</div><p>Equivalent to <a href="#collector_registeredp-2"><tt>collector_registeredp(default, Collector)</tt></a>.</p>
+
+
 <h3 class="function"><a name="collector_registeredp-2">collector_registeredp/2</a></h3>
 <div class="spec">
 <p><tt>collector_registeredp(Registry, Collector) -&gt; boolean()</tt>
@@ -75,15 +90,33 @@ A registry of Collectors.</p>
 <p><tt>collectors(Registry::<a href="prometheus_registry.html#type-registry">prometheus_registry:registry()</a>) -&gt; [Collector::<a href="prometheus_collector.html#type-collector">prometheus_collector:collector()</a>]</tt><br></p>
 </div>
 
+<h3 class="function"><a name="deregister_collector-1">deregister_collector/1</a></h3>
+<div class="spec">
+<p><tt>deregister_collector(Collector::<a href="prometheus_collector.html#type-collector">prometheus_collector:collector()</a>) -&gt; ok</tt><br></p>
+</div><p>Equivalent to <a href="#deregister_collector-2"><tt>deregister_collector(default, Collector)</tt></a>.</p>
+
+
 <h3 class="function"><a name="deregister_collector-2">deregister_collector/2</a></h3>
 <div class="spec">
 <p><tt>deregister_collector(Registry::<a href="prometheus_registry.html#type-registry">prometheus_registry:registry()</a>, Collector::<a href="prometheus_collector.html#type-collector">prometheus_collector:collector()</a>) -&gt; ok</tt><br></p>
 </div>
 
+<h3 class="function"><a name="register_collector-1">register_collector/1</a></h3>
+<div class="spec">
+<p><tt>register_collector(Collector::<a href="prometheus_collector.html#type-collector">prometheus_collector:collector()</a>) -&gt; ok</tt><br></p>
+</div><p>Equivalent to <a href="#register_collector-2"><tt>register_collector(default, Collector)</tt></a>.</p>
+
+
 <h3 class="function"><a name="register_collector-2">register_collector/2</a></h3>
 <div class="spec">
 <p><tt>register_collector(Registry::<a href="prometheus_registry.html#type-registry">prometheus_registry:registry()</a>, Collector::<a href="prometheus_collector.html#type-collector">prometheus_collector:collector()</a>) -&gt; ok</tt><br></p>
 </div>
+
+<h3 class="function"><a name="register_collectors-1">register_collectors/1</a></h3>
+<div class="spec">
+<p><tt>register_collectors(Collectors::[<a href="prometheus_collector.html#type-collector">prometheus_collector:collector()</a>]) -&gt; ok</tt><br></p>
+</div><p>Equivalent to <a href="#register_collectors-2"><tt>register_collectors(default, Collectors)</tt></a>.</p>
+
 
 <h3 class="function"><a name="register_collectors-2">register_collectors/2</a></h3>
 <div class="spec">
@@ -92,6 +125,6 @@ A registry of Collectors.</p>
 <hr>
 
 <div class="navbar"><a name="#navbar_bottom"></a><table width="100%" border="0" cellspacing="0" cellpadding="2" summary="navigation bar"><tr><td><a href="overview-summary.html" target="overviewFrame">Overview</a></td><td><a href="http://www.erlang.org/"><img src="erlang.png" align="right" border="0" alt="erlang logo"></a></td></tr></table></div>
-<p><i>Generated by EDoc, Aug 29 2016, 23:53:54.</i></p>
+<p><i>Generated by EDoc, Sep 13 2016, 20:35:12.</i></p>
 </body>
 </html>

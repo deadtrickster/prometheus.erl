@@ -49,7 +49,7 @@
 enabled_collectors() ->
   case application:get_env(prometheus, default_collectors) of
     undefined -> all_known_collectors();
-    Collectors -> Collectors
+    {ok, Collectors} -> Collectors
   end.
 
 %% @equiv register(Collector, default)

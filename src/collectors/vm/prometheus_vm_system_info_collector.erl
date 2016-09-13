@@ -178,7 +178,7 @@ call_if_system_info_exists(SysInfoItem, Fun) ->
   end.
 
 enabled_system_info_metrics() ->
-  application:get_env(prometheus, vm_statistics_collector_metrics,
+  application:get_env(prometheus, vm_system_info_collector_metrics,
                       ?PROMETHEUS_VM_SYSTEM_INFO).
 
 %% create_counter(Name, Help, Data) ->

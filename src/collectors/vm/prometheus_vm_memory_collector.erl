@@ -1,3 +1,64 @@
+%% @doc
+%% Collects information about memory dynamically allocated
+%% by the Erlang emulator usin
+%% <a href="http://erlang.org/doc/man/erlang.html#statistics-1">
+%%   erlang:memory/0
+%% </a>. Also provides basic (D)ETS statistics.
+%%
+%% ==Exported metrics==
+%% <ul>
+%%   <li>
+%%     <pre>erlang_vm_memory_bytes_total</pre>
+%%     Labels:
+%%     <ul style="list-style:circle">
+%%       <li>kind="system"|"processes".</li>
+%%     </ul>
+%%     <br/>
+%%     The total amount of memory currently allocated.
+%%     This is the same as the sum of the memory size for processes and system.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_memory_processes_bytes_total</pre>
+%%     Labels:
+%%     <ul style="list-style:circle">
+%%       <li>usage="used"|"free".</li>
+%%     </ul>
+%%     <br/>
+%%     The total amount of memory currently allocated for the Erlang processes.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_memory_system_bytes_total</pre>
+%%     Labels:
+%%     <ul style="list-style:circle">
+%%       <li>usage="atom"|"binary"|"code"|"ets"|"other".</li>
+%%     </ul>
+%%     <br/>
+%%     The total amount of memory currently allocated for the emulator
+%%     that is not directly related to any Erlang process.
+%%     Memory presented as processes is not included in this memory.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_memory_atom_bytes_total</pre>
+%%     Labels:
+%%     <ul style="list-style:circle">
+%%       <li>usage="free"|"used".</li>
+%%     </ul>
+%%     <br/>
+%%     The total amount of memory currently allocated for atoms.
+%%     This memory is part of the memory presented as system memory.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_ets_tables</pre>
+%%     Erlang VM ETS Tables count.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_dets_tables</pre>
+%%     Erlang VM DETS Tables count.
+%%   </li>
+%% </ul>
+%%
+%% @end
+
 -module(prometheus_vm_memory_collector).
 
 -export([deregister_cleanup/1,

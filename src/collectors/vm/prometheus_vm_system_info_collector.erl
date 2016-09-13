@@ -1,3 +1,129 @@
+%% @doc
+%% Collects Erlang VM metrics using
+%% <a href="http://erlang.org/doc/man/erlang.html#system_info-1">
+%%   erlang:system_info/1
+%% </a>.
+%%
+%% ==Exported metrics==
+%% <ul>
+%%   <li>
+%%     <pre>erlang_vm_ets_limit</pre>
+%%     The maximum number of ETS tables allowed.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_logical_processors</pre>
+%%     The detected number of logical processors configured in the system.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_logical_processors_available</pre>
+%%     The detected number of logical processors
+%%     available to the Erlang runtime system.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_logical_processors_online</pre>
+%%     The detected number of logical processors online on the system.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_port_count</pre>
+%%     The number of ports currently existing at the local node.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_port_limit</pre>
+%%     The maximum number of simultaneously existing ports at the local node.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_process_count</pre>
+%%     The number of processes currently existing at the local node.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_process_limit</pre>
+%%     The maximum number of simultaneously existing processes
+%%     at the local node.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_schedulers</pre>
+%%     The number of scheduler threads used by the emulator.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_schedulers_online</pre>
+%%     The number of schedulers online.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_smp_support</pre>
+%%     1 if the emulator has been compiled with SMP support, otherwise 0.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_threads</pre>
+%%     1 if the emulator has been compiled with thread support, otherwise 0.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_thread_pool_size</pre>
+%%     The number of async threads in the async thread pool
+%%     used for asynchronous driver calls.
+%%   </li>
+%%   <li>
+%%     <pre>erlang_vm_time_correction</pre>
+%%     1 if time correction is enabled, otherwise 0.
+%%   </li>
+%% </ul>
+%%
+%% ==Configuration==
+%%
+%% Metrics exported by this collector can be configured via
+%% `vm_system_info_collector_metrics' of `prometheus' app environment key.
+%%
+%% Options are the same as Item parameter values for
+%% <a href="http://erlang.org/doc/man/erlang.html#system_info-1">
+%%   erlang:system_info/1
+%% </a>:
+%% <ul>
+%%   <li>
+%%     `ets_limit' for `erlang_vm_ets_limit'.
+%%   </li>
+%%   <li>
+%%     `logical_processors' for `erlang_vm_logical_processors'.
+%%   </li>
+%%   <li>
+%%     `logical_processors_available' for
+%%     `erlang_vm_logical_processors_available'.
+%%   </li>
+%%   <li>
+%%     `logical_processors_online' for `erlang_vm_logical_processors_online'.
+%%   </li>
+%%   <li>
+%%     `port_count' for `erlang_vm_port_count'.
+%%   </li>
+%%   <li>
+%%     `port_limit' for `erlang_vm_port_limit'.
+%%   </li>
+%%   <li>
+%%     `process_count' for `erlang_vm_process_count'.
+%%   </li>
+%%   <li>
+%%     `process_limit' for `erlang_vm_process_limit'.
+%%   </li>
+%%   <li>
+%%     `schedulers' for `erlang_vm_schedulers'.
+%%   </li>
+%%   <li>
+%%     `schedulers_online' for `erlang_vm_schedulers_online'.
+%%   </li>
+%%   <li>
+%%     `smp_support' for `erlang_vm_smp_support'.
+%%   </li>
+%%   <li>
+%%     `threads' for `erlang_threads'.
+%%   </li>
+%%   <li>
+%%     `thread_pool_size' for `erlang_vm_thread_pool_size'.
+%%   </li>
+%%   <li>
+%%     `time_correction' for `erlang_vm_time_correction'.
+%%   </li>
+%% </ul>
+%%
+%% By default all metrics are enabled.
+%% @end
 -module(prometheus_vm_system_info_collector).
 
 -export([deregister_cleanup/1,
@@ -70,71 +196,72 @@ collect_mf(_Registry, Callback) ->
 
 add_metric_family(ets_limit, Value, Callback) ->
   Callback(create_gauge(?ETS_LIMIT,
-                        "The maximum number of ETS tables allowed",
+                        "The maximum number of ETS tables allowed.",
                         Value));
 add_metric_family(logical_processors, Value, Callback) ->
   Callback(create_gauge(?LOGICAL_PROCESSORS,
                         "The detected number of logical processors "
-                        "configured in the system",
+                        "configured in the system.",
                         Value));
 add_metric_family(logical_processors_available, Value, Callback) ->
   Callback(create_gauge(?LOGICAL_PROCESSORS_AVAILABLE,
                         "The detected number of logical processors "
-                        "available to the Erlang runtime system",
+                        "available to the Erlang runtime system.",
                         Value));
 add_metric_family(logical_processors_online, Value, Callback) ->
   Callback(create_gauge(?LOGICAL_PROCESSORS_ONLINE,
                         "The detected number of logical processors "
-                        "online on the system",
+                        "online on the system.",
                         Value));
 add_metric_family(port_count, Value, Callback) ->
   Callback(create_gauge(?PORT_COUNT,
                         "The number of ports currently existing "
-                        "at the local node",
+                        "at the local node.",
                         Value));
 add_metric_family(port_limit, Value, Callback) ->
   Callback(create_gauge(?PORT_LIMIT,
                         "The maximum number of simultaneously existing ports "
-                        "at the local node",
+                        "at the local node.",
                         Value));
 add_metric_family(process_count, Value, Callback) ->
   Callback(create_gauge(?PROCESS_COUNT,
                         "The number of processes currently existing "
-                        "at the local node",
+                        "at the local node.",
                         Value));
 add_metric_family(process_limit, Value, Callback) ->
   Callback(create_gauge(?PROCESS_LIMIT,
                         "The maximum number of simultaneously existing "
-                        "processes at the local node",
+                        "processes at the local node.",
                         Value));
 add_metric_family(schedulers, Value, Callback) ->
   Callback(create_gauge(?SCHEDULERS,
-                        "The number of scheduler threads used by the emulator",
+                        "The number of scheduler threads used by the emulator.",
                         Value));
 add_metric_family(schedulers_online, Value, Callback) ->
   Callback(create_gauge(?SCHEDULERS_ONLINE,
-                        "The number of schedulers online",
+                        "The number of schedulers online.",
                         Value));
 add_metric_family(smp_support, Value, Callback) ->
   Callback(create_boolean(?SMP_SUPPORT,
                           "1 if the emulator has been compiled with SMP "
-                          "support, otherwise 0",
+                          "support, otherwise 0.",
                           Value));
 add_metric_family(threads, Value, Callback) ->
   Callback(create_boolean(?THREADS,
                           "1 if the emulator has been compiled with thread "
-                          "support, otherwise 0",
+                          "support, otherwise 0.",
                           Value));
 add_metric_family(thread_pool_size, Value, Callback) ->
   Callback(create_gauge(?THREAD_POOL_SIZE,
-                        "the number of async threads in the async thread pool "
-                        "used for asynchronous driver calls",
+                        "The number of async threads in the async thread pool "
+                        "used for asynchronous driver calls.",
                         Value));
 add_metric_family(time_correction, Value, Callback) ->
   Callback(create_boolean(?TIME_CORRECTION,
-                          "1 if time correction is enabled, otherwise 0",
+                          "1 if time correction is enabled, otherwise 0.",
                           Value)).
 
+%% @private
 collect_metrics(?ETS_LIMIT, Value) ->
   gauge_metric(Value);
 collect_metrics(?LOGICAL_PROCESSORS, Value) ->

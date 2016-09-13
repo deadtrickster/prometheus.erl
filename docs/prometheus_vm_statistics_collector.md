@@ -88,7 +88,7 @@ measured as opposed to runtime or CPU time.
 
 ### <a name="Configuration">Configuration</a> ###
 
-Metrics exported my this collector can be configured via
+Metrics exported by this collector can be configured via
 `vm_statistics_collector_metrics` of `prometheus` app environment key.
 
 Options are the same as Item parameter values for
@@ -96,7 +96,7 @@ Options are the same as Item parameter values for
 erlang:statistics/1
 ](http://erlang.org/doc/man/erlang.md#statistics-1):
 
-* `context_switches` for `context_switches`.
+* `context_switches` for `erlang_vm_statistics_context_switches`.
 
 * `garbage_collection`
 for `erlang_vm_statistics_garbage_collection_number_of_gcs` and

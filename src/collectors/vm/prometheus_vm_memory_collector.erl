@@ -60,7 +60,7 @@
 %% ==Configuration==
 %%
 %% Metrics exported by this collector can be configured via
-%% `vm_memory_collector_metrics' of `prometheus' app environment key.
+%% `vm_memory_collector_metrics' key of `prometheus' app environment.
 %%
 %% Available options:
 %% <ul>

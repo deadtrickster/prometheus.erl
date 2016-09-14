@@ -298,8 +298,10 @@ collect_metrics(?TIME_CORRECTION, Value) ->
 
 call_if_system_info_exists(SysInfoItem, Fun) ->
   try
-    Value = erlang:system_info(SysInfoItem),
-    Fun(Value)
+    case erlang:system_info(SysInfoItem) of
+      unknown -> Fun(undefined);
+      Value -> Fun(Value)
+    end
   catch
     error:badarg -> undefined
   end.

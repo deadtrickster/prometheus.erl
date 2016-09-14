@@ -1,6 +1,8 @@
 %% @doc
 %%
-%% Serializes Prometheus registry using the latest text format.
+%% Serializes Prometheus registry using the latest
+%% [text format](http://bit.ly/2cxSuJP).
+%%
 %% Example output:
 %% <pre>
 %%   # TYPE http_request_duration_milliseconds histogram
@@ -47,7 +49,7 @@
 
 -spec content_type() -> binary().
 %% @doc
-%% Content type of the latest text format.
+%% Returns content type of the latest [text format](http://bit.ly/2cxSuJP).
 %% @end
 content_type() ->
   <<"text/plain; version=0.0.4">>.
@@ -55,14 +57,14 @@ content_type() ->
 %% @equiv format(default)
 -spec format() -> binary().
 %% @doc
-%% Format `default' registry using the latest text format.
+%% Formats `default' registry using the latest text format.
 %% @end
 format() ->
   format(default).
 
 -spec format(Registry :: prometheus_registry:registry()) -> binary().
 %% @doc
-%% Format `registry' using the latest text format.
+%% Formats `Registry' using the latest text format.
 %% @end
 format(Registry) ->
   {ok, Fd} = ram_file:open("", [write, read, binary]),
@@ -87,12 +89,14 @@ registry_collect_callback(Fd, Registry, Collector) ->
              end,
   prometheus_collector:collect_mf(Registry, Collector, Callback).
 
+%% @private
 emit_mf_prologue(Fd, #'MetricFamily'{name=Name, help=Help, type=Type}) ->
   Bytes = io_lib:format("# TYPE ~s ~s\n# HELP ~s ~s\n",
                         [Name, string_type(Type),
                          Name, escape_metric_help(Help)]),
   file:write(Fd, Bytes).
 
+%% @private
 emit_mf_metrics(Fd, #'MetricFamily'{name=Name, metric = Metrics}) ->
   [emit_metric(Fd, Name, Metric) || Metric <- Metrics].
 

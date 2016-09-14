@@ -47,7 +47,10 @@ registry() = atom()
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#clear-0">clear/0</a></td><td>Equivalent to <a href="#clear-1"><tt>clear(default)</tt></a>.</td></tr><tr><td valign="top"><a href="#clear-1">clear/1</a></td><td></td></tr><tr><td valign="top"><a href="#collect-2">collect/2</a></td><td></td></tr><tr><td valign="top"><a href="#collector_registeredp-1">collector_registeredp/1</a></td><td>Equivalent to <a href="#collector_registeredp-2"><tt>collector_registeredp(default, Collector)</tt></a>.</td></tr><tr><td valign="top"><a href="#collector_registeredp-2">collector_registeredp/2</a></td><td></td></tr><tr><td valign="top"><a href="#collectors-1">collectors/1</a></td><td></td></tr><tr><td valign="top"><a href="#deregister_collector-1">deregister_collector/1</a></td><td>Equivalent to <a href="#deregister_collector-2"><tt>deregister_collector(default, Collector)</tt></a>.</td></tr><tr><td valign="top"><a href="#deregister_collector-2">deregister_collector/2</a></td><td></td></tr><tr><td valign="top"><a href="#register_collector-1">register_collector/1</a></td><td>Equivalent to <a href="#register_collector-2"><tt>register_collector(default, Collector)</tt></a>.</td></tr><tr><td valign="top"><a href="#register_collector-2">register_collector/2</a></td><td></td></tr><tr><td valign="top"><a href="#register_collectors-1">register_collectors/1</a></td><td>Equivalent to <a href="#register_collectors-2"><tt>register_collectors(default, Collectors)</tt></a>.</td></tr><tr><td valign="top"><a href="#register_collectors-2">register_collectors/2</a></td><td></td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#clear-0">clear/0</a></td><td>Equivalent to <a href="#clear-1"><tt>clear(default)</tt></a>.</td></tr><tr><td valign="top"><a href="#clear-1">clear/1</a></td><td>Unregisters all collectors.</td></tr><tr><td valign="top"><a href="#collect-2">collect/2</a></td><td>
+Calls <code>Callback</code> for each collector with two arguments:
+<code>Registry</code> and <code>Collector</code>.</td></tr><tr><td valign="top"><a href="#collector_registeredp-1">collector_registeredp/1</a></td><td>Equivalent to <a href="#collector_registeredp-2"><tt>collector_registeredp(default, Collector)</tt></a>.</td></tr><tr><td valign="top"><a href="#collector_registeredp-2">collector_registeredp/2</a></td><td>Checks whether <code>Collector</code> is registered.</td></tr><tr><td valign="top"><a href="#collectors-1">collectors/1</a></td><td>
+Returns collectors registered in <code>Registry</code>.</td></tr><tr><td valign="top"><a href="#deregister_collector-1">deregister_collector/1</a></td><td>Equivalent to <a href="#deregister_collector-2"><tt>deregister_collector(default, Collector)</tt></a>.</td></tr><tr><td valign="top"><a href="#deregister_collector-2">deregister_collector/2</a></td><td>Unregisters a collector.</td></tr><tr><td valign="top"><a href="#register_collector-1">register_collector/1</a></td><td>Equivalent to <a href="#register_collector-2"><tt>register_collector(default, Collector)</tt></a>.</td></tr><tr><td valign="top"><a href="#register_collector-2">register_collector/2</a></td><td>Register a collector.</td></tr><tr><td valign="top"><a href="#register_collectors-1">register_collectors/1</a></td><td>Equivalent to <a href="#register_collectors-2"><tt>register_collectors(default, Collectors)</tt></a>.</td></tr><tr><td valign="top"><a href="#register_collectors-2">register_collectors/2</a></td><td>Registers collectors list.</td></tr></table>
 
 
 <a name="functions"></a>
@@ -74,6 +77,8 @@ clear(Registry::<a href="prometheus_registry.md#type-registry">prometheus_regist
 </code></pre>
 <br />
 
+Unregisters all collectors.
+
 <a name="collect-2"></a>
 
 ### collect/2 ###
@@ -83,6 +88,9 @@ collect(Registry, Callback) -&gt; ok
 </code></pre>
 
 <ul class="definitions"><li><code>Registry = <a href="prometheus_registry.md#type-registry">prometheus_registry:registry()</a></code></li><li><code>Callback = <a href="#type-collect_callback">collect_callback()</a></code></li></ul>
+
+Calls `Callback` for each collector with two arguments:
+`Registry` and `Collector`.
 
 <a name="collector_registeredp-1"></a>
 
@@ -106,6 +114,8 @@ collector_registeredp(Registry, Collector) -&gt; boolean()
 
 <ul class="definitions"><li><code>Registry = <a href="prometheus_registry.md#type-registry">prometheus_registry:registry()</a></code></li><li><code>Collector = <a href="prometheus_collector.md#type-collector">prometheus_collector:collector()</a></code></li></ul>
 
+Checks whether `Collector` is registered.
+
 <a name="collectors-1"></a>
 
 ### collectors/1 ###
@@ -114,6 +124,8 @@ collector_registeredp(Registry, Collector) -&gt; boolean()
 collectors(Registry::<a href="prometheus_registry.md#type-registry">prometheus_registry:registry()</a>) -&gt; [Collector::<a href="prometheus_collector.md#type-collector">prometheus_collector:collector()</a>]
 </code></pre>
 <br />
+
+Returns collectors registered in `Registry`.
 
 <a name="deregister_collector-1"></a>
 
@@ -135,6 +147,8 @@ deregister_collector(Registry::<a href="prometheus_registry.md#type-registry">pr
 </code></pre>
 <br />
 
+Unregisters a collector.
+
 <a name="register_collector-1"></a>
 
 ### register_collector/1 ###
@@ -155,6 +169,8 @@ register_collector(Registry::<a href="prometheus_registry.md#type-registry">prom
 </code></pre>
 <br />
 
+Register a collector.
+
 <a name="register_collectors-1"></a>
 
 ### register_collectors/1 ###
@@ -174,4 +190,6 @@ Equivalent to [`register_collectors(default, Collectors)`](#register_collectors-
 register_collectors(Registry::<a href="prometheus_registry.md#type-registry">prometheus_registry:registry()</a>, Collectors::[<a href="prometheus_collector.md#type-collector">prometheus_collector:collector()</a>]) -&gt; ok
 </code></pre>
 <br />
+
+Registers collectors list.
 

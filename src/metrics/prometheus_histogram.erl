@@ -7,6 +7,29 @@
 %%   <li>Response latency</li>
 %%   <li>Request size</li>
 %% </ul>
+%%
+%% Histogram expects `buckets` key in a metric spec. Buckets can be:
+%%   - a list of numbers in increasing order;
+%%  one of the generate specs (shortcuts for `prometheus_buckets' functions)
+%%   - :default;
+%%   - {:linear, start, step, count};
+%%   - {:exponential, start, step, count}
+%%
+%% Example:
+%% <pre lang="erlang">
+%% -module(example_instrumenter).
+%% setup() ->
+%%   prometheus_histogram:declare([{name, http_request_duration_milliseconds},
+%%                                 {labels, [method]},
+%%                                 {buckets, [100, 300, 500, 750, 1000]},
+%%                                 {help, "Http Request execution time."}]).
+%%
+%% instrument(Time, Method) ->
+%%   %% Time must be in native units, otherwise duration_unit must be false
+%%   prometheus_histogram:observe(http_request_duration_milliseconds,
+%%                                [Method], Time).
+%%
+%% </pre>
 %% @end
 
 -module(prometheus_histogram).
@@ -36,10 +59,7 @@
          value/3,
          buckets/1,
          buckets/2,
-         buckets/3,
-         default_buckets/0,
-         linear_buckets/3,
-         exponential_buckets/3]
+         buckets/3]
        ).
 
 %%% collector
@@ -56,13 +76,19 @@
          code_change/3,
          start_link/0]).
 
+-ifdef(TEST).
+-export([default_buckets/0,
+         linear_buckets/3,
+         exponential_buckets/3]).
+-endif.
+
 -import(prometheus_model_helpers, [create_mf/5,
                                    gauge_metrics/1,
                                    gauge_metric/1,
                                    gauge_metric/2,
                                    counter_metric/1,
                                    counter_metric/2,
-                                   summary_metric/3,
+                                   histogram_metric/3,
                                    histogram_metric/4]).
 
 -include("prometheus.hrl").
@@ -82,6 +108,30 @@
 %% Metric API
 %%====================================================================
 
+%% @doc Creates a histogram using `Spec'.
+%%
+%% Raises `{missing_metric_spec_key, Key, Spec}' error if required `Soec' key
+%% is missing.<br/>
+%% Raises `{invalid_metric_name, Name, Message}' error if metric `Name'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_help, Help, Message}' error if metric `Help'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_labels, Labels, Message}' error if `Labels'
+%% isn't a list.<br/>
+%% Raises `{invalid_label_name, Name, Message}' error if `Name' isn't a valid
+%% label name.<br/>
+%% Raises `{invalid_value_error, Value, Message}' error if `duration_unit' is
+%% unknown or doesn't match metric name.<br/>
+%% Raises `{mf_already_exists, {Registry, Name}, Message}' error if a histogram
+%% with the same `Spec' already exists.
+%%
+%% Histogram-specific errors:<br/>
+%% Raises `{histogram_no_buckets, Buckets}' error if `Buckets' are missing,
+%% not a list, empty list or not known buckets spec.<br/>
+%% Raises `{histogram_invalid_buckets, Buckets, Message}' error if `Buckets'
+%% aren't in increasing order.<br/>
+%% Raises `{histogram_invalid_bound, Bound}' error if `Bound' isn't a number.
+%% @end
 new(Spec) ->
   Spec1 = validate_histogram_spec(Spec),
   prometheus_metric:insert_new_mf(?TABLE, ?MODULE, Spec1).
@@ -93,6 +143,29 @@ new(Spec, Registry) ->
               " with registry key"),
   new([{registry, Registry} | Spec]).
 
+%% @doc Creates a histogram using `Spec'.
+%% If a histogram with the same `Spec' exists returns `false'.
+%%
+%% Raises `{missing_metric_spec_key, Key, Spec}' error if required `Soec' key
+%% is missing.<br/>
+%% Raises `{invalid_metric_name, Name, Message}' error if metric `Name'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_help, Help, Message}' error if metric `Help'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_labels, Labels, Message}' error if `Labels'
+%% isn't a list.<br/>
+%% Raises `{invalid_label_name, Name, Message}' error if `Name' isn't a valid
+%% label name.<br/>
+%% Raises `{invalid_value_error, Value, MessagE}' error if `duration_unit' is
+%% unknown or doesn't match metric name.<br/>
+%%
+%% Histogram-specific errors:<br/>
+%% Raises `{histogram_no_buckets, Buckets}' error if `Buckets' are missing,
+%% not a list, empty list or not known buckets spec.<br/>
+%% Raises `{histogram_invalid_buckets, Buckets, Message}' error if `Buckets'
+%% aren't in increasing order.<br/>
+%% Raises `{histogram_invalid_bound, Bound}' error if `Bound' isn't a number.
+%% @end
 declare(Spec) ->
   Spec1 = validate_histogram_spec(Spec),
   prometheus_metric:insert_mf(?TABLE, ?MODULE, Spec1).
@@ -112,6 +185,15 @@ observe(Name, Value) ->
 observe(Name, LabelValues, Value) ->
   observe(default, Name, LabelValues, Value).
 
+%% @doc Observes the given `Value'.
+%%
+%% Raises `{invalid_value, Value, Message}' if `Value'
+%% isn't an integer.<br/>
+%% Raises `{unknown_metric, Registry, Name}' error if histogram with named
+%% `Name' can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
     [Metric] ->
@@ -134,6 +216,17 @@ dobserve(Name, Value) ->
 dobserve(Name, LabelValues, Value) ->
   dobserve(default, Name, LabelValues, Value).
 
+%% @doc Observes the given `Value'.
+%% If `Value' happened to be a float number even one time(!) you
+%% shouldn't use {@link observe/4} after dobserve.
+%%
+%% Raises `{invalid_value, Value, Message}' if `Value'
+%% isn't a number.<br/>
+%% Raises `{unknown_metric, Registry, Name}' error if histogram with named
+%% `Name' can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 dobserve(Registry, Name, LabelValues, Value) when is_number(Value) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   CallTimeout = prometheus_metric:mf_call_timeout(MF),
@@ -158,6 +251,15 @@ observe_duration(Name, Fun) ->
 observe_duration(Name, LabelValues, Fun) ->
   observe_duration(default, Name, LabelValues, Fun).
 
+%% @doc Tracks the amount of time spent executing `Fun'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if histogram with named
+%% `Name' can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% Raises `{invalid_value, Value, Message}' if `Fun'
+%% isn't a function.<br/>
+%% @end
 observe_duration(Registry, Name, LabelValues, Fun) when is_function(Fun) ->
   Start = erlang:monotonic_time(),
   try
@@ -176,6 +278,14 @@ remove(Name) ->
 remove(Name, LabelValues) ->
   remove(default, Name, LabelValues).
 
+%% @doc Removes histogram series identified by `Registry', `Name'
+%% and `LabelValues'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if histogram with named
+%% `Name' can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 remove(Registry, Name, LabelValues) ->
   prometheus_metric:remove_labels(?TABLE, Registry, Name, LabelValues).
 
@@ -187,6 +297,14 @@ reset(Name) ->
 reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
+%% @doc Resets the value of the histogram identified by `Registry', `Name'
+%% and `LabelValues'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if histogram with named
+%% `Name' can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 reset(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   Buckets = prometheus_metric:mf_data(MF),
@@ -201,6 +319,18 @@ value(Name) ->
 value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
+%% @doc Returns the value of the histogram identified by `Registry', `Name'
+%% and `LabelValues'. If there is no histogram for `LabelValues',
+%% returns `undefined'.
+%%
+%% If duration unit set, sum will be converted to the duration unit.
+%% {@link prometheus_time. Read more here.}
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if histogram named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 value(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
@@ -216,18 +346,12 @@ buckets(Name) ->
 buckets(Name, LabelValues) ->
   buckets(default, Name, LabelValues).
 
+%% @doc Returns buckets of the histogram identified by `Registry', `Name'
+%% and `LabelValues'.
+%% @end
 buckets(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   prometheus_metric:mf_data(MF).
-
-default_buckets () ->
-  prometheus_buckets:default().
-
-linear_buckets(Start, Step, Count) ->
-  prometheus_buckets:linear(Start, Step, Count).
-
-exponential_buckets(Start, Factor, Count) ->
-  prometheus_buckets:exponential(Start, Factor, Count).
 
 %%====================================================================
 %% Collector API
@@ -312,6 +436,15 @@ raise_error_if_le_label_found("le") ->
                 "histogram cannot have a label named \"le\""});
 raise_error_if_le_label_found(Label) ->
   Label.
+
+default_buckets () ->
+  prometheus_buckets:default().
+
+linear_buckets(Start, Step, Count) ->
+  prometheus_buckets:linear(Start, Step, Count).
+
+exponential_buckets(Start, Factor, Count) ->
+  prometheus_buckets:exponential(Start, Factor, Count).
 
 validate_buckets([]) ->
   erlang:error({histogram_no_buckets, []});

@@ -1,3 +1,4 @@
+%% @hidden
 -module(prometheus_metric).
 
 -export([insert_new_mf/3,

@@ -18,13 +18,57 @@ Normal users should use [`prometheus_gauge`](prometheus_gauge.md),
 [`prometheus_counter`](prometheus_counter.md), [`prometheus_summary`](prometheus_summary.md)
 and [`prometheus_histogram`](prometheus_histogram.md).
 
-Implementing `:prometheus_collector` behaviour is for advanced uses,
+Implementing `:prometheus_collector` behaviour is for advanced uses
 such as proxying metrics from another monitoring system.
 It is it the responsibility of the implementer to ensure produced metrics
 are valid.
 
 You will be working with Prometheus
 data model directly (see [`prometheus_model_helpers`](prometheus_model_helpers.md)).
+
+Callbacks:
+- `collect_mf(Registry, Callback)` - called by exporters and formats.
+Should call `Callback` for each `MetricFamily` of this collector;
+- `collect_metrics(Name, Data)` - called by `MetricFamily` constructor.
+Should return Metric list for each MetricFamily identified by `Name`.
+`Data` is a term associated with MetricFamily by collect_mf.
+- `deregister_cleanup(Registry)` - called when collector unregistered by
+`Registry`. If collector is stateful you can put cleanup code here.
+
+Example (simplified `prometheus_vm_memory_collector`):
+
+```erlang
+
+  -module(prometheus_vm_memory_collector).
+  -export([deregister_cleanup/1,
+           collect_mf/2,
+           collect_metrics/2]).
+  -behaviour(prometheus_collector).
+  %%====================================================================
+  %% Collector API
+  %%====================================================================
+  deregister_cleanup(_) -> ok.
+  collect_mf(_Registry, Callback) ->
+    Memory = erlang:memory(),
+    Callback(create_gauge(erlang_vm_bytes_total,
+                          "The total amount of memory currently allocated. "
+                          "This is the same as the sum of the memory size "
+                          "for processes and system.",
+                          Memory)),
+    ok.
+  collect_metrics(erlang_vm_bytes_total, Memory) ->
+    prometheus_model_helpers:gauge_metrics(
+      [
+        {[{kind, system}], proplists:get_value(system,  Memory)},
+        {[{kind, processes}], proplists:get_value(processes, Memory)}
+      ]).
+  %%====================================================================
+  %% Private Parts
+  %%====================================================================
+  create_gauge(Name, Help, Data) ->
+    prometheus_model_helpers:create_mf(Name, Help, gauge, ?MODULE, Data).
+```
+
 <a name="types"></a>
 
 ## Data Types ##
@@ -64,7 +108,7 @@ data() = any()
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#collect_mf-3">collect_mf/3</a></td><td></td></tr><tr><td valign="top"><a href="#collect_mf_to_list-1">collect_mf_to_list/1</a></td><td></td></tr><tr><td valign="top"><a href="#deregister-1">deregister/1</a></td><td>(<em>Deprecated</em>.) Equivalent to <a href="#deregister-2"><tt>deregister(Collector, default)</tt></a>.</td></tr><tr><td valign="top"><a href="#deregister-2">deregister/2</a></td><td>(<em>Deprecated</em>.) </td></tr><tr><td valign="top"><a href="#enabled_collectors-0">enabled_collectors/0</a></td><td></td></tr><tr><td valign="top"><a href="#register-1">register/1</a></td><td>(<em>Deprecated</em>.) Equivalent to <a href="#register-2"><tt>register(Collector, default)</tt></a>.</td></tr><tr><td valign="top"><a href="#register-2">register/2</a></td><td>(<em>Deprecated</em>.) </td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#collect_mf-3">collect_mf/3</a></td><td>Calls <code>Callback</code> for each MetricFamily of this collector.</td></tr><tr><td valign="top"><a href="#deregister-1">deregister/1</a></td><td>(<em>Deprecated</em>.) Equivalent to <a href="#deregister-2"><tt>deregister(Collector, default)</tt></a>.</td></tr><tr><td valign="top"><a href="#deregister-2">deregister/2</a></td><td>(<em>Deprecated</em>.) </td></tr><tr><td valign="top"><a href="#register-1">register/1</a></td><td>(<em>Deprecated</em>.) Equivalent to <a href="#register-2"><tt>register(Collector, default)</tt></a>.</td></tr><tr><td valign="top"><a href="#register-2">register/2</a></td><td>(<em>Deprecated</em>.) </td></tr></table>
 
 
 <a name="functions"></a>
@@ -81,11 +125,7 @@ collect_mf(Registry, Collector, Callback) -&gt; ok
 
 <ul class="definitions"><li><code>Registry = <a href="prometheus_registry.md#type-registry">prometheus_registry:registry()</a></code></li><li><code>Collector = <a href="#type-collector">collector()</a></code></li><li><code>Callback = <a href="#type-collect_mf_callback">collect_mf_callback()</a></code></li></ul>
 
-<a name="collect_mf_to_list-1"></a>
-
-### collect_mf_to_list/1 ###
-
-`collect_mf_to_list(Collector) -> any()`
+Calls `Callback` for each MetricFamily of this collector.
 
 <a name="deregister-1"></a>
 
@@ -108,15 +148,6 @@ deregister(Collector, Registry) -&gt; ok
 <ul class="definitions"><li><code>Collector = <a href="#type-collector">collector()</a></code></li><li><code>Registry = <a href="prometheus_registry.md#type-registry">prometheus_registry:registry()</a></code></li></ul>
 
 __This function is deprecated:__ Please use [`prometheus_registry:deregister_collector/2`](prometheus_registry.md#deregister_collector-2)
-
-<a name="enabled_collectors-0"></a>
-
-### enabled_collectors/0 ###
-
-<pre><code>
-enabled_collectors() -&gt; [<a href="#type-collector">collector()</a>]
-</code></pre>
-<br />
 
 <a name="register-1"></a>
 

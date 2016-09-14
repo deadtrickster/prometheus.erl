@@ -18,17 +18,34 @@
 %% Public API
 %%====================================================================
 
+%% @doc
+%% Returns default microseconds buckets for measuring http requests duration.
+%%
+%% <pre lang="erlang">
+%% 1> prometheus_http:microseconds_duration_buckets().
+%% [10,100,1000,10000,100000,300000,500000,750000,1000000,
+%%  1500000,2000000,3000000]
+%% </pre>
+%% @end
 -spec microseconds_duration_buckets() -> prometheus_buckets:buckets().
-%% @doc default microseconds buckets for measuring http requests duration
 microseconds_duration_buckets() ->
   [10, 100, 1000, 10000, 100000, 300000, 500000,
    750000, 1000000, 1500000, 2000000, 3000000].
 
-%% FIXME: throw invalid_value if StatusCode isn't a positive integer
+%% @doc
+%% Returns status class for the http status code `SCode'.
+%%
+%% <pre lang="erlang">
+%% 2> prometheus_http:status_class(202).
+%% "success"
+%% </pre>
+%%
+%% Raises `{invalid_value_error, SCode, Message}' error if `SCode'
+%% isn't a positive integer.
+%% @end
 -spec status_class(SCode) -> StatusClass when
     SCode :: status_code(),
     StatusClass :: status_class().
-%% @doc returns status class for http status code
 status_class(SCode) when is_integer(SCode)
                          andalso SCode > 0
                          andalso SCode < 100 ->

@@ -16,6 +16,26 @@
 %%   <li>Total memory</li>
 %%   <li>Temperature</li>
 %% </ul>
+%%
+%% Example:
+%% <pre lang="erlang">
+%% -module(my_pool_instrumenter).
+%%
+%% -export([setup/0,
+%%          set_size/1]).
+%%
+%% setup() ->
+%%   prometheus_gauge:declare([{name, my_pool_size},
+%%                             {help, "Pool size."}]),
+%%   prometheus_gauge:declare([{name, my_pool_checked_out},
+%%                             {help, "Number of checked out sockets"}]).
+%%
+%% set_size(Size) ->
+%%   prometheus_gauge:set(my_pool_size, Size)
+%%
+%% track_checked_out_sockets(CheckoutFun) ->
+%%   prometheus_gauge:track_inprogress(my_pool_checked_out, CheckoutFun)..
+%% </pre>
 %% @end
 -module(prometheus_gauge).
 
@@ -100,6 +120,23 @@
 %% Metric API
 %%====================================================================
 
+%% @doc Creates a gauge using `Spec'.
+%%
+%% Raises `{missing_metric_spec_key, Key, Spec}' error if required `Soec' key
+%% is missing.<br/>
+%% Raises `{invalid_metric_name, Name, Message}' error if metric `Name'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_help, Help, Message}' error if metric `Help'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_labels, Labels, Message}' error if `Labels'
+%% isn't a list.<br/>
+%% Raises `{invalid_label_name, Name, Message}' error if `Name' isn't a valid
+%% label name.<br/>
+%% Raises `{invalid_value_error, Value, Message}' error if `duration_unit' is
+%% unknown or doesn't match metric name.<br/>
+%% Raises `{mf_already_exists, {Registry, Name}, Message}' error if a gauge
+%% with the same `Spec' already exists.
+%% @end
 new(Spec) ->
   prometheus_metric:insert_new_mf(?TABLE, ?MODULE, Spec).
 
@@ -110,6 +147,22 @@ new(Spec, Registry) ->
               " with registry key"),
   new([{registry, Registry} | Spec]).
 
+%% @doc Creates a gauge using `Spec'.
+%% If a gauge with the same `Spec' exists returns `false'.
+%%
+%% Raises `{missing_metric_spec_key, Key, Spec}' error if required `Soec' key
+%% is missing.<br/>
+%% Raises `{invalid_metric_name, Name, Message}' error if metric `Name'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_help, Help, Message}' error if metric `Help'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_labels, Labels, Message}' error if `Labels'
+%% isn't a list.<br/>
+%% Raises `{invalid_label_name, Name, Message}' error if `Name' isn't a valid
+%% label name.<br/>
+%% Raises `{invalid_value_error, Value, MessagE}' error if `duration_unit' is
+%% unknown or doesn't match metric name.<br/>
+%% @end
 declare(Spec) ->
   prometheus_metric:insert_mf(?TABLE, ?MODULE, Spec).
 
@@ -128,6 +181,16 @@ set(Name, Value) ->
 set(Name, LabelValues, Value) ->
   set(default, Name, LabelValues, Value).
 
+%% @doc Sets the gauge identified by `Registry', `Name'
+%% and `LabelValues' to `Value'.
+%%
+%% Raises `{invalid_value, Value, Message}' if `Value'
+%% isn't a number or `undefined'.<br/>
+%% Raises `{unknown_metric, Registry, Name}' error if gauge with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 set(Registry, Name, LabelValues, Value) when is_number(Value) orelse
                                              Value == undefined ->
   case ets:update_element(?TABLE, {Registry, Name, LabelValues},
@@ -141,9 +204,14 @@ set(Registry, Name, LabelValues, Value) when is_number(Value) orelse
 set(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "set accepts only numbers"}).
 
+%% @equiv inc(default, Name, [], 1)
 inc(Name) ->
   inc(default, Name, [], 1).
 
+%% @doc If the second argument is a list, equivalent to
+%% <a href="#inc-4"><tt>inc(default, Name, LabelValues, 1)</tt></a>
+%% otherwise equivalent to
+%% <a href="#inc-4"><tt>inc(default, Name, [], Value)</tt></a>.
 inc(Name, LabelValues) when is_list(LabelValues)->
   inc(default, Name, LabelValues, 1);
 inc(Name, Value) ->
@@ -153,6 +221,16 @@ inc(Name, Value) ->
 inc(Name, LabelValues, Value) ->
   inc(default, Name, LabelValues, Value).
 
+%% @doc Increments the gauge identified by `Registry', `Name'
+%% and `LabelValues' by `Value'.
+%%
+%% Raises `{invalid_value, Value, Message}' if `Value'
+%% isn't an integer.<br/>
+%% Raises `{unknown_metric, Registry, Name}' error if gauge with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 inc(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   try
     ets:update_counter(?TABLE, {Registry, Name, LabelValues},
@@ -169,6 +247,10 @@ inc(_Registry, _Name, _LabelValues, Value) ->
 dinc(Name) ->
   dinc(default, Name, [], 1).
 
+%% @doc If the second argument is a list, equivalent to
+%% <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, 1)</tt></a>
+%% otherwise equivalent to
+%% <a href="#dinc-4"><tt>dinc(default, Name, [], Value)</tt></a>.
 dinc(Name, LabelValues) when is_list(LabelValues)->
   dinc(default, Name, LabelValues, 1);
 dinc(Name, Value) when is_number(Value) ->
@@ -178,6 +260,18 @@ dinc(Name, Value) when is_number(Value) ->
 dinc(Name, LabelValues, Value) ->
   dinc(default, Name, LabelValues, Value).
 
+%% @doc Increments the gauge identified by `Registry', `Name'
+%% and `LabelValues' by `Value'.
+%% If `Value' happened to be a float number even one time(!) you
+%% shouldn't use {@link inc/4} after dinc.
+%%
+%% Raises `{invalid_value, Value, Message}' if `Value'
+%% isn't a number.<br/>
+%% Raises `{unknown_metric, Registry, Name}' error if gauge with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   CallTimeout = prometheus_metric:mf_call_timeout(MF),
@@ -194,9 +288,14 @@ dinc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
                 "dinc accepts only numbers"}).
 
+%% @equiv inc(default, Name, [], -1)
 dec(Name) ->
   inc(default, Name, [], -1).
 
+%% @doc If the second argument is a list, equivalent to
+%% <a href="#inc-4"><tt>inc(default, Name, LabelValues, -1)</tt></a>
+%% otherwise equivalent to
+%% <a href="#inc-4"><tt>inc(default, Name, [], -1 * Value)</tt></a>.
 dec(Name, LabelValues) when is_list(LabelValues)->
   inc(default, Name, LabelValues, -1);
 dec(Name, Value)  when is_integer(Value) ->
@@ -205,21 +304,29 @@ dec(_Name, Value) ->
   erlang:error({invalid_value, Value,
                 "dec accepts only integers"}).
 
+%% @equiv inc(default, Name, LabelValues, -1 * Value)
 dec(Name, LabelValues, Value) when is_integer(Value) ->
   inc(default, Name, LabelValues, -1*Value);
 dec(_Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
                 "dec accepts only integers"}).
 
+
+%% @equiv inc(Registry, Name, LabelValues, -1 * Value)
 dec(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   inc(Registry, Name, LabelValues, -1*Value);
 dec(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
                 "dec accepts only integers"}).
 
+%% @equiv dinc(default, Name, [], -1)
 ddec(Name) ->
   dinc(default, Name, [], -1).
 
+%% @doc If the second argument is a list, equivalent to
+%% <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, -1)</tt></a>
+%% otherwise equivalent to
+%% <a href="#dinc-4"><tt>dinc(default, Name, [], -1 * Value)</tt></a>.
 ddec(Name, LabelValues) when is_list(LabelValues)->
   dinc(default, Name, LabelValues, -1);
 ddec(Name, Value)  when is_number(Value) ->
@@ -228,12 +335,15 @@ ddec(_Name, Value) ->
   erlang:error({invalid_value, Value,
                 "ddec accepts only numbers"}).
 
+%% @equiv dinc(default, Name, LabelValues, -1 * Value)
 ddec(Name, LabelValues, Value) when is_number(Value) ->
   dinc(default, Name, LabelValues, -1*Value);
 ddec(_Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
                 "ddec accepts only numbers"}).
 
+
+%% @equiv dinc(default, Name, LabelValues, -1 * Value)
 ddec(Registry, Name, LabelValues, Value) when is_number(Value) ->
   dinc(Registry, Name, LabelValues, -1*Value);
 ddec(_Registry, _Name, _LabelValues, Value) ->
@@ -248,6 +358,14 @@ set_to_current_time(Name) ->
 set_to_current_time(Name, LabelValues) ->
   set_to_current_time(default, Name, LabelValues).
 
+%% @doc Sets the gauge identified by `Registry', `Name'
+%% and `LabelValues' to the current unixtime.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if gauge with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 set_to_current_time(Registry, Name, LabelValues) ->
   set(Registry, Name, LabelValues, os:system_time(seconds)).
 
@@ -259,6 +377,16 @@ track_inprogress(Name, Fun) ->
 track_inprogress(Name, LabelValues, Fun) ->
   track_inprogress(default, Name, LabelValues, Fun).
 
+%% @doc Sets the gauge identified by `Registry', `Name'
+%% and `LabelValues' to the number of currently executing `Fun's.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if gauge with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% Raises `{invalid_value, Value, Message}' if `Fun'
+%% isn't a function.<br/>
+%% @end
 track_inprogress(Registry, Name, LabelValues, Fun) when is_function(Fun) ->
   inc(Registry, Name, LabelValues, 1),
   try
@@ -277,6 +405,16 @@ set_duration(Name, Fun) ->
 set_duration(Name, LabelValues, Fun) ->
   set_duration(default, Name, LabelValues, Fun).
 
+%% @doc Sets the gauge identified by `Registry', `Name'
+%% and `LabelValues' to the the amount of time spent executing `Fun'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if gauge with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% Raises `{invalid_value, Value, Message}' if `Fun'
+%% isn't a function.<br/>
+%% @end
 set_duration(Registry, Name, LabelValues, Fun) when is_function(Fun) ->
   Start = erlang:monotonic_time(),
   try
@@ -295,6 +433,14 @@ remove(Name) ->
 remove(Name, LabelValues) ->
   remove(default, Name, LabelValues).
 
+%% @doc Removes gauge series identified by `Registry', `Name'
+%% and `LabelValues'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if gauge with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 remove(Registry, Name, LabelValues) ->
   prometheus_metric:remove_labels(?TABLE, Registry, Name, LabelValues).
 
@@ -306,6 +452,14 @@ reset(Name) ->
 reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
+%% @doc Resets the value of the gauge identified by `Registry', `Name'
+%% and `LabelValues'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if gauge with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?GAUGE_POS, 0}).
@@ -318,6 +472,18 @@ value(Name) ->
 value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
+%% @doc Returns the value of the gauge identified by `Registry', `Name'
+%% and `LabelValues'. If there is no gauge for `LabelValues',
+%% returns `undefined'.
+%%
+%% If duration unit set, value will be converted to the duration unit.
+%% {@link prometheus_time. Read more here.}
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if gauge named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 value(Registry, Name, LabelValues) ->
   MF =  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   DU = prometheus_metric:mf_duration_unit(MF),
@@ -330,17 +496,20 @@ value(Registry, Name, LabelValues) ->
 %% Collector API
 %%====================================================================
 
+%% @private
 deregister_cleanup(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry),
   true = ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_'}),
   ok.
 
+%% @private
 collect_mf(Registry, Callback) ->
   [Callback(create_gauge(Name, Help, {Labels, Registry, DU})) ||
     [Name, {Labels, Help}, _, DU, _] <- prometheus_metric:metrics(?TABLE,
                                                                   Registry)],
   ok.
 
+%% @private
 collect_metrics(Name, {Labels, Registry, DU}) ->
   [gauge_metric(lists:zip(Labels, LabelValues),
                 prometheus_time:maybe_convert_to_du(DU, Value)) ||

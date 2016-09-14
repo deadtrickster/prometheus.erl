@@ -7,40 +7,49 @@
 %% ==Exported metrics==
 %% <ul>
 %%   <li>
-%%     <pre>erlang_vm_statistics_bytes_output_total</pre>
+%%     `erlang_vm_statistics_bytes_output_total'<br/>
+%%     Type: counter.<br/>
 %%     The total number of bytes output to ports.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_statistics_bytes_received_total</pre>
+%%     `erlang_vm_statistics_bytes_received_total'<br/>
+%%     Type: counter.<br/>
 %%     The total number of bytes received through ports.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_statistics_context_switches</pre>
+%%     `erlang_vm_statistics_context_switches'<br/>
+%%     Type: counter.<br/>
 %%     The total number of context switches since the system started.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_statistics_garbage_collection_number_of_gcs</pre>
+%%     `erlang_vm_statistics_garbage_collection_number_of_gcs'<br/>
+%%     Type: counter.<br/>
 %%     The total number of garbage collections since the system started.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_statistics_garbage_collection_words_reclaimed</pre>
+%%     `erlang_vm_statistics_garbage_collection_words_reclaimed'<br/>
+%%     Type: counter.<br/>
 %%     The total number of words reclaimed by GC since the system started.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_statistics_reductions_total</pre>
+%%     `erlang_vm_statistics_reductions_total'<br/>
+%%     Type: counter.<br/>
 %%     Total reductions count.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_statistics_run_queues_length_total</pre>
+%%     `erlang_vm_statistics_run_queues_length_total'<br/>
+%%     Type: gauge.<br/>
 %%     The total length of the run-queues. That is, the number of
 %%     processes and ports that are ready to run on all available run-queues.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_statistics_runtime_milliseconds</pre>
+%%     `erlang_vm_statistics_runtime_milliseconds'<br/>
+%%     Type: counter.<br/>
 %%     The sum of the runtime for all threads in the Erlang runtime system.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_statistics_wallclock_time_milliseconds</pre>
+%%     `erlang_vm_statistics_wallclock_time_milliseconds'<br/>
+%%     Type: counter.<br/>
 %%     Can be used in the same manner as
 %%     `erlang_vm_statistics_runtime_milliseconds', except that real time is
 %%     measured as opposed to runtime or CPU time.
@@ -117,13 +126,15 @@
 -define(RUNTIME_MS, erlang_vm_statistics_runtime_milliseconds).
 -define(WALLCLOCK_TIME_MS, erlang_vm_statistics_wallclock_time_milliseconds).
 
--define(PROMETHEUS_VM_STATISTICS, [context_switches,
+-define(PROMETHEUS_VM_STATISTICS, [
+                                   context_switches,
                                    garbage_collection,
                                    io,
                                    reductions,
                                    run_queue,
                                    runtime,
-                                   wall_clock]).
+                                   wall_clock
+                                  ]).
 
 %%====================================================================
 %% Collector API
@@ -177,16 +188,16 @@ add_metric_family(wall_clock, Stat, Callback) ->
     "except that real time is measured").
 
 %% @private
+collect_metrics(?BYTES_OUTPUT, {_, {output, Output}}) ->
+  counter_metric(Output);
+collect_metrics(?BYTES_RECEIVED, {{input, Input}, _}) ->
+  counter_metric(Input);
 collect_metrics(?CONTEXT_SWITCHES, {Stat, _}) ->
   counter_metric(Stat);
 collect_metrics(?GC_NUM_GCS, {NumberOfGCs, _, _}) ->
   counter_metric(NumberOfGCs);
 collect_metrics(?GC_WORDS_RECLAIMED, {_, WordsReclaimed, _}) ->
   counter_metric(WordsReclaimed);
-collect_metrics(?BYTES_RECEIVED, {{input, Input}, _}) ->
-  counter_metric(Input);
-collect_metrics(?BYTES_OUTPUT, {_, {output, Output}}) ->
-  counter_metric(Output);
 collect_metrics(?REDUCTIONS, {ReductionsTotal, _}) ->
   counter_metric(ReductionsTotal);
 collect_metrics(?RUN_QUEUES_LENGTH, Total) ->

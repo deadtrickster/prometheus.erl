@@ -2,10 +2,26 @@
 %% Summary metric, to track the size of events.
 %%
 %% Example use cases for Summaries:
-%% <ul>
-%%   <li>Response latency</li>
-%%   <li>Request size</li>
-%% </ul>
+%%   - Response latency;
+%%   - Request size;
+%%   - Response size.
+%%
+%% Example:
+%% <pre lang="erlang">
+%% -module(my_proxy_instrumenter).
+%%
+%% setup() ->
+%%   prometheus_summary:declare([{name, request_size_bytes},
+%%                               {help, "Request size in bytes."}]),
+%%   prometheus_summary:declare([{name, response_size_bytes},
+%%                               {help, "Response size in bytes."}]).
+%%
+%% observe_request(Size) ->
+%%   prometheus_summary:observe(request_size_bytes, Size).
+%%
+%% observe_response(Size) ->
+%%   prometheus_summary:observe(response_size_bytes, Size).
+%% </pre>
 %% @end
 
 -module(prometheus_summary).
@@ -49,9 +65,9 @@
          start_link/0]).
 
 -import(prometheus_model_helpers, [create_mf/5,
-                                   gauge_metrics/1,
-                                   gauge_metric/1,
-                                   gauge_metric/2,
+                                   summary_metrics/1,
+                                   summary_metric/1,
+                                   summary_metric/2,
                                    counter_metric/1,
                                    counter_metric/2,
                                    summary_metric/3]).
@@ -74,6 +90,23 @@
 %% Metric API
 %%====================================================================
 
+%% @doc Creates a summary using `Spec'.
+%%
+%% Raises `{missing_metric_spec_key, Key, Spec}' error if required `Soec' key
+%% is missing.<br/>
+%% Raises `{invalid_metric_name, Name, Message}' error if metric `Name'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_help, Help, Message}' error if metric `Help'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_labels, Labels, Message}' error if `Labels'
+%% isn't a list.<br/>
+%% Raises `{invalid_label_name, Name, Message}' error if `Name' isn't a valid
+%% label name.<br/>
+%% Raises `{invalid_value_error, Value, Message}' error if `duration_unit' is
+%% unknown or doesn't match metric name.<br/>
+%% Raises `{mf_already_exists, {Registry, Name}, Message}' error if a summary
+%% with the same `Spec' already exists.
+%% @end
 new(Spec) ->
   validate_summary_spec(Spec),
   prometheus_metric:insert_new_mf(?TABLE, ?MODULE, Spec).
@@ -85,6 +118,22 @@ new(Spec, Registry) ->
               " with registry key"),
   new([{registry, Registry} | Spec]).
 
+%% @doc Creates a summary using `Spec'.
+%% If a summary with the same `Spec' exists returns `false'.
+%%
+%% Raises `{missing_metric_spec_key, Key, Spec}' error if required `Soec' key
+%% is missing.<br/>
+%% Raises `{invalid_metric_name, Name, Message}' error if metric `Name'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_help, Help, Message}' error if metric `Help'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_labels, Labels, Message}' error if `Labels'
+%% isn't a list.<br/>
+%% Raises `{invalid_label_name, Name, Message}' error if `Name' isn't a valid
+%% label name.<br/>
+%% Raises `{invalid_value_error, Value, MessagE}' error if `duration_unit' is
+%% unknown or doesn't match metric name.<br/>
+%% @end
 declare(Spec) ->
   Spec1 = validate_summary_spec(Spec),
   prometheus_metric:insert_mf(?TABLE, ?MODULE, Spec1).
@@ -104,6 +153,15 @@ observe(Name, Value) ->
 observe(Name, LabelValues, Value) ->
   observe(default, Name, LabelValues, Value).
 
+%% @doc Observes the given `Value'.
+%%
+%% Raises `{invalid_value, Value, Message}' if `Value'
+%% isn't an integer.<br/>
+%% Raises `{unknown_metric, Registry, Name}' error if summary with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   try
     ets:update_counter(?TABLE, {Registry, Name, LabelValues},
@@ -123,6 +181,17 @@ dobserve(Name, Value) ->
 dobserve(Name, LabelValues, Value) ->
   dobserve(default, Name, LabelValues, Value).
 
+%% @doc Observes the given `Value'.
+%% If `Value' happened to be a float number even one time(!) you
+%% shouldn't use {@link observe/4} after dobserve.
+%%
+%% Raises `{invalid_value, Value, Message}' if `Value'
+%% isn't a number.<br/>
+%% Raises `{unknown_metric, Registry, Name}' error if summary with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 dobserve(Registry, Name, LabelValues, Value) when is_number(Value) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   CallTimeout = prometheus_metric:mf_call_timeout(MF),
@@ -147,6 +216,15 @@ observe_duration(Name, Fun) ->
 observe_duration(Name, LabelValues, Fun) ->
   observe_duration(default, Name, LabelValues, Fun).
 
+%% @doc Tracks the amount of time spent executing `Fun'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if summary with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% Raises `{invalid_value, Value, Message}' if `Fun'
+%% isn't a function.<br/>
+%% @end
 observe_duration(Registry, Name, LabelValues, Fun) when is_function(Fun)->
   Start = erlang:monotonic_time(),
   try
@@ -165,6 +243,14 @@ remove(Name) ->
 remove(Name, LabelValues) ->
   remove(default, Name, LabelValues).
 
+%% @doc Removes summary series identified by `Registry', `Name'
+%% and `LabelValues'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if summary with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 remove(Registry, Name, LabelValues) ->
   prometheus_metric:remove_labels(?TABLE, Registry, Name, LabelValues).
 
@@ -176,6 +262,14 @@ reset(Name) ->
 reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
+%% @doc Resets the value of the summary identified by `Registry', `Name'
+%% and `LabelValues'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if summary with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   ets:update_element(?TABLE, {Registry, Name, LabelValues},
@@ -189,6 +283,18 @@ value(Name) ->
 value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
+%% @doc Returns the value of the summary identified by `Registry', `Name'
+%% and `LabelValues'. If there is no summary for `LabelValues',
+%% returns `undefined'.
+%%
+%% If duration unit set, sum will be converted to the duration unit.
+%% {@link prometheus_time. Read more here.}
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if summary named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 value(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   DU = prometheus_metric:mf_duration_unit(MF),

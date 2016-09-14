@@ -7,62 +7,76 @@
 %% ==Exported metrics==
 %% <ul>
 %%   <li>
-%%     <pre>erlang_vm_ets_limit</pre>
+%%     `erlang_vm_ets_limit'<br/>
+%%     Type: gauge.<br/>
 %%     The maximum number of ETS tables allowed.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_logical_processors</pre>
+%%     `erlang_vm_logical_processors'<br/>
+%%     Type: gauge.<br/>
 %%     The detected number of logical processors configured in the system.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_logical_processors_available</pre>
+%%     `erlang_vm_logical_processors_available'<br/>
+%%     Type: gauge.<br/>
 %%     The detected number of logical processors
 %%     available to the Erlang runtime system.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_logical_processors_online</pre>
+%%     `erlang_vm_logical_processors_online'<br/>
+%%     Type: gauge.<br/>
 %%     The detected number of logical processors online on the system.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_port_count</pre>
+%%     `erlang_vm_port_count'<br/>
+%%     Type: gauge.<br/>
 %%     The number of ports currently existing at the local node.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_port_limit</pre>
+%%     `erlang_vm_port_limit'<br/>
+%%     Type: gauge.<br/>
 %%     The maximum number of simultaneously existing ports at the local node.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_process_count</pre>
+%%     `erlang_vm_process_count'<br/>
+%%     Type: gauge.<br/>
 %%     The number of processes currently existing at the local node.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_process_limit</pre>
+%%     `erlang_vm_process_limit'<br/>
+%%     Type: gauge.<br/>
 %%     The maximum number of simultaneously existing processes
 %%     at the local node.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_schedulers</pre>
+%%     `erlang_vm_schedulers'<br/>
+%%     Type: gauge.<br/>
 %%     The number of scheduler threads used by the emulator.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_schedulers_online</pre>
+%%     `erlang_vm_schedulers_online'<br/>
+%%     Type: gauge.<br/>
 %%     The number of schedulers online.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_smp_support</pre>
+%%     `erlang_vm_smp_support'<br/>
+%%     Type: boolean.<br/>
 %%     1 if the emulator has been compiled with SMP support, otherwise 0.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_threads</pre>
+%%     `erlang_vm_threads'<br/>
+%%     Type: boolean.<br/>
 %%     1 if the emulator has been compiled with thread support, otherwise 0.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_thread_pool_size</pre>
+%%     `erlang_vm_thread_pool_size'<br/>
+%%     Type: gauge.<br/>
 %%     The number of async threads in the async thread pool
 %%     used for asynchronous driver calls.
 %%   </li>
 %%   <li>
-%%     <pre>erlang_vm_time_correction</pre>
+%%     `erlang_vm_time_correction'<br/>
+%%     Type: boolean.<br/>
 %%     1 if time correction is enabled, otherwise 0.
 %%   </li>
 %% </ul>
@@ -160,7 +174,8 @@
 -define(THREAD_POOL_SIZE, erlang_vm_thread_pool_size).
 -define(TIME_CORRECTION, erlang_vm_time_correction).
 
--define(PROMETHEUS_VM_SYSTEM_INFO, [ets_limit,
+-define(PROMETHEUS_VM_SYSTEM_INFO, [
+                                    ets_limit,
                                     logical_processors,
                                     logical_processors_available,
                                     logical_processors_online,
@@ -173,7 +188,8 @@
                                     smp_support,
                                     threads,
                                     thread_pool_size,
-                                    time_correction]).
+                                    time_correction
+                                   ]).
 
 %%====================================================================
 %% Collector API

@@ -5,7 +5,8 @@
 * [Function Index](#index)
 * [Function Details](#functions)
 
-Serializes Prometheus registry using protocol buffer format.
+Serializes Prometheus registry using
+[protocol buffer format](http://bit.ly/2cxSuJP).
 
 __Behaviours:__ [`prometheus_format`](prometheus_format.md).
 
@@ -15,9 +16,9 @@ __Behaviours:__ [`prometheus_format`](prometheus_format.md).
 
 
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#content_type-0">content_type/0</a></td><td>
-Content type of the Protocol buffer format.</td></tr><tr><td valign="top"><a href="#format-0">format/0</a></td><td>
-Format <code>default</code> registry using Protocol buffer format.</td></tr><tr><td valign="top"><a href="#format-1">format/1</a></td><td>
-Format <code>registry</code> using Protocol buffer format.</td></tr></table>
+Returns content type of the protocol buffer format.</td></tr><tr><td valign="top"><a href="#format-0">format/0</a></td><td>
+Formats <code>default</code> registry using protocol buffer format.</td></tr><tr><td valign="top"><a href="#format-1">format/1</a></td><td>
+Formats <code>Registry</code> using protocol buffer format.</td></tr></table>
 
 
 <a name="functions"></a>
@@ -33,7 +34,7 @@ content_type() -&gt; binary()
 </code></pre>
 <br />
 
-Content type of the Protocol buffer format.
+Returns content type of the protocol buffer format.
 
 <a name="format-0"></a>
 
@@ -46,7 +47,7 @@ format() -&gt; binary()
 
 Equivalent to [`format(default)`](#format-1).
 
-Format `default` registry using Protocol buffer format.
+Formats `default` registry using protocol buffer format.
 
 <a name="format-1"></a>
 
@@ -57,5 +58,5 @@ format(Registry::<a href="prometheus_registry.md#type-registry">prometheus_regis
 </code></pre>
 <br />
 
-Format `registry` using Protocol buffer format.
+Formats `Registry` using protocol buffer format.
 

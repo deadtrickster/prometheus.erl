@@ -37,7 +37,9 @@ status_code() = pos_integer()
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#microseconds_duration_buckets-0">microseconds_duration_buckets/0</a></td><td>default microseconds buckets for measuring http requests duration.</td></tr><tr><td valign="top"><a href="#status_class-1">status_class/1</a></td><td>returns status class for http status code.</td></tr></table>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#microseconds_duration_buckets-0">microseconds_duration_buckets/0</a></td><td>
+Returns default microseconds buckets for measuring http requests duration.</td></tr><tr><td valign="top"><a href="#status_class-1">status_class/1</a></td><td>
+Returns status class for the http status code <code>SCode</code>.</td></tr></table>
 
 
 <a name="functions"></a>
@@ -53,7 +55,14 @@ microseconds_duration_buckets() -&gt; <a href="prometheus_buckets.md#type-bucket
 </code></pre>
 <br />
 
-default microseconds buckets for measuring http requests duration
+Returns default microseconds buckets for measuring http requests duration.
+
+```erlang
+
+  1> prometheus_http:microseconds_duration_buckets().
+  [10,100,1000,10000,100000,300000,500000,750000,1000000,
+   1500000,2000000,3000000]
+```
 
 <a name="status_class-1"></a>
 
@@ -65,5 +74,14 @@ status_class(SCode) -&gt; StatusClass
 
 <ul class="definitions"><li><code>SCode = <a href="#type-status_code">status_code()</a></code></li><li><code>StatusClass = <a href="#type-status_class">status_class()</a></code></li></ul>
 
-returns status class for http status code
+Returns status class for the http status code `SCode`.
+
+```erlang
+
+  2> prometheus_http:status_class(202).
+  "success"
+```
+
+Raises `{invalid_value_error, SCode, Message}` error if `SCode`
+isn't a positive integer.
 

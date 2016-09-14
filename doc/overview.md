@@ -1,11 +1,8 @@
+@copyright 2016 Ilya Khaprov <<i.khaprov@gmail.com>>.
+@title Prometheus.io client for Erlang
+@version 3.0.0
 
-
-# Prometheus.io client for Erlang #
-
-Copyright (c) 2016 Ilya Khaprov <<i.khaprov@gmail.com>>.
-
-__Version:__ 3.0.0
-
+@doc
 [![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)](https://hex.pm/packages/prometheus) [![Build Status](https://travis-ci.org/deadtrickster/prometheus.erl.svg?branch=version-3)](https://travis-ci.org/deadtrickster/prometheus.erl) [![Coverage Status](https://coveralls.io/repos/github/deadtrickster/prometheus.erl/badge.svg?branch=version-3)](https://coveralls.io/github/deadtrickster/prometheus.erl?branch=version-3)
 
 [Prometheus.io](https://prometheus.io) monitoring system and time series database client in Erlang.
@@ -22,32 +19,22 @@ __Version:__ 3.0.0
 - [RabbitMQ Exporter](https://github.com/deadtrickster/prometheus_rabbitmq_exporter).
 
 ## Erlang VM Collectors
-- [Memory Collector](prometheus_vm_memory_collector.md)
-- [Statistics Collector](prometheus_vm_statistics_collector.md)
-- [System Information Collector](prometheus_vm_system_info_collector.md).
+- {@link prometheus_vm_memory_collector. Memory Collector}
+- {@link prometheus_vm_statistics_collector. Statistics Collector}
+- {@link prometheus_vm_system_info_collector. System Information Collector}.
 
 ## Example Console Session
 
 Run shell with compiled and loaded app:
-
-```erlang-repl
-
+<pre lang="erlang-repl">
     $ rebar3 shell
-
-```
-
+</pre>
 Start prometheus app:
-
-```erlang-repl
-
+<pre lang="erlang-repl">
 prometheus:start().
-
-```
-
+</pre>
 Register metrics:
-
-```erlang
-
+<pre lang="erlang">
 prometheus_gauge:new([{name, pool_size}, {help, "MongoDB Connections pool size"}]),
 prometheus_counter:new([{name, http_requests_total}, {help, "Http request count"}]).
 prometheus_summary:new([{name, orders}, {help, "Track orders count/total sum"}]).
@@ -55,13 +42,9 @@ prometheus_histogram:new([{name, http_request_duration_milliseconds},
                                {labels, [method]},
                                {bounds, [100, 300, 500, 750, 1000]},
                                {help, "Http Request execution time"}]).
-
-```
-
+</pre>
 Use metrics:
-
-```erlang
-
+<pre lang="erlang">
 prometheus_gauge:set(pool_size, 365),
 prometheus_counter:inc(http_requests_total).
 prometheus_summary:observe(orders, 10).
@@ -81,19 +64,14 @@ prometheus_histogram:observe(http_request_duration_milliseconds, [post], 450).
 prometheus_histogram:observe(http_request_duration_milliseconds, [post], 850).
 prometheus_histogram:observe(http_request_duration_milliseconds, [post], 750).
 prometheus_histogram:observe(http_request_duration_milliseconds, [post], 1650).
-
-```
+</pre>
 
 Export metrics as text:
 
-```erlang
-
+<pre lang="erlang">
 io:format(prometheus_text_format:format()).
-
-```
-
+</pre>
 ->
-
 ```
 # TYPE http_requests_total counter
 # HELP http_requests_total Http request count
@@ -123,24 +101,25 @@ http_request_duration_milliseconds_bucket{method="get",le="1000"} 9
 http_request_duration_milliseconds_bucket{method="get",le="+Inf"} 9
 http_request_duration_milliseconds_count{method="get"} 9
 http_request_duration_milliseconds_sum{method="get"} 2622
-```
+
+'''
 
 ## API
 
 API can be grouped like this:
 
-### Standard Metrics & Registry
+### Standard Metrics &amp; Registry
 
-- [`prometheus_counter`](prometheus_counter.md) - counter metric, to track counts of events or running totals;
-- [`prometheus_gauge`](prometheus_gauge.md) - gauge metric, to report instantaneous values;
-- [`prometheus_histogram`](prometheus_histogram.md) - histogram metric, to track distributions of events;
-- [`prometheus_summary`](prometheus_summary.md) - summary metric, to track the size of events;
-- [`prometheus_registry`](prometheus_registry.md) - working with Prometheus registries.
+- {@link prometheus_counter} - counter metric, to track counts of events or running totals;
+- {@link prometheus_gauge} - gauge metric, to report instantaneous values;
+- {@link prometheus_histogram} - histogram metric, to track distributions of events;
+- {@link prometheus_summary} - summary metric, to track the size of events;
+- {@link prometheus_registry} - working with Prometheus registries.
 
-All metrics created via `new/1` or `declare/1`. The difference is that `new/1` actually wants metric to be
-new and raises `{mf_already_exists, {Registry, Name}, Message}` error if it isn't.
+All metrics created via `new/1' or `declare/1'. The difference is that `new/1' actually wants metric to be
+new and raises `{mf_already_exists, {Registry, Name}, Message}' error if it isn't.
 
-Both `new/1` and `declare/1` accept options as [proplist](http://erlang.org/doc/man/proplists.html).
+Both `new/1' and `declare/1' accept options as [proplist](http://erlang.org/doc/man/proplists.html).
 Common options are:
 
 - name - metric name, can be an atom or a string (required);
@@ -148,32 +127,30 @@ Common options are:
 - labels - metric labels, label can be an atom or a string (default is []);
 - registry - Prometheus registry for the metric, can be any term. (default is default)
 
-Histogram also accepts `buckets` option. Please refer to respective modules docs for the more information.
+Histogram also accepts `buckets' option. Please refer to respective modules docs for the more information.
 
 ### Exposition Formats
 
-- [`prometheus_text_format`](prometheus_text_format.md) - renders metrics for a given registry (default is `default`) in text format;
-- [`prometheus_protobuf_format`](prometheus_protobuf_format.md) - renders metrics for a given registry (default is `default`) in protobuf v2 format.
+- {@link prometheus_text_format} - renders metrics for a given registry (default is `default') in text format;
+- {@link prometheus_protobuf_format} - renders metrics for a given registry (default is `default') in protobuf v2 format.
 
 ### General Helpers
 
-- [`prometheus_buckets`](prometheus_buckets.md) - linear or exponential bucket generators;
-- [`prometheus_http`](prometheus_http.md) - helpers for HTTP instrumenters.
+- {@link prometheus_buckets} - linear or exponential bucket generators;
+- {@link prometheus_http} - helpers for HTTP instrumenters.
 
 ### Advanced
 
 You will need this modules only if you're writing custom collector for app/lib that can't be instrumented directly.
 
-- [`prometheus_collector`](prometheus_collector.md) - common interface for collectors;
-- [`prometheus_format`](prometheus_format.md) - common interface for exposition formats;
-- [`prometheus_model_helpers`](prometheus_model_helpers.md) - provides API for working with underlying Prometheus models.
+- {@link prometheus_collector} - common interface for collectors;
+- {@link prometheus_format} - common interface for exposition formats;
+- {@link prometheus_model_helpers} - provides API for working with underlying Prometheus models.
 You'll use that if you want to create custom collector.
 
 ## Build
 
-```
-   $ rebar3 compile
-```
+```$ rebar3 compile'''
 
 ## Configuration
 
@@ -206,39 +183,16 @@ For Elixir: `Prometheus.<name>Collector`/`Prometheus.<name>Exporter`.
 
 Sections order:
 
-`Types -> Macros -> Callbacks -> Public API -> Deprecations -> Private Parts`
+`Types -> Macros -> Callbacks -> Public API -> Deprecations -> Private Parts'
 
 install git precommit hook:
 
-```
-   ./bin/pre-commit.sh install
-```
+```./bin/pre-commit.sh install'''
 
-Pre-commit check can be skipped passing `--no-verify` option to git commit.
+ Pre-commit check can be skipped passing `--no-verify' option to git commit.
 
 ## License
 
 MIT
 
-
-## Modules ##
-
-
-<table width="100%" border="0" summary="list of modules">
-<tr><td><a href="prometheus_buckets.md" class="module">prometheus_buckets</a></td></tr>
-<tr><td><a href="prometheus_collector.md" class="module">prometheus_collector</a></td></tr>
-<tr><td><a href="prometheus_counter.md" class="module">prometheus_counter</a></td></tr>
-<tr><td><a href="prometheus_format.md" class="module">prometheus_format</a></td></tr>
-<tr><td><a href="prometheus_gauge.md" class="module">prometheus_gauge</a></td></tr>
-<tr><td><a href="prometheus_histogram.md" class="module">prometheus_histogram</a></td></tr>
-<tr><td><a href="prometheus_http.md" class="module">prometheus_http</a></td></tr>
-<tr><td><a href="prometheus_model_helpers.md" class="module">prometheus_model_helpers</a></td></tr>
-<tr><td><a href="prometheus_protobuf_format.md" class="module">prometheus_protobuf_format</a></td></tr>
-<tr><td><a href="prometheus_registry.md" class="module">prometheus_registry</a></td></tr>
-<tr><td><a href="prometheus_summary.md" class="module">prometheus_summary</a></td></tr>
-<tr><td><a href="prometheus_text_format.md" class="module">prometheus_text_format</a></td></tr>
-<tr><td><a href="prometheus_time.md" class="module">prometheus_time</a></td></tr>
-<tr><td><a href="prometheus_vm_memory_collector.md" class="module">prometheus_vm_memory_collector</a></td></tr>
-<tr><td><a href="prometheus_vm_statistics_collector.md" class="module">prometheus_vm_statistics_collector</a></td></tr>
-<tr><td><a href="prometheus_vm_system_info_collector.md" class="module">prometheus_vm_system_info_collector</a></td></tr></table>
-
+@end

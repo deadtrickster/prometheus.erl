@@ -1,3 +1,4 @@
+%% @hidden
 -module(prometheus_instrumenter).
 
 -export([enabled_instrumenters/0,

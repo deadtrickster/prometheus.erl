@@ -20,6 +20,34 @@
 %% functions in Prometheus to calculate the rate of increase of a Counter.
 %% By convention, the names of Counters are suffixed by `_total'.
 %%
+%% To create a counter use either {@link new/1} or {@link declare/1},
+%% the difference is that {@link new/1} will raise
+%% {:mf_already_exists, {Registry, Name}, Message} error if counter with
+%% the same `Registry', `Name' and `Labels' combination already exists.
+%% Both accept `Spec' [proplist](http://erlang.org/doc/man/proplists.html)
+%% with the same set of keys:
+%%
+%%  - `Registry' - optional, default is `default';
+%%  - `Name' - required, can be an atom or a string;
+%%  - `Help' - required, must be a string;
+%%  - `Labels' - optional, default is `[]'.
+%%
+%% Example:
+%% <pre lang="erlang">
+%% -module(my_service_instrumenter).
+%%
+%% -export([setup/0,
+%%          inc/1]).
+%%
+%% setup() ->
+%%   prometheus_counter:declare([{name, my_service_requests_total},
+%%                               {help, "Requests count"},
+%%                               {labels, caller}]).
+%%
+%% inc(Caller) ->
+%%   prometheus_counter:inc(my_service_requests_total, [Caller]).
+%%
+%% </pre>
 %% @end
 
 -module(prometheus_counter).
@@ -85,6 +113,21 @@
 %% Metric API
 %%====================================================================
 
+%% @doc Creates a counter using `Spec'.
+%%
+%% Raises `{missing_metric_spec_key, Key, Spec}' error if required `Soec' key
+%% is missing.<br/>
+%% Raises `{invalid_metric_name, Name, Message}' error if metric `Name'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_help, Help, Message}' error if metric `Help'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_labels, Labels, Message}' error if `Labels'
+%% isn't a list.<br/>
+%% Raises `{invalid_label_name, Name, Message}' error if `Name' isn't a valid
+%% label name.<br/>
+%% Raises `{mf_already_exists, {Registry, Name}, Message}' error if a counter
+%% with the same `Spec' already exists.
+%% @end
 new(Spec) ->
   prometheus_metric:insert_new_mf(?TABLE, ?MODULE, Spec).
 
@@ -95,6 +138,20 @@ new(Spec, Registry) ->
               " with registry key"),
   new([{registry, Registry} | Spec]).
 
+%% @doc Creates a counter using `Spec', if a counter with the same `Spec' exists
+%% returns `false'.
+%%
+%% Raises `{missing_metric_spec_key, Key, Spec}' error if required `Soec' key
+%% is missing.<br/>
+%% Raises `{invalid_metric_name, Name, Message}' error if metric `Name'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_help, Help, Message}' error if metric `Help'
+%% is invalid.<br/>
+%% Raises `{invalid_metric_labels, Labels, Message}' error if `Labels'
+%% isn't a list.<br/>
+%% Raises `{invalid_label_name, Name, Message}' error if `Name' isn't a valid
+%% label name.
+%% @end
 declare(Spec) ->
   prometheus_metric:insert_mf(?TABLE, ?MODULE, Spec).
 
@@ -109,6 +166,10 @@ declare(Spec, Registry) ->
 inc(Name) ->
   inc(default, Name, [], 1).
 
+%% @doc If the second argument is a list, equivalent to
+%% <a href="#inc-4"><tt>inc(default, Name, LabelValues, 1)</tt></a>
+%% otherwise equivalent to
+%% <a href="#inc-4"><tt>inc(default, Name, [], Value)</tt></a>.
 inc(Name, LabelValues) when is_list(LabelValues)->
   inc(default, Name, LabelValues, 1);
 inc(Name, Value) ->
@@ -118,6 +179,16 @@ inc(Name, Value) ->
 inc(Name, LabelValues, Value) ->
   inc(default, Name, LabelValues, Value).
 
+%% @doc Increments the counter identified by `Registry', `Name'
+%% and `LabelValues' by `Value'.
+%%
+%% Raises `{invalid_value, Value, Message}' if `Value'
+%% isn't a positive integer.<br/>
+%% Raises `{unknown_metric, Registry, Name}' error if counter with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 inc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
   erlang:error({invalid_value, Value,
                 "inc accepts only non-negative integers"});
@@ -136,6 +207,10 @@ inc(_Registry, _Name, _LabelValues, Value) ->
 dinc(Name) ->
   dinc(default, Name, [], 1).
 
+%% @doc If the second argument is a list, equivalent to
+%% <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, 1)</tt></a>
+%% otherwise equivalent to
+%% <a href="#dinc-4"><tt>dinc(default, Name, [], Value)</tt></a>.
 dinc(Name, LabelValues) when is_list(LabelValues)->
   dinc(default, Name, LabelValues, 1);
 dinc(Name, Value) when is_number(Value) ->
@@ -145,6 +220,18 @@ dinc(Name, Value) when is_number(Value) ->
 dinc(Name, LabelValues, Value) ->
   dinc(default, Name, LabelValues, Value).
 
+%% @doc Increments the counter identified by `Registry', `Name'
+%% and `LabelValues' by `Value'.
+%% If `Value' happened to be a float number even one time(!) you
+%% shouldn't use {@link inc/4} after dinc.
+%%
+%% Raises `{invalid_value, Value, Message}' if `Value'
+%% isn't a number.<br/>
+%% Raises `{unknown_metric, Registry, Name}' error if counter with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 dinc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
   erlang:error({invalid_value, Value,
                 "dinc accepts only non-negative numbers"});
@@ -172,6 +259,14 @@ remove(Name) ->
 remove(Name, LabelValues) ->
   remove(default, Name, LabelValues).
 
+%% @doc Removes counter series identified by `Registry', `Name'
+%% and `LabelValues'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if counter with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 remove(Registry, Name, LabelValues) ->
   prometheus_metric:remove_labels(?TABLE, Registry, Name, LabelValues).
 
@@ -183,6 +278,14 @@ reset(Name) ->
 reset(Name, LabelValues) ->
   reset(default, Name, LabelValues).
 
+%% @doc Resets the value of the counter identified by `Registry', `Name'
+%% and `LabelValues'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if counter with named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, 0}).
@@ -195,6 +298,15 @@ value(Name) ->
 value(Name, LabelValues) ->
   value(default, Name, LabelValues).
 
+%% @doc Returns the value of the counter identified by `Registry', `Name'
+%% and `LabelValues'. If there is no counter for `LabelValues',
+%% returns `undefined'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if counter named `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
 value(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of

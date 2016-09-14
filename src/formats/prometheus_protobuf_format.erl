@@ -1,5 +1,6 @@
 %% @doc
-%% Serializes Prometheus registry using protocol buffer format.
+%% Serializes Prometheus registry using
+%% [protocol buffer format](http://bit.ly/2cxSuJP).
 %% @end
 -module(prometheus_protobuf_format).
 -export([content_type/0,
@@ -17,7 +18,7 @@
 
 -spec content_type() -> binary().
 %% @doc
-%% Content type of the Protocol buffer format.
+%% Returns content type of the protocol buffer format.
 %% @end
 content_type() ->
   <<"application/vnd.google.protobuf; "
@@ -27,14 +28,14 @@ content_type() ->
 %% @equiv format(default)
 -spec format() -> binary().
 %% @doc
-%% Format `default' registry using Protocol buffer format.
+%% Formats `default' registry using protocol buffer format.
 %% @end
 format() ->
   format(default).
 
 -spec format(Registry :: prometheus_registry:registry()) -> binary().
 %% @doc
-%% Format `registry' using Protocol buffer format.
+%% Formats `Registry' using protocol buffer format.
 %% @end
 format(Registry) ->
   {ok, Fd} = ram_file:open("", [write, read, binary]),

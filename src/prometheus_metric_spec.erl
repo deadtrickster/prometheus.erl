@@ -1,3 +1,4 @@
+%% @hidden
 -module(prometheus_metric_spec).
 
 -export([get_value/2,

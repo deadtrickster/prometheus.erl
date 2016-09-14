@@ -58,25 +58,25 @@
 %% </a>:
 %% <ul>
 %%   <li>
-%%     `context_switches' for `erlang_vm_statistics_context_switches'.
+%%     `context_switches' for `erlang_vm_statistics_context_switches';
 %%   </li>
 %%   <li>
 %%     `garbage_collection'
 %%      for `erlang_vm_statistics_garbage_collection_number_of_gcs' and
-%%      `erlang_vm_statistics_garbage_collection_words_reclaimed'.
+%%      `erlang_vm_statistics_garbage_collection_words_reclaimed';
 %%   </li>
 %%   <li>
 %%     `io' for `erlang_vm_statistics_bytes_output_total' and
-%%     `erlang_vm_statistics_bytes_received_total'.
+%%     `erlang_vm_statistics_bytes_received_total';
 %%   </li>
 %%   <li>
-%%     `reductions' for `erlang_vm_statistics_reductions_total'.
+%%     `reductions' for `erlang_vm_statistics_reductions_total';
 %%   </li>
 %%   <li>
-%%     `run_queue' for `erlang_vm_statistics_run_queues_length_total'.
+%%     `run_queue' for `erlang_vm_statistics_run_queues_length_total';
 %%   </li>
 %%   <li>
-%%     `runtime' for `erlang_vm_statistics_runtime_milliseconds'.
+%%     `runtime' for `erlang_vm_statistics_runtime_milliseconds';
 %%   </li>
 %%   <li>
 %%     `wall_clock' for `erlang_vm_statistics_wallclock_time_milliseconds'.

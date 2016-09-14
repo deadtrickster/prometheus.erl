@@ -4,10 +4,10 @@
 * [Description](#description)
 
 Collects information about memory dynamically allocated
-by the Erlang emulator usin
+by the Erlang emulator using
 [
 erlang:memory/0
-](http://erlang.org/doc/man/erlang.md#statistics-1).
+](http://erlang.org/doc/man/erlang.md#memory-0).
 
 __Behaviours:__ [`prometheus_collector`](prometheus_collector.md).
 

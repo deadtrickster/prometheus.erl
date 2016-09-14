@@ -50,7 +50,7 @@
 %% ==Configuration==
 %%
 %% Metrics exported by this collector can be configured via
-%% `vm_statistics_collector_metrics' of `prometheus' app environment key.
+%% `vm_statistics_collector_metrics' key of `prometheus' app environment.
 %%
 %% Options are the same as Item parameter values for
 %% <a href="http://erlang.org/doc/man/erlang.html#statistics-1">

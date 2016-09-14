@@ -92,3 +92,25 @@ erlang_vm_dets_tables
 Erlang VM DETS Tables count.
 
 
+
+### <a name="Configuration">Configuration</a> ###
+
+Metrics exported by this collector can be configured via
+`vm_memory_collector_metrics` of `prometheus` app environment key.
+
+Available options:
+
+* `atom_bytes_total` for `erlang_vm_memory_atom_bytes_total`.
+
+* `bytes_total` for `erlang_vm_memory_bytes_total`.
+
+* `dets_tables` for `erlang_vm_dets_tables`.
+
+* `ets_tables` for `erlang_vm_ets_tables`.
+
+* `processes_bytes_total` for `erlang_vm_memory_processes_bytes_total`.
+
+* `system_bytes_total` for `erlang_vm_memory_system_bytes_total`.
+
+
+By default all metrics are enabled.

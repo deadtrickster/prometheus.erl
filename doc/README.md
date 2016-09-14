@@ -1,6 +1,13 @@
 
 
-# The prometheus application #
+# Prometheus.io client for Erlang #
+
+Copyright (c) 2016 Ilya Khaprov
+
+__Version:__ 3.0.0
+
+__Authors:__ Ilya Khaprov ([`i.khaprov@gmail.com`](mailto:i.khaprov@gmail.com)).
+
 
 
 ## Modules ##

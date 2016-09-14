@@ -57,6 +57,34 @@
 %%   </li>
 %% </ul>
 %%
+%% ==Configuration==
+%%
+%% Metrics exported by this collector can be configured via
+%% `vm_memory_collector_metrics' of `prometheus' app environment key.
+%%
+%% Available options:
+%% <ul>
+%%   <li>
+%%     `atom_bytes_total' for `erlang_vm_memory_atom_bytes_total'.
+%%   </li>
+%%   <li>
+%%     `bytes_total' for `erlang_vm_memory_bytes_total'.
+%%   </li>
+%%   <li>
+%%     `dets_tables' for `erlang_vm_dets_tables'.
+%%   </li>
+%%   <li>
+%%     `ets_tables' for `erlang_vm_ets_tables'.
+%%   </li>
+%%   <li>
+%%     `processes_bytes_total' for `erlang_vm_memory_processes_bytes_total'.
+%%   </li>
+%%   <li>
+%%     `system_bytes_total' for `erlang_vm_memory_system_bytes_total'.
+%%   </li>
+%% </ul>
+%%
+%% By default all metrics are enabled.
 %% @end
 
 -module(prometheus_vm_memory_collector).
@@ -77,6 +105,27 @@
 -behaviour(prometheus_collector).
 
 %%====================================================================
+%% Macros
+%%====================================================================
+
+
+-define(ATOM_BYTES_TOTAL, erlang_vm_memory_atom_bytes_total).
+-define(BYTES_TOTAL, erlang_vm_memory_bytes_total).
+-define(DETS_TABLES, erlang_vm_dets_tables).
+-define(ETS_TABLES, erlang_vm_ets_tables).
+-define(PROCESSES_BYTES_TOTAL, erlang_vm_memory_processes_bytes_total).
+-define(SYSTEM_BYTES_TOTAL, erlang_vm_memory_system_bytes_total).
+
+-define(PROMETHEUS_VM_MEMORY, [
+                               atom_bytes_total,
+                               bytes_total,
+                               dets_tables,
+                               ets_tables,
+                               processes_bytes_total,
+                               system_bytes_total
+                              ]).
+
+%%====================================================================
 %% Collector API
 %%====================================================================
 
@@ -89,72 +138,76 @@ deregister_cleanup(_) -> ok.
 %% @private
 collect_mf(_Registry, Callback) ->
   Memory = erlang:memory(),
+  [add_metric_family(MFName, Memory, Callback)
+   || MFName <- enabled_memory_metrics()],
+  ok.
 
-  Callback(create_gauge(erlang_vm_memory_bytes_total,
+
+add_metric_family(atom_bytes_total, Memory, Callback) ->
+  Callback(create_gauge(?ATOM_BYTES_TOTAL,
+                        "The total amount of memory currently allocated "
+                        "for atoms. This memory is part of the memory "
+                        "presented as system memory.",
+                        Memory));
+add_metric_family(bytes_total, Memory, Callback) ->
+  Callback(create_gauge(?BYTES_TOTAL,
                         "The total amount of memory currently allocated. "
                         "This is the same as the sum of the memory size "
                         "for processes and system.",
-                        Memory)),
-
-  Callback(create_gauge(erlang_vm_memory_processes_bytes_total,
+                        Memory));
+add_metric_family(ets_tables, Memory, Callback) ->
+  Callback(create_gauge(?ETS_TABLES,
+                        "Erlang VM ETS Tables count",
+                        Memory));
+add_metric_family(dets_tables, Memory, Callback) ->
+  Callback(create_gauge(?DETS_TABLES,
+                        "Erlang VM DETS Tables count",
+                        Memory));
+add_metric_family(processes_bytes_total, Memory, Callback) ->
+  Callback(create_gauge(?PROCESSES_BYTES_TOTAL,
                         "The total amount of memory currently allocated "
                         "for the Erlang processes.",
-                        Memory)),
-
-  Callback(create_gauge(erlang_vm_memory_system_bytes_total,
+                        Memory));
+add_metric_family(system_bytes_total, Memory, Callback) ->
+  Callback(create_gauge(?SYSTEM_BYTES_TOTAL,
                         "The total amount of memory currently allocated "
                         "for the emulator that is not directly related "
                         "to any Erlang process. Memory presented as processes "
                         "is not included in this memory.",
-                        Memory)),
-
-  Callback(create_gauge(erlang_vm_memory_atom_bytes_total,
-                        "The total amount of memory currently allocated "
-                        "for atoms. This memory is part of the memory "
-                        "presented as system memory.",
-                        Memory)),
-
-  Callback(create_gauge(erlang_vm_ets_tables,
-                        "Erlang VM ETS Tables count",
-                        Memory)),
-
-  Callback(create_gauge(erlang_vm_dets_tables,
-                        "Erlang VM DETS Tables count",
-                        Memory)),
-  ok.
+                        Memory)).
 
 %% @private
-collect_metrics(erlang_vm_memory_bytes_total, Memory) ->
-  gauge_metrics([
-                 {[{kind, system}], proplists:get_value(system,  Memory)},
-                 {[{kind, processes}], proplists:get_value(processes, Memory)}
-                ]);
-collect_metrics(erlang_vm_memory_processes_bytes_total, Memory) ->
-  gauge_metrics([
-                 {[{usage, used}], proplists:get_value(processes_used, Memory)},
-                 {[{usage, free}],
-                  proplists:get_value(processes, Memory)
-                  - proplists:get_value(processes_used, Memory)}
-                ]);
-collect_metrics(erlang_vm_memory_system_bytes_total, Memory) ->
-  gauge_metrics([
-                 {[{usage, atom}], proplists:get_value(atom, Memory)},
-                 {[{usage, binary}], proplists:get_value(binary, Memory)},
-                 {[{usage, code}], proplists:get_value(code, Memory)},
-                 {[{usage, ets}], proplists:get_value(ets, Memory)},
-                 {[{usage, other}], memory_other(Memory)}
-                ]);
-collect_metrics(erlang_vm_memory_atom_bytes_total, Memory) ->
+collect_metrics(?ATOM_BYTES_TOTAL, Memory) ->
   gauge_metrics([
                  {[{usage, used}], proplists:get_value(atom_used, Memory)},
                  {[{usage, free}],
                   proplists:get_value(atom, Memory)
                   - proplists:get_value(atom_used, Memory)}
                 ]);
-collect_metrics(erlang_vm_ets_tables, _MFData) ->
+collect_metrics(?BYTES_TOTAL, Memory) ->
+  gauge_metrics([
+                 {[{kind, system}], proplists:get_value(system,  Memory)},
+                 {[{kind, processes}], proplists:get_value(processes, Memory)}
+                ]);
+collect_metrics(?ETS_TABLES, _MFData) ->
   gauge_metric(length(ets:all()));
-collect_metrics(erlang_vm_dets_tables, _MFData) ->
-  gauge_metric(length(dets:all())).
+collect_metrics(?DETS_TABLES, _MFData) ->
+  gauge_metric(length(dets:all()));
+collect_metrics(?PROCESSES_BYTES_TOTAL, Memory) ->
+  gauge_metrics([
+                 {[{usage, used}], proplists:get_value(processes_used, Memory)},
+                 {[{usage, free}],
+                  proplists:get_value(processes, Memory)
+                  - proplists:get_value(processes_used, Memory)}
+                ]);
+collect_metrics(?SYSTEM_BYTES_TOTAL, Memory) ->
+  gauge_metrics([
+                 {[{usage, atom}], proplists:get_value(atom, Memory)},
+                 {[{usage, binary}], proplists:get_value(binary, Memory)},
+                 {[{usage, code}], proplists:get_value(code, Memory)},
+                 {[{usage, ets}], proplists:get_value(ets, Memory)},
+                 {[{usage, other}], memory_other(Memory)}
+                ]).
 
 %%====================================================================
 %% Private Parts
@@ -166,6 +219,10 @@ memory_other(Memory) ->
     - proplists:get_value(binary, Memory)
     - proplists:get_value(code, Memory)
     - proplists:get_value(ets, Memory).
+
+enabled_memory_metrics() ->
+  application:get_env(prometheus, vm_memory_collector_metrics,
+                      ?PROMETHEUS_VM_MEMORY).
 
 -spec create_gauge(Name, Help, Data) -> prometheus_model:'MetricFamily'() when
     Name :: atom(),

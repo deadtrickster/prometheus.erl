@@ -6,15 +6,11 @@
 
 -define(PROMETHEUS_COUNTER_DEFAULT, 0).
 
--define(PROMETHEUS_VM_STATISTICS, [context_switches,
-                                   garbage_collection,
-                                   io,
-                                   reductions,
-                                   run_queue,
-                                   runtime,
-                                   wall_clock]).
-
 -define(PROMETHEUS_STANDARD_METRICS, [prometheus_counter,
                                       prometheus_gauge,
                                       prometheus_summary,
                                       prometheus_histogram]).
+
+-define(DEPRECATED(Old, New),
+        error_logger:warning_msg(Old " is deprecated and will soon be removed. "
+                                 "Please use " New " instead.~n")).

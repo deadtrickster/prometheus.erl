@@ -19,8 +19,7 @@
 
 -module(prometheus_misc).
 
--export([behaviour_modules/1,
-         observe_duration/5]).
+-export([behaviour_modules/1]).
 
 %%====================================================================
 %% Public API
@@ -31,14 +30,6 @@ behaviour_modules(Behaviour) ->
   [Module || {Module, Behaviours} <-
                all_module_attributes(behaviour),
              lists:member(Behaviour, Behaviours)].
-
-observe_duration(Metric, Registry, Name, LabelValues, Fun) ->
-  Start = current_time(),
-  try
-    Fun()
-  after
-    Metric:dobserve(Registry, Name, LabelValues, time_diff_seconds(Start))
-  end.
 
 %%====================================================================
 %% Private Parts
@@ -70,12 +61,3 @@ module_attributes(Module) ->
     V ->
       V
   end.
-
-current_time () ->
-  erlang:monotonic_time().
-
-time_diff_seconds (Start) ->
-  Microseconds = erlang:convert_time_unit(erlang:monotonic_time() - Start,
-                                          native,
-                                          micro_seconds),
-  Microseconds / 1000000.

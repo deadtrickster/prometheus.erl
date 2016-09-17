@@ -1,3 +1,7 @@
+%% @doc
+%% Serializes Prometheus registry using
+%% [protocol buffer format](http://bit.ly/2cxSuJP).
+%% @end
 -module(prometheus_protobuf_format).
 -export([content_type/0,
          format/0,
@@ -13,6 +17,9 @@
 %%====================================================================
 
 -spec content_type() -> binary().
+%% @doc
+%% Returns content type of the protocol buffer format.
+%% @end
 content_type() ->
   <<"application/vnd.google.protobuf; "
     "proto=io.prometheus.client.MetricFamily; "
@@ -20,10 +27,16 @@ content_type() ->
 
 %% @equiv format(default)
 -spec format() -> binary().
+%% @doc
+%% Formats `default' registry using protocol buffer format.
+%% @end
 format() ->
   format(default).
 
 -spec format(Registry :: prometheus_registry:registry()) -> binary().
+%% @doc
+%% Formats `Registry' using protocol buffer format.
+%% @end
 format(Registry) ->
   {ok, Fd} = ram_file:open("", [write, read, binary]),
   Callback = fun (_, Collector) ->
@@ -41,7 +54,7 @@ format(Registry) ->
 
 registry_collect_callback(Fd, Registry, Collector) ->
   Callback = fun (MF) -> file:write(Fd, delimited_encode_mf(MF)) end,
-  prometheus_collector:collect_mf(Collector, Callback, Registry).
+  prometheus_collector:collect_mf(Registry, Collector, Callback).
 
 delimited_encode_mf(MF) ->
   IoRec = prometheus_model:encode_msg(MF),

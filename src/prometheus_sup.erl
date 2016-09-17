@@ -43,6 +43,12 @@ init([]) ->
                                5000,
                                worker,
                                [prometheus_counter]},
+                              {prometheus_gauge,
+                               {prometheus_gauge, start_link, []},
+                               permanent,
+                               5000,
+                               worker,
+                               [prometheus_gauge]},
                               {prometheus_summary,
                                {prometheus_summary, start_link, []},
                                permanent,
@@ -73,7 +79,7 @@ create_tables() ->
 
 register_collectors() ->
   Collectors = prometheus_collector:enabled_collectors(),
-  prometheus_registry:register_collectors(default, Collectors).
+  prometheus_registry:register_collectors(Collectors).
 
 register_metrics() ->
   [Metric:declare(Spec, Registry) ||

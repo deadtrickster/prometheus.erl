@@ -141,7 +141,7 @@ Histogram also accepts `buckets' option. Please refer to respective modules docs
 
 ### Advanced
 
-You will need this modules only if you're writing custom collector for app/lib that can't be instrumented directly.
+You will need these modules only if you're writing custom collector for app/lib that can't be instrumented directly.
 
 - {@link prometheus_collector} - common interface for collectors;
 - {@link prometheus_format} - common interface for exposition formats;

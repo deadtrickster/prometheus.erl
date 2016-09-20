@@ -9,12 +9,12 @@ Measuring time intervals with Prometheus.erl.
 
 ## Description ##
 
-Measuring time intervals is trivial you just have to be sure you are using
+Measuring time intervals is trivial - you just have to be sure you are using
 monotonic time source. Basically interval is a difference between
 start time and end time.
 Erlang has standard `erlang:monotonic_time` function that returns
 so called native time units. Native time units are meaningless
-and have to be converted to seocnds(or other units)
+and have to be converted to seconds (or other units)
 using `erlang:convert_time_unit`.
 However as `erlang:convert_time_unit` documentation
 [warns](http://erlang.org/doc/man/erlang.html#convert_time_unit-3):

@@ -27,6 +27,7 @@ default_registry() ->
                  prometheus_vm_statistics_collector,
                  prometheus_vm_memory_collector,
                  prometheus_summary,
+                 prometheus_mnesia_collector,
                  prometheus_histogram,
                  prometheus_gauge,
                  prometheus_counter],

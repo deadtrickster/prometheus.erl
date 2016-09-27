@@ -76,7 +76,8 @@ erlang:statistics/1
 * `context_switches` for `erlang_vm_statistics_context_switches`;
 
 * `garbage_collection`
-for `erlang_vm_statistics_garbage_collection_number_of_gcs` and
+for `erlang_vm_statistics_garbage_collection_number_of_gcs`,
+`erlang_vm_statistics_garbage_collection_bytes_reclaimed`, and
 `erlang_vm_statistics_garbage_collection_words_reclaimed`;
 
 * `io` for `erlang_vm_statistics_bytes_output_total` and

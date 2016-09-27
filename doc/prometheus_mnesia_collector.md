@@ -57,4 +57,14 @@ Total number of transaction restarts.
 Metrics exported by this collector can be configured via
 `mnesia_collector_metrics` key of `prometheus` app environment.
 
+Available options:
+- `:held_locks` for `erlang_mnesia_held_locks`;
+- `:lock_queue` for `erlang_mnesia_lock_queue`;
+- `:transaction_participants` for `erlang_mnesia_transaction_participants`;
+- `:transaction_coordinators` for `erlang_mnesia_transaction_coordinators`;
+- `:transaction_failures` for `erlang_mnesia_failed_transactions`;
+- `:transaction_commits` for `erlang_mnesia_committed_transactions`;
+- `:transaction_log_writes` for `erlang_mnesia_logged_transactions`;
+- `:transaction_restarts` for `erlang_mnesia_restarted_transactions`.
+
 By default all metrics are enabled.

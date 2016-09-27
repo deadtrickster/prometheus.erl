@@ -76,7 +76,8 @@
 %%   </li>
 %%   <li>
 %%     `garbage_collection'
-%%      for `erlang_vm_statistics_garbage_collection_number_of_gcs' and
+%%      for `erlang_vm_statistics_garbage_collection_number_of_gcs',
+%%      `erlang_vm_statistics_garbage_collection_bytes_reclaimed', and
 %%      `erlang_vm_statistics_garbage_collection_words_reclaimed';
 %%   </li>
 %%   <li>

@@ -28,7 +28,14 @@ test_mnesia_on_collector_env_on() ->
   application:set_env(prometheus,mnesia_collector_metrics,
                       [transaction_coordinators]),
   Metrics = prometheus_text_format:format(),
-  ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_transaction_coord")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_held_locks")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_lock_queue")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_transaction_participants")),
+  ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_transaction_coordinators")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_failed_transactions")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_committed_transactions")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_logged_transactions")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_restarted_transactions")),
   application:unset_env(prometheus,mnesia_collector_metrics,[]).
 
 test_mnesia_on_collector_env_off() ->
@@ -36,9 +43,23 @@ test_mnesia_on_collector_env_off() ->
   application:set_env(prometheus,mnesia_collector_metrics,[]),
   Metrics = prometheus_text_format:format(),
   ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_held_locks")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_lock_queue")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_transaction_participants")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_transaction_coordinators")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_failed_transactions")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_committed_transactions")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_logged_transactions")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_restarted_transactions")),
   application:unset_env(prometheus,mnesia_collector_metrics,[]).
 
 test_mnesia_on_collector() ->
   prometheus_registry:register_collector(prometheus_mnesia_collector),
   Metrics = prometheus_text_format:format(),
-  ?assertMatch({match, _}, re:run(Metrics, "erlang_mnesia_held_locks")).
+  ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_held_locks")),
+  ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_lock_queue")),
+  ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_transaction_participants")),
+  ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_transaction_coordinators")),
+  ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_failed_transactions")),
+  ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_committed_transactions")),
+  ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_logged_transactions")),
+  ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_restarted_transactions")).

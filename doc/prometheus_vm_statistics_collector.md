@@ -38,6 +38,10 @@ The total number of garbage collections since the system started.
 Type: counter.<br />
 The total number of words reclaimed by GC since the system started.
 
+* `erlang_vm_statistics_garbage_collection_bytes_reclaimed`<br />
+Type: counter.<br />
+The total number of bytes reclaimed by GC since the system started.
+
 * `erlang_vm_statistics_reductions_total`<br />
 Type: counter.<br />
 Total reductions count.

@@ -32,6 +32,11 @@
 %%     The total number of words reclaimed by GC since the system started.
 %%   </li>
 %%   <li>
+%%     `erlang_vm_statistics_garbage_collection_bytes_reclaimed'<br/>
+%%     Type: counter.<br/>
+%%     The total number of bytes reclaimed by GC since the system started.
+%%   </li>
+%%   <li>
 %%     `erlang_vm_statistics_reductions_total'<br/>
 %%     Type: counter.<br/>
 %%     Total reductions count.
@@ -121,6 +126,8 @@
 -define(GC_NUM_GCS, erlang_vm_statistics_garbage_collection_number_of_gcs).
 -define(GC_WORDS_RECLAIMED,
         erlang_vm_statistics_garbage_collection_words_reclaimed).
+-define(GC_BYTES_RECLAIMED,
+        erlang_vm_statistics_garbage_collection_bytes_reclaimed).
 -define(REDUCTIONS, erlang_vm_statistics_reductions_total).
 -define(RUN_QUEUES_LENGTH, erlang_vm_statistics_run_queues_length_total).
 -define(RUNTIME_MS, erlang_vm_statistics_runtime_milliseconds).
@@ -163,7 +170,9 @@ add_metric_family(garbage_collection, Stat, Callback) ->
   do_add_metric_family(?GC_NUM_GCS, Stat, Callback,
                        "Garbage collection: number of GCs"),
   do_add_metric_family(?GC_WORDS_RECLAIMED, Stat, Callback,
-                       "Garbage collection: words reclaimed");
+                       "Garbage collection: words reclaimed"),
+  do_add_metric_family(?GC_BYTES_RECLAIMED, Stat, Callback,
+                       "Garbage collection: bytes reclaimed");
 add_metric_family(io, Stat, Callback) ->
   do_add_metric_family(?BYTES_RECEIVED, Stat, Callback,
                        "Total number of bytes received through ports"),
@@ -198,6 +207,8 @@ collect_metrics(?GC_NUM_GCS, {NumberOfGCs, _, _}) ->
   counter_metric(NumberOfGCs);
 collect_metrics(?GC_WORDS_RECLAIMED, {_, WordsReclaimed, _}) ->
   counter_metric(WordsReclaimed);
+collect_metrics(?GC_BYTES_RECLAIMED, {_, WordsReclaimed, _}) ->
+  counter_metric(WordsReclaimed * erlang:system_info(wordsize));
 collect_metrics(?REDUCTIONS, {ReductionsTotal, _}) ->
   counter_metric(ReductionsTotal);
 collect_metrics(?RUN_QUEUES_LENGTH, Total) ->

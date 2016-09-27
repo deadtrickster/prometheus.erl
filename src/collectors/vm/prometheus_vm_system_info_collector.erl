@@ -307,7 +307,6 @@ collect_metrics(?THREAD_POOL_SIZE, Value) ->
 collect_metrics(?TIME_CORRECTION, Value) ->
   boolean_metric(Value).
 
-
 %%====================================================================
 %% Private Parts
 %%====================================================================

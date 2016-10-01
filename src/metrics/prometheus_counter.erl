@@ -108,6 +108,7 @@
 
 -define(TABLE, ?PROMETHEUS_COUNTER_TABLE).
 -define(SUM_POS, 2).
+-define(WIDTH, 16).
 
 %%====================================================================
 %% Metric API
@@ -194,7 +195,9 @@ inc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
                 "inc accepts only non-negative integers"});
 inc(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   try
-    ets:update_counter(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, Value})
+    ets:update_counter(?TABLE,
+                       key(Registry, Name, LabelValues),
+                       {?SUM_POS, Value})
   catch error:badarg ->
       insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
   end,
@@ -268,7 +271,14 @@ remove(Name, LabelValues) ->
 %% mismatch.
 %% @end
 remove(Registry, Name, LabelValues) ->
-  prometheus_metric:remove_labels(?TABLE, Registry, Name, LabelValues).
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  Schedulers = erlang:system_info(schedulers),
+  case lists:flatten([ets:take(?TABLE,
+                               {Registry, Name, LabelValues, Scheduler})
+                      || Scheduler <- lists:seq(1, Schedulers)]) of
+    [] -> false;
+    _ -> true
+  end.
 
 %% @equiv reset(default, Name, [])
 reset(Name) ->
@@ -288,7 +298,15 @@ reset(Name, LabelValues) ->
 %% @end
 reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?SUM_POS, 0}).
+  Schedulers = erlang:system_info(schedulers),
+  case lists:usort([ets:update_element(?TABLE,
+                                       {Registry, Name, LabelValues, Scheduler},
+                                       {?SUM_POS, 0})
+                    || Scheduler <- lists:seq(1, Schedulers)]) of
+    [_, _] -> true;
+    [true] -> true;
+    _ -> false
+  end.
 
 %% @equiv value(default, Name, [])
 value(Name) ->
@@ -309,9 +327,11 @@ value(Name, LabelValues) ->
 %% @end
 value(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
-    [{_Key, Value}] -> Value;
-    [] -> undefined
+  case ets:select(?TABLE, [{{{Registry, Name, LabelValues, '_'}, '$1'},
+                            [],
+                            ['$1']}]) of
+    [] -> undefined;
+    List -> lists:sum(List)
   end.
 
 %%====================================================================
@@ -321,7 +341,7 @@ value(Registry, Name, LabelValues) ->
 %% @private
 deregister_cleanup(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry),
-  true = ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_'}),
+  true = ets:match_delete(?TABLE, {{Registry, '_', '_', '_'}, '_'}),
   ok.
 
 %% @private
@@ -333,8 +353,12 @@ collect_mf(Registry, Callback) ->
 
 %% @private
 collect_metrics(Name, {Labels, Registry}) ->
-  [counter_metric(lists:zip(Labels, LabelValues), Value) ||
-    [LabelValues, Value] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'})].
+  MFValues = ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2'}),
+  [begin
+     Value = reduce_label_values(LabelValues, MFValues),
+     counter_metric(lists:zip(Labels, LabelValues), Value)
+   end ||
+    LabelValues <- collect_unique_labels(MFValues)].
 
 %%====================================================================
 %% Gen_server API
@@ -376,9 +400,9 @@ start_link() ->
 %%====================================================================
 
 dinc_impl(Registry, Name, LabelValues, Value) ->
-  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
+  case ets:lookup(?TABLE, key(Registry, Name, LabelValues)) of
     [{_Key, OldValue}] ->
-      ets:update_element(?TABLE, {Registry, Name, LabelValues},
+      ets:update_element(?TABLE, key(Registry, Name, LabelValues),
                          {?SUM_POS, Value + OldValue});
     [] ->
       insert_metric(Registry, Name, LabelValues, Value, fun dinc_impl/4)
@@ -386,12 +410,23 @@ dinc_impl(Registry, Name, LabelValues, Value) ->
 
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  case ets:insert_new(?TABLE, {{Registry, Name, LabelValues}, Value}) of
+  case ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), Value}) of
     false -> %% some sneaky process already inserted
       ConflictCB(Registry, Name, LabelValues, Value);
     true ->
       ok
   end.
+
+key(Registry, Name, LabelValues) ->
+  X = erlang:system_info(scheduler_id),
+  Rnd = X band (?WIDTH-1),
+  {Registry, Name, LabelValues, Rnd}.
+
+collect_unique_labels(MFValues) ->
+  lists:usort([L || [L, _] <- MFValues]).
+
+reduce_label_values(Labels, MFValues) ->
+  lists:sum([Y || [L, Y] <- MFValues, L == Labels]).
 
 create_counter(Name, Help, Data) ->
   create_mf(Name, Help, counter, ?MODULE, Data).

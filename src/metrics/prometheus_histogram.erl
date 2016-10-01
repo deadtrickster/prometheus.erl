@@ -103,6 +103,7 @@
 -define(TABLE, ?PROMETHEUS_HISTOGRAM_TABLE).
 -define(BUCKETS_POS, 2).
 -define(BUCKETS_START, 3).
+-define(WIDTH, 16).
 
 %%====================================================================
 %% Metric API
@@ -195,11 +196,11 @@ observe(Name, LabelValues, Value) ->
 %% mismatch.
 %% @end
 observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
-  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
+  case ets:lookup(?TABLE, key(Registry, Name, LabelValues)) of
     [Metric] ->
       {BucketPosition, SumPosition} =
         calculate_histogram_update_positions(Metric, Value),
-      ets:update_counter(?TABLE, {Registry, Name, LabelValues},
+      ets:update_counter(?TABLE, key(Registry, Name, LabelValues),
                          [{BucketPosition, 1}, {SumPosition, Value}]);
     [] ->
       insert_metric(Registry, Name, LabelValues, Value, fun observe/4)
@@ -287,7 +288,14 @@ remove(Name, LabelValues) ->
 %% mismatch.
 %% @end
 remove(Registry, Name, LabelValues) ->
-  prometheus_metric:remove_labels(?TABLE, Registry, Name, LabelValues).
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  Schedulers = erlang:system_info(schedulers),
+  case lists:flatten([ets:take(?TABLE,
+                               {Registry, Name, LabelValues, Scheduler})
+                      || Scheduler <- lists:seq(1, Schedulers)]) of
+    [] -> false;
+    _ -> true
+  end.
 
 %% @equiv reset(default, Name, [])
 reset(Name) ->
@@ -309,7 +317,16 @@ reset(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   Buckets = prometheus_metric:mf_data(MF),
   UpdateSpec = generate_update_spec(?BUCKETS_START, length(Buckets)),
-  ets:update_element(?TABLE, {Registry, Name, LabelValues}, UpdateSpec).
+
+  Schedulers = erlang:system_info(schedulers),
+  case lists:usort([ets:update_element(?TABLE,
+                                       {Registry, Name, LabelValues, Scheduler},
+                                       UpdateSpec)
+                    || Scheduler <- lists:seq(1, Schedulers)]) of
+    [_, _] -> true;
+    [true] -> true;
+    _ -> false
+  end.
 
 %% @equiv value(default, Name, [])
 value(Name) ->
@@ -333,9 +350,13 @@ value(Name, LabelValues) ->
 %% @end
 value(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
-    [Metric] -> {buckets_counters(Metric), sum(MF, Metric)};
-    [] -> undefined
+  Schedulers = erlang:system_info(schedulers),
+
+  RawValues = [ets:lookup(?TABLE, {Registry, Name, LabelValues, Scheduler})
+               || Scheduler <- lists:seq(1, Schedulers)],
+  case lists:flatten(RawValues) of
+    [] -> undefined;
+    Values -> {reduce_buckets_counters(Values), reduce_sum(MF, Values)}
   end.
 
 %% @equiv buckets(default, Name, [])
@@ -372,15 +393,26 @@ collect_mf(Registry, Callback) ->
   ok.
 
 %% @private
-collect_metrics(Name, {Labels, Registry, DU, Buckets}) ->
-  BoundPlaceholders = gen_query_bound_placeholders(Buckets),
-  SumPlaceholder = gen_query_placeholder(sum_position(Buckets)),
+collect_metrics(Name, {Labels, Registry, DU, MFBuckets}) ->
+  BoundPlaceholders = gen_query_bound_placeholders(MFBuckets),
+  SumPlaceholder = gen_query_placeholder(sum_position(MFBuckets)),
   QuerySpec =
-    [{Registry, Name, '$1'}, '$2']
+    [{Registry, Name, '$1', '_'}, '_']
     ++ BoundPlaceholders
     ++ [SumPlaceholder],
-  [create_histogram_metric(Labels, DU, Value) ||
-    Value <- ets:match(?TABLE, list_to_tuple(QuerySpec))].
+
+
+  Fun = fun (Bucket) ->
+            prometheus_time:maybe_convert_to_native(DU, Bucket)
+        end,
+  Buckets = lists:map(Fun, MFBuckets),
+
+  MFValues = ets:match(?TABLE, list_to_tuple(QuerySpec)),
+  [begin
+     Stat = reduce_label_values(LabelValues, MFValues),
+     create_histogram_metric(Labels, DU, Buckets, LabelValues, Stat)
+   end ||
+    LabelValues <- collect_unique_labels(MFValues)].
 
 %%====================================================================
 %% Gen_server API
@@ -473,13 +505,13 @@ validate_histogram_bound(Bound) ->
   erlang:error({histogram_invalid_bound, Bound}).
 
 dobserve_impl(Registry, Name, LabelValues, Value) ->
-  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
+  case ets:lookup(?TABLE, key(Registry, Name, LabelValues)) of
     [Metric] ->
       {BucketPosition, SumPosition} =
         calculate_histogram_update_positions(Metric, Value),
-      ets:update_element(?TABLE, {Registry, Name, LabelValues},
+      ets:update_element(?TABLE, key(Registry, Name, LabelValues),
                          {SumPosition, sum(Metric) + Value}),
-      ets:update_counter(?TABLE, {Registry, Name, LabelValues},
+      ets:update_counter(?TABLE, key(Registry, Name, LabelValues),
                          {BucketPosition, 1});
     [] ->
       insert_metric(Registry, Name, LabelValues, Value, fun dobserve_impl/4)
@@ -494,7 +526,7 @@ insert_metric(Registry, Name, LabelValues, Value, CB) ->
         end,
   BoundCounters = lists:duplicate(length(MFBuckets), 0),
   MetricSpec =
-    [{Registry, Name, LabelValues}, lists:map(Fun, MFBuckets)]
+    [key(Registry, Name, LabelValues), lists:map(Fun, MFBuckets)]
     ++ BoundCounters
     ++ [0],
   ets:insert(?TABLE, list_to_tuple(MetricSpec)),
@@ -530,9 +562,16 @@ augment_counters([Counter | Counters], LAcc, CAcc) ->
 metric_buckets(Metric) ->
   element(?BUCKETS_POS, Metric).
 
-buckets_counters( Metric) ->
-  sub_tuple_to_list(Metric, ?BUCKETS_START,
-                    ?BUCKETS_START + length(metric_buckets(Metric))).
+reduce_buckets_counters(Metrics) ->
+  ABuckets =
+    [sub_tuple_to_list(Metric, ?BUCKETS_START,
+                       ?BUCKETS_START + length(metric_buckets(Metric)))
+     || Metric <- Metrics],
+  [lists:sum(Bucket) || Bucket <- transpose(ABuckets)].
+
+transpose([[]|_]) -> [];
+transpose(M) ->
+  [lists:map(fun hd/1, M) | transpose(lists:map(fun tl/1, M))].
 
 sum_position(Metric) when is_tuple(Metric) ->
   ?BUCKETS_START + length(metric_buckets(Metric));
@@ -542,12 +581,14 @@ sum_position(Buckets) when is_list(Buckets) ->
 sum(Metric) ->
   element(sum_position(Metric), Metric).
 
-sum(MF, Metric) ->
-  DU = prometheus_metric:mf_duration_unit(MF),
-  prometheus_time:maybe_convert_to_du(DU,
-                                      element(sum_position(Metric), Metric)).
+reduce_sum(Metrics) ->
+  lists:sum([element(sum_position(Metric), Metric) || Metric <- Metrics]).
 
-create_histogram_metric(Labels, DU, [LabelValues, Buckets | Stat]) ->
+reduce_sum(MF, Metrics) ->
+  DU = prometheus_metric:mf_duration_unit(MF),
+  prometheus_time:maybe_convert_to_du(DU, reduce_sum(Metrics)).
+
+create_histogram_metric(Labels, DU, Buckets, LabelValues, Stat) ->
   Fun = fun(Bound) ->
             prometheus_time:maybe_convert_to_du(DU, Bound)
         end,
@@ -564,7 +605,7 @@ create_histogram_metric(Labels, DU, [LabelValues, Buckets | Stat]) ->
 
 delete_metrics(Registry, Buckets) ->
   BoundCounters = lists:duplicate(length(Buckets), '_'),
-  MetricSpec = [{Registry, '_', '_'}, '_'] ++ BoundCounters ++ ['_'],
+  MetricSpec = [{Registry, '_', '_', '_'}, '_'] ++ BoundCounters ++ ['_'],
   ets:match_delete(?TABLE, list_to_tuple(MetricSpec)).
 
 sub_tuple_to_list(Tuple, Pos, Size) when Pos < Size ->
@@ -583,6 +624,18 @@ position([H|L], Pred, Pos) ->
     false ->
       position(L, Pred, Pos + 1)
   end.
+
+key(Registry, Name, LabelValues) ->
+  X = erlang:system_info(scheduler_id),
+  Rnd = X band (?WIDTH-1),
+  {Registry, Name, LabelValues, Rnd}.
+
+collect_unique_labels(MFValues) ->
+  lists:usort([L || [L | _] <- MFValues]).
+
+reduce_label_values(Labels, MFValues) ->
+  [lists:sum(C)
+   || C <- transpose([V || [L | V] <- MFValues, L == Labels])].
 
 create_histogram(Name, Help, Data) ->
   prometheus_model_helpers:create_mf(Name, Help, histogram, ?MODULE, Data).

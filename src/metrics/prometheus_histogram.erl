@@ -289,10 +289,9 @@ remove(Name, LabelValues) ->
 %% @end
 remove(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  Schedulers = erlang:system_info(schedulers),
   case lists:flatten([ets:take(?TABLE,
                                {Registry, Name, LabelValues, Scheduler})
-                      || Scheduler <- lists:seq(1, Schedulers)]) of
+                      || Scheduler <- schedulers_seq()]) of
     [] -> false;
     _ -> true
   end.
@@ -318,11 +317,10 @@ reset(Registry, Name, LabelValues) ->
   Buckets = prometheus_metric:mf_data(MF),
   UpdateSpec = generate_update_spec(?BUCKETS_START, length(Buckets)),
 
-  Schedulers = erlang:system_info(schedulers),
   case lists:usort([ets:update_element(?TABLE,
                                        {Registry, Name, LabelValues, Scheduler},
                                        UpdateSpec)
-                    || Scheduler <- lists:seq(1, Schedulers)]) of
+                    || Scheduler <- schedulers_seq()]) of
     [_, _] -> true;
     [true] -> true;
     _ -> false
@@ -350,10 +348,9 @@ value(Name, LabelValues) ->
 %% @end
 value(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  Schedulers = erlang:system_info(schedulers),
 
   RawValues = [ets:lookup(?TABLE, {Registry, Name, LabelValues, Scheduler})
-               || Scheduler <- lists:seq(1, Schedulers)],
+               || Scheduler <- schedulers_seq()],
   case lists:flatten(RawValues) of
     [] -> undefined;
     Values -> {reduce_buckets_counters(Values), reduce_sum(MF, Values)}
@@ -624,6 +621,9 @@ position([H|L], Pred, Pos) ->
     false ->
       position(L, Pred, Pos + 1)
   end.
+
+schedulers_seq() ->
+  lists:seq(0, ?WIDTH-1).
 
 key(Registry, Name, LabelValues) ->
   X = erlang:system_info(scheduler_id),

@@ -254,10 +254,9 @@ remove(Name, LabelValues) ->
 %% @end
 remove(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  Schedulers = erlang:system_info(schedulers),
   case lists:flatten([ets:take(?TABLE,
                                {Registry, Name, LabelValues, Scheduler})
-                      || Scheduler <- lists:seq(1, Schedulers)]) of
+                      || Scheduler <- schedulers_seq()]) of
     [] -> false;
     _ -> true
   end.
@@ -280,11 +279,10 @@ reset(Name, LabelValues) ->
 %% @end
 reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  Schedulers = erlang:system_info(schedulers),
   case lists:usort([ets:update_element(?TABLE,
                                        {Registry, Name, LabelValues, Scheduler},
                                        [{?COUNTER_POS, 0}, {?SUM_POS, 0}])
-                    || Scheduler <- lists:seq(1, Schedulers)]) of
+                    || Scheduler <- schedulers_seq()]) of
     [_, _] -> true;
     [true] -> true;
     _ -> false
@@ -425,6 +423,9 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
 
 sum(Metric) ->
   element(?SUM_POS, Metric).
+
+schedulers_seq() ->
+  lists:seq(0, ?WIDTH-1).
 
 key(Registry, Name, LabelValues) ->
   X = erlang:system_info(scheduler_id),

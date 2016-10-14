@@ -6,9 +6,7 @@ Copyright (c) 2016 Ilya Khaprov <<i.khaprov@gmail.com>>.
 
 __Version:__ 3.0.0
 
-[![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)](https://hex.pm/packages/prometheus)
-[![Hex.pm](https://img.shields.io/hexpm/dt/prometheus.svg?maxAge=2592000)](https://hex.pm/packages/prometheus)
-[![Build Status](https://travis-ci.org/deadtrickster/prometheus.erl.svg?branch=version-3)](https://travis-ci.org/deadtrickster/prometheus.erl) [![Coverage Status](https://coveralls.io/repos/github/deadtrickster/prometheus.erl/badge.svg?branch=master)](https://coveralls.io/github/deadtrickster/prometheus.erl?branch=master)
+[![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)](https://hex.pm/packages/prometheus) [![Build Status](https://travis-ci.org/deadtrickster/prometheus.erl.svg?branch=version-3)](https://travis-ci.org/deadtrickster/prometheus.erl) [![Coverage Status](https://coveralls.io/repos/github/deadtrickster/prometheus.erl/badge.svg?branch=master)](https://coveralls.io/github/deadtrickster/prometheus.erl?branch=master)
 
 [Prometheus.io](https://prometheus.io) monitoring system and time series database client in Erlang.
 
@@ -161,7 +159,8 @@ Histogram also accepts `buckets` option. Please refer to respective modules docs
 ### General Helpers
 
 - [`prometheus_buckets`](https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_buckets.md) - linear or exponential bucket generators;
-- [`prometheus_http`](https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_http.md) - helpers for HTTP instrumenters.
+- [`prometheus_http`](https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_http.md) - helpers for HTTP instrumenters;
+- [`prometheus_mnesia`](https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_mnesia.md) - Mnesia instrumentation helpers.
 
 ### Advanced
 
@@ -235,6 +234,7 @@ MIT
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_gauge.md" class="module">prometheus_gauge</a></td></tr>
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_histogram.md" class="module">prometheus_histogram</a></td></tr>
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_http.md" class="module">prometheus_http</a></td></tr>
+<tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_mnesia.md" class="module">prometheus_mnesia</a></td></tr>
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_mnesia_collector.md" class="module">prometheus_mnesia_collector</a></td></tr>
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_model_helpers.md" class="module">prometheus_model_helpers</a></td></tr>
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_protobuf_format.md" class="module">prometheus_protobuf_format</a></td></tr>

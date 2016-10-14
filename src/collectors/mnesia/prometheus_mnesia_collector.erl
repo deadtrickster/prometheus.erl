@@ -99,11 +99,7 @@ collect_mf(_Registry, Callback) ->
 collect_mf(CB) ->
   SetMetrics = application:get_env(prometheus, mnesia_collector_metrics, all),
 
-  {Participants, Coordinators} =
-    case get_tm_info(SetMetrics) andalso mnesia_tm:get_info(1000) of
-      {info, Ps, Cs} -> {length(Ps), length(Cs)};
-      _ -> {undefined, undefined}    % gets transported as "NaN"
-    end,
+  {Participants, Coordinators} = get_tm_info(SetMetrics),
 
   Metrics =
     [{erlang_mnesia_held_locks,
@@ -158,10 +154,17 @@ collect_metrics(_Key, {gauge, Val}) -> gauge_metric(Val).
 %%====================================================================
 
 get_tm_info(SetMetrics) ->
+  case tm_metrics_enabled(SetMetrics) of
+    true ->
+      prometheus_mnesia:tm_info();
+    _ ->
+      {undefined, undefined}
+  end.
+
+tm_metrics_enabled(SetMetrics) ->
   (SetMetrics =:= all)
     orelse
-      (lists:member(transaction_participants, SetMetrics)
-       orelse
+      (lists:member(transaction_participants, SetMetrics) orelse
        lists:member(transaction_coordinators, SetMetrics)).
 
 emit(CB, {MetricName, Selector, Help, Type, DF}, SetMetrics) ->

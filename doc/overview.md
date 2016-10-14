@@ -138,7 +138,8 @@ Histogram also accepts `buckets' option. Please refer to respective modules docs
 ### General Helpers
 
 - {@link prometheus_buckets} - linear or exponential bucket generators;
-- {@link prometheus_http} - helpers for HTTP instrumenters.
+- {@link prometheus_http} - helpers for HTTP instrumenters;
+- {@link prometheus_mnesia} - Mnesia instrumentation helpers.
 
 ### Advanced
 

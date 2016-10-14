@@ -159,7 +159,8 @@ Histogram also accepts `buckets` option. Please refer to respective modules docs
 ### General Helpers
 
 - [`prometheus_buckets`](prometheus_buckets.md) - linear or exponential bucket generators;
-- [`prometheus_http`](prometheus_http.md) - helpers for HTTP instrumenters.
+- [`prometheus_http`](prometheus_http.md) - helpers for HTTP instrumenters;
+- [`prometheus_mnesia`](prometheus_mnesia.md) - Mnesia instrumentation helpers.
 
 ### Advanced
 
@@ -233,6 +234,7 @@ MIT
 <tr><td><a href="prometheus_gauge.md" class="module">prometheus_gauge</a></td></tr>
 <tr><td><a href="prometheus_histogram.md" class="module">prometheus_histogram</a></td></tr>
 <tr><td><a href="prometheus_http.md" class="module">prometheus_http</a></td></tr>
+<tr><td><a href="prometheus_mnesia.md" class="module">prometheus_mnesia</a></td></tr>
 <tr><td><a href="prometheus_mnesia_collector.md" class="module">prometheus_mnesia_collector</a></td></tr>
 <tr><td><a href="prometheus_model_helpers.md" class="module">prometheus_model_helpers</a></td></tr>
 <tr><td><a href="prometheus_protobuf_format.md" class="module">prometheus_protobuf_format</a></td></tr>

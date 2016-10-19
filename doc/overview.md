@@ -3,7 +3,10 @@
 @version 3.0.1
 
 @doc
-[![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)](https://hex.pm/packages/prometheus) [![Build Status](https://travis-ci.org/deadtrickster/prometheus.erl.svg?branch=version-3)](https://travis-ci.org/deadtrickster/prometheus.erl) [![Coverage Status](https://coveralls.io/repos/github/deadtrickster/prometheus.erl/badge.svg?branch=master)](https://coveralls.io/github/deadtrickster/prometheus.erl?branch=master)
+[![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)](https://hex.pm/packages/prometheus)
+[![Hex.pm](https://img.shields.io/hexpm/dt/prometheus.svg?maxAge=2592000)](https://hex.pm/packages/prometheus)
+[![Build Status](https://travis-ci.org/deadtrickster/prometheus.erl.svg?branch=version-3)](https://travis-ci.org/deadtrickster/prometheus.erl)
+[![Coverage Status](https://coveralls.io/repos/github/deadtrickster/prometheus.erl/badge.svg?branch=master)](https://coveralls.io/github/deadtrickster/prometheus.erl?branch=master)
 
 [Prometheus.io](https://prometheus.io) monitoring system and time series database client in Erlang.
 

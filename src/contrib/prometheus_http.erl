@@ -5,6 +5,10 @@
          status_class/1,
          negotiate/2]).
 
+-ifdef(TEST).
+-export([parse_accept/1]).
+-endif.
+
 -export_type([status_code/0,
               status_class/0]).
 
@@ -259,7 +263,7 @@ compare_media_types(#media_range{subtype = "*",
                                  params = Params1},
                     #media_range{subtype = "*",
                                  params = Params2}) ->
-  length(Params1) =< length(Params2);
+  length(Params1) >= length(Params2);
 compare_media_types(#media_range{subtype = "*"},
                     _) ->
   false;

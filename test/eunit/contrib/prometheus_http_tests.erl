@@ -3,7 +3,7 @@
 -include_lib("eunit/include/eunit.hrl").
 
 -define(CHROME_ACCEPT, "application/xml,application/xhtml+xml,"
-        "text/html;q=0.9,text/plain;q=0.8,image/png,*/*;q=0.5").
+        "text/html;q=0.9,text/plain;q=0.8,image/png,image/*;q=0.9,*/*;q=0.5").
 
 -define(PROMETHEUS_ACCEPT, "application/vnd.google.protobuf;"
         "proto=io.prometheus.client.MetricFamily;encoding=delimited;q=0.7,"
@@ -33,7 +33,28 @@ status_class_test() ->
   ?assertMatch("unknown", prometheus_http:status_class(655)).
 
 
-%% https://bitbucket.org/ww/goautoneg
+parse_accept_test() ->
+  ?assertMatch([{media_range, "image", "png", 1, [{"name", "value"}]},
+                {media_range, "text", "html", 1, []},
+                {media_range, "image", "*", 1, [{"name", "value"}, {"name1", "value1"}]},
+                {media_range, "image", "*", 1, [{"name", "value"}]},
+                {media_range, "*", "*", 1, [{"name", "value"}, {"name1", "value1"}]},
+                {media_range, "*", "*", 1, [{"name", "value"}]},
+                {media_range, "text", "org", 0.5, []},
+                {media_range, "text", "plain", 0, [{"name", "value"}]}],
+               prometheus_http:parse_accept("text/org;q=0.5,"
+                                            "text/html,"
+                                            "*/*;name=value,"
+                                            "*/*;name=value;name1=value1,"
+                                            "image/*;name=value,"
+                                            "image/png;name=value,"
+                                            "image/*;name=value;name1=value1,"
+                                            "text/plain;q=qwe;name=value;orphaned")),
+
+  ?assertMatch([{media_range, "image", "png", 1, [{"name", "value"}]},
+                {media_range, "image", "*", 1, [{"name", "value"}, {"name1", "value1"}]}],
+               prometheus_http:parse_accept("image/*;name=value;name1=value1,"
+                                            "image/png;name=value")).
 
 content_negotiation_test() ->
   ?assertEqual("image/png",
@@ -46,6 +67,9 @@ content_negotiation_test() ->
   ?assertEqual("text/plain",
                prometheus_http:negotiate(?CHROME_ACCEPT, ["text/n3",
                                                           "text/plain"])),
+  ?assertEqual("image/jpg",
+               prometheus_http:negotiate(?CHROME_ACCEPT, ["text/plain",
+                                                          "image/jpg"])),
   ?assertEqual("text/n3",
                prometheus_http:negotiate(?CHROME_ACCEPT, ["text/n3",
                                                           "application/rdf+xml"])),

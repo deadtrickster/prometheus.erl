@@ -2,6 +2,9 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-define(RFC_ACCEPT, "text/*;q=0.3, text/html;q=0.7, text/html;level=1,"
+        "text/html;level=2;q=0.4, */*;q=0.5").
+
 -define(CHROME_ACCEPT, "application/xml,application/xhtml+xml,"
         "text/html;q=0.9,text/plain;q=0.8,image/png,image/*;q=0.9,*/*;q=0.5").
 
@@ -34,13 +37,13 @@ status_class_test() ->
 
 
 parse_accept_test() ->
-  ?assertMatch([{media_range, "image", "png", 1, [{"name", "value"}]},
+  ?assertMatch([{media_range, "text", "org", 0.5, []},
                 {media_range, "text", "html", 1, []},
-                {media_range, "image", "*", 1, [{"name", "value"}, {"name1", "value1"}]},
-                {media_range, "image", "*", 1, [{"name", "value"}]},
-                {media_range, "*", "*", 1, [{"name", "value"}, {"name1", "value1"}]},
                 {media_range, "*", "*", 1, [{"name", "value"}]},
-                {media_range, "text", "org", 0.5, []},
+                {media_range, "*", "*", 1, [{"name", "value"}, {"name1", "value1"}]},
+                {media_range, "image", "*", 1, [{"name", "value"}]},
+                {media_range, "image", "png", 1, [{"name", "value"}]},
+                {media_range, "image", "*", 1, [{"name", "value"}, {"name1", "value1"}]},
                 {media_range, "text", "plain", 0, [{"name", "value"}]}],
                prometheus_http:parse_accept("text/org;q=0.5,"
                                             "text/html,"
@@ -51,12 +54,46 @@ parse_accept_test() ->
                                             "image/*;name=value;name1=value1,"
                                             "text/plain;q=qwe;name=value;orphaned")),
 
-  ?assertMatch([{media_range, "image", "png", 1, [{"name", "value"}]},
-                {media_range, "image", "*", 1, [{"name", "value"}, {"name1", "value1"}]}],
+  ?assertMatch([{media_range, "image", "*", 1, [{"name", "value"}, {"name1", "value1"}]},
+                {media_range, "image", "png", 1, [{"name", "value"}]}],
                prometheus_http:parse_accept("image/*;name=value;name1=value1,"
                                             "image/png;name=value")).
 
 content_negotiation_test() ->
+
+  ?assertEqual("text/html;level=1",
+               prometheus_http:negotiate(?RFC_ACCEPT, ["text/plain",
+                                                       "text/html;level=2",
+                                                       "image/jpeg",
+                                                       "text/html",
+                                                       "text/html;level=3",
+                                                       "text/html;level=1"])),
+
+  ?assertEqual("text/html",
+               prometheus_http:negotiate(?RFC_ACCEPT, ["text/plain",
+                                                       "text/html;level=2",
+                                                       "image/jpeg",
+                                                       "text/html"])),
+
+  ?assertEqual("text/html;level=3",
+               prometheus_http:negotiate(?RFC_ACCEPT, ["text/plain",
+                                                       "text/html;level=2",
+                                                       "image/jpeg",
+                                                       "text/html;level=3"])),
+
+  ?assertEqual("image/jpeg",
+               prometheus_http:negotiate(?RFC_ACCEPT, ["text/plain",
+                                                       "text/html;level=2",
+                                                       "image/jpeg"])),
+
+  ?assertEqual("text/html;level=2",
+               prometheus_http:negotiate(?RFC_ACCEPT, ["text/plain",
+                                                       "text/html;level=2"])),
+
+  ?assertEqual("text/plain",
+               prometheus_http:negotiate(?RFC_ACCEPT, ["text/plain"])),
+
+
   ?assertEqual("image/png",
                prometheus_http:negotiate(?CHROME_ACCEPT, ["text/html",
                                                           "image/png"])),
@@ -73,6 +110,11 @@ content_negotiation_test() ->
   ?assertEqual("text/n3",
                prometheus_http:negotiate(?CHROME_ACCEPT, ["text/n3",
                                                           "application/rdf+xml"])),
+
+  ?assertEqual("text/n3",
+               prometheus_http:negotiate("text/*;q=0.5",
+                                         ["text/n3", "text/rdf+xml", "app/qwe"])),
+
 
   ?assertEqual(prometheus_protobuf_format,
                prometheus_http:negotiate(?PROMETHEUS_ACCEPT,

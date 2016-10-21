@@ -12,6 +12,9 @@
 
 ![RabbitMQ Dashboard](https://raw.githubusercontent.com/deadtrickster/prometheus_rabbitmq_exporter/master/priv/dashboards/RabbitMQErlangVM.png)
 
+ - IRC: #erlang on Freenode;
+ - [Slack](https://elixir-slackin.herokuapp.com/): #prometheus channel - [Browser](https://elixir-lang.slack.com/messages/prometheus) or App(slack://elixir-lang.slack.com/messages/prometheus).
+
 ## Integrations
 - [Ecto Instrumenter](https://hex.pm/packages/prometheus_ecto)
 - [Elixir client](https://github.com/deadtrickster/prometheus.ex)

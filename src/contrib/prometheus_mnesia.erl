@@ -25,7 +25,7 @@ table_disk_size(Table) ->
   table_disk_size(mnesia:system_info(directory), Table).
 
 %% @doc
-%% Returns sum of all mnesia files for the given `Table'.
+%% Returns sum of all mnesia files for the given `Table' in bytes.
 %% Mnesia can create different files for each table:
 %% - .DAT - DETS files
 %% - .TMP - temp files

@@ -13,7 +13,7 @@ Mnesia instrumentation helpers.
 
 
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#table_disk_size-1">table_disk_size/1</a></td><td>Equivalent to <a href="#table_disk_size-2"><tt>table_disk_size(mnesia:system_info(directory), Table)</tt></a>.</td></tr><tr><td valign="top"><a href="#table_disk_size-2">table_disk_size/2</a></td><td>
-Returns sum of all mnesia files for the given <code>Table</code>.</td></tr><tr><td valign="top"><a href="#tm_info-0">tm_info/0</a></td><td>
+Returns sum of all mnesia files for the given <code>Table</code> in bytes.</td></tr><tr><td valign="top"><a href="#tm_info-0">tm_info/0</a></td><td>
 Returns {PCount, CCount} tuple, where
 PCount is a number of participant transactions and
 CCount is a number of coordinator transactions.</td></tr></table>
@@ -45,7 +45,7 @@ table_disk_size(Dir, Table) -&gt; Size
 
 <ul class="definitions"><li><code>Dir = <a href="file.md#type-name_all">file:name_all()</a></code></li><li><code>Table = <a href="file.md#type-name_all">file:name_all()</a></code></li><li><code>Size = non_neg_integer()</code></li></ul>
 
-Returns sum of all mnesia files for the given `Table`.
+Returns sum of all mnesia files for the given `Table` in bytes.
 Mnesia can create different files for each table:
 - .DAT - DETS files
 - .TMP - temp files

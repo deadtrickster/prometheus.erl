@@ -129,9 +129,9 @@ counter_metrics(Specs) -> lists:map(fun counter_metric/1, Specs).
 %% <a href="#counter_metric-2"><tt>counter_metric(Labels, Value)</tt></a>.
 %% @end
 -spec counter_metric(Spec) -> prometheus_model:'Metric'() when
-    Spec :: non_neg_integer()
-          | {non_neg_integer()}
-          | {[label()], non_neg_integer()}.
+    Spec :: value()
+          | {value()}
+          | {[label()], value()}.
 counter_metric({Labels, Value}) -> counter_metric(Labels, Value);
 counter_metric({Value})         -> counter_metric([], Value);
 counter_metric(Value)           -> counter_metric([], Value).
@@ -141,7 +141,7 @@ counter_metric(Value)           -> counter_metric([], Value).
 %% @end
 -spec counter_metric(Labels, Value) -> prometheus_model:'Metric'() when
     Labels :: [label()],
-    Value  :: non_neg_integer().
+    Value  :: value().
 counter_metric(Labels, Value) ->
   #'Metric'{label   = label_pairs(Labels),
             counter = #'Counter'{value = Value}}.

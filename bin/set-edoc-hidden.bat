@@ -6,7 +6,7 @@ if not exist %FILE% (
     call :USAGE
 )
 
-set /p "FIRST_LINE=<%FILE%"
+set /p FIRST_LINE=<%FILE%
 set "HIDDEN=%%%% @hidden"
 
 if not %FIRST_LINE% == %HIDDEN% (

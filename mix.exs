@@ -14,8 +14,12 @@ defmodule Prometheus.Mixfile do
     """
   end
 
+  def application do
+    [mod: { :prometheus, [] }]
+  end
+
   defp package do
-    [build_tools: ["rebar3"],
+    [build_tools: ["rebar3", "mix"],
      maintainers: ["Ilya Khaprov"],
      licenses: ["MIT"],
      links: %{"GitHub" => "https://github.com/deadtrickster/prometheus.erl",

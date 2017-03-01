@@ -29,6 +29,11 @@
 
 - [Beam Dashboards](https://github.com/deadtrickster/beam-dashboards).
 
+## Blogs
+
+- [Monitoring Elixir apps in 2016: Prometheus and Grafana](https://aldusleaf.org/monitoring-elixir-apps-in-2016-prometheus-and-grafana/)
+- [A Simple Erlang Application, with Prometheus](http://markbucciarelli.com/2016-11-23_a_simple_erlang_application_with_prometheus.html).
+
 ## Erlang VM &amp; OTP Collectors
 - {@link prometheus_vm_memory_collector. Memory Collector}
 - {@link prometheus_mnesia_collector. Mnesia Collector}

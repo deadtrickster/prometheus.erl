@@ -101,7 +101,7 @@ Creates untyped metric with <code>Labels</code> and <code>Value</code>.</td></tr
 counter_metric(Spec) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Spec = non_neg_integer() | {non_neg_integer()} | {[<a href="#type-label">label()</a>], non_neg_integer()}</code></li></ul>
+<ul class="definitions"><li><code>Spec = <a href="#type-value">value()</a> | {<a href="#type-value">value()</a>} | {[<a href="#type-label">label()</a>], <a href="#type-value">value()</a>}</code></li></ul>
 
 Equivalent to
 [`counter_metric(Labels, Value)`](#counter_metric-2).
@@ -114,7 +114,7 @@ Equivalent to
 counter_metric(Labels, Value) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Labels = [<a href="#type-label">label()</a>]</code></li><li><code>Value = non_neg_integer()</code></li></ul>
+<ul class="definitions"><li><code>Labels = [<a href="#type-label">label()</a>]</code></li><li><code>Value = <a href="#type-value">value()</a></code></li></ul>
 
 Creates counter metric with `Labels` and `Value`.
 

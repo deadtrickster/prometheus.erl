@@ -9,8 +9,9 @@ prometheus_registry_test_() ->
    fun start/0,
    fun stop/1,
    fun(ok) ->
-       {inparallel, [default_registry(),
-                     test_registry()]}
+       {inorder, [default_registry(),
+                  test_registry(),
+                  test_registry_exists()]}
    end}.
 
 start() ->
@@ -82,5 +83,16 @@ test_registry() ->
    ?_assertEqual(true, DCR1),
    ?_assertEqual(false, DCD1),
    ?_assertEqual([], ADC1)].
+
+test_registry_exists() ->
+  prometheus_registry:register_collector(test_registry, prometheus_registry_tests),
+
+  [?_assertMatch(true, prometheus_registry:exists(test_registry)),
+
+   ?_assertMatch(test_registry, prometheus_registry:exists("test_registry")),
+   ?_assertMatch(test_registry, prometheus_registry:exists(<<"test_registry">>)),
+
+   ?_assertMatch(false, prometheus_registry:exists(qweqwa)),
+   ?_assertMatch(false, prometheus_registry:exists("qweqwa"))].
 
 deregister_cleanup(_) -> ok.

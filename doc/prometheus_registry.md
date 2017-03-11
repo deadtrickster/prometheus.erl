@@ -50,7 +50,8 @@ registry() = atom()
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#clear-0">clear/0</a></td><td>Equivalent to <a href="#clear-1"><tt>clear(default)</tt></a>.</td></tr><tr><td valign="top"><a href="#clear-1">clear/1</a></td><td>Unregisters all collectors.</td></tr><tr><td valign="top"><a href="#collect-2">collect/2</a></td><td>
 Calls <code>Callback</code> for each collector with two arguments:
 <code>Registry</code> and <code>Collector</code>.</td></tr><tr><td valign="top"><a href="#collector_registeredp-1">collector_registeredp/1</a></td><td>Equivalent to <a href="#collector_registeredp-2"><tt>collector_registeredp(default, Collector)</tt></a>.</td></tr><tr><td valign="top"><a href="#collector_registeredp-2">collector_registeredp/2</a></td><td>Checks whether <code>Collector</code> is registered.</td></tr><tr><td valign="top"><a href="#collectors-1">collectors/1</a></td><td>
-Returns collectors registered in <code>Registry</code>.</td></tr><tr><td valign="top"><a href="#deregister_collector-1">deregister_collector/1</a></td><td>Equivalent to <a href="#deregister_collector-2"><tt>deregister_collector(default, Collector)</tt></a>.</td></tr><tr><td valign="top"><a href="#deregister_collector-2">deregister_collector/2</a></td><td>Unregisters a collector.</td></tr><tr><td valign="top"><a href="#register_collector-1">register_collector/1</a></td><td>Equivalent to <a href="#register_collector-2"><tt>register_collector(default, Collector)</tt></a>.</td></tr><tr><td valign="top"><a href="#register_collector-2">register_collector/2</a></td><td>Register a collector.</td></tr><tr><td valign="top"><a href="#register_collectors-1">register_collectors/1</a></td><td>Equivalent to <a href="#register_collectors-2"><tt>register_collectors(default, Collectors)</tt></a>.</td></tr><tr><td valign="top"><a href="#register_collectors-2">register_collectors/2</a></td><td>Registers collectors list.</td></tr></table>
+Returns collectors registered in <code>Registry</code>.</td></tr><tr><td valign="top"><a href="#deregister_collector-1">deregister_collector/1</a></td><td>Equivalent to <a href="#deregister_collector-2"><tt>deregister_collector(default, Collector)</tt></a>.</td></tr><tr><td valign="top"><a href="#deregister_collector-2">deregister_collector/2</a></td><td>Unregisters a collector.</td></tr><tr><td valign="top"><a href="#exists-1">exists/1</a></td><td>
+Tries to find registry with the <code>Name</code>.</td></tr><tr><td valign="top"><a href="#register_collector-1">register_collector/1</a></td><td>Equivalent to <a href="#register_collector-2"><tt>register_collector(default, Collector)</tt></a>.</td></tr><tr><td valign="top"><a href="#register_collector-2">register_collector/2</a></td><td>Register a collector.</td></tr><tr><td valign="top"><a href="#register_collectors-1">register_collectors/1</a></td><td>Equivalent to <a href="#register_collectors-2"><tt>register_collectors(default, Collectors)</tt></a>.</td></tr><tr><td valign="top"><a href="#register_collectors-2">register_collectors/2</a></td><td>Registers collectors list.</td></tr></table>
 
 
 <a name="functions"></a>
@@ -148,6 +149,22 @@ deregister_collector(Registry::<a href="prometheus_registry.md#type-registry">pr
 <br />
 
 Unregisters a collector.
+
+<a name="exists-1"></a>
+
+### exists/1 ###
+
+<pre><code>
+exists(Name) -&gt; Result
+</code></pre>
+
+<ul class="definitions"><li><code>Name = atom() | iolist()</code></li><li><code>Result = boolean() | atom()</code></li></ul>
+
+Tries to find registry with the `Name`.
+Assumes that registry name is always an atom.
+If `Name` is an atom `ets:lookup/2` is used
+If `Name` is an iolist performs safe search (to avoid interning
+atoms] and returns atom or false. This operation is O(n).
 
 <a name="register_collector-1"></a>
 

@@ -29,6 +29,6 @@ defmodule Prometheus.Mixfile do
               "Phoenix Instrumenter" => "https://hex.pm/packages/prometheus_phoenix",
               "Plugs Instrumenter/Exporter" => "https://hex.pm/packages/prometheus_plugs",
               "Process info Collector" => "https://hex.pm/packages/prometheus_process_collector"},
-     files: ["bin", "src", "include", "README.md", "LICENSE", "rebar.config"]]
+     files: ["mix.exs", "bin", "src", "include", "README.md", "LICENSE", "rebar.config"]]
   end
 end

@@ -53,7 +53,7 @@
 %% Assumes that registry name is always an atom.
 %% If `Name' is an atom `ets:lookup/2' is used
 %% If `Name' is an iolist performs safe search (to avoid interning
-%% atoms] and returns atom or false. This operation is O(n).
+%% atoms) and returns atom or false. This operation is O(n).
 %% @end
 -spec exists(Name) -> Result when
     Name :: atom() | iolist(),

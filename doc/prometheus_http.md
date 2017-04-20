@@ -38,7 +38,9 @@ status_code() = pos_integer()
 
 
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#microseconds_duration_buckets-0">microseconds_duration_buckets/0</a></td><td>
-Returns default microseconds buckets for measuring http requests duration.</td></tr><tr><td valign="top"><a href="#status_class-1">status_class/1</a></td><td>
+Returns default microseconds buckets for measuring http requests duration.</td></tr><tr><td valign="top"><a href="#negotiate-2">negotiate/2</a></td><td>
+Negotiate the most appropriate content_type given the accept header
+and a list of alternatives.</td></tr><tr><td valign="top"><a href="#parse_accept-1">parse_accept/1</a></td><td></td></tr><tr><td valign="top"><a href="#status_class-1">status_class/1</a></td><td>
 Returns status class for the http status code <code>SCode</code>.</td></tr></table>
 
 
@@ -64,6 +66,25 @@ Returns default microseconds buckets for measuring http requests duration.
    1000, 2500, 5000, 10000, 25000, 50000, 100000, 250000, 500000,
    1000000, 2500000, 5000000, 10000000]
 ```
+
+<a name="negotiate-2"></a>
+
+### negotiate/2 ###
+
+<pre><code>
+negotiate(Header, Alternatives) -&gt; Match
+</code></pre>
+
+<ul class="definitions"><li><code>Header = BinaryOrString</code></li><li><code>Alternatives = [Alternative]</code></li><li><code>Alternative = BinaryOrString | {BinaryOrString | Tag}</code></li><li><code>BinaryOrString = binary() | string()</code></li><li><code>Tag = any()</code></li><li><code>Match = Tag | nomatch</code></li></ul>
+
+Negotiate the most appropriate content_type given the accept header
+and a list of alternatives.
+
+<a name="parse_accept-1"></a>
+
+### parse_accept/1 ###
+
+`parse_accept(AcceptString) -> any()`
 
 <a name="status_class-1"></a>
 

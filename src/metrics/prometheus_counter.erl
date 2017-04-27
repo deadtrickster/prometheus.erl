@@ -190,10 +190,7 @@ inc(Name, LabelValues, Value) ->
 %% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
 %% mismatch.
 %% @end
-inc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
-  erlang:error({invalid_value, Value,
-                "inc accepts only non-negative integers"});
-inc(Registry, Name, LabelValues, Value) when is_integer(Value) ->
+inc(Registry, Name, LabelValues, Value) when is_integer(Value), Value >= 0 ->
   try
     ets:update_counter(?TABLE,
                        key(Registry, Name, LabelValues),
@@ -235,10 +232,7 @@ dinc(Name, LabelValues, Value) ->
 %% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
 %% mismatch.
 %% @end
-dinc(_Registry, _Name, _LabelValues, Value) when Value < 0 ->
-  erlang:error({invalid_value, Value,
-                "dinc accepts only non-negative numbers"});
-dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
+dinc(Registry, Name, LabelValues, Value) when is_number(Value), Value >= 0 ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   CallTimeout = prometheus_metric:mf_call_timeout(MF),
   case CallTimeout of

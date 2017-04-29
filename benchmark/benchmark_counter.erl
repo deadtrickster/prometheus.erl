@@ -44,7 +44,7 @@ run_test(Pids, Count, ExpectedValue) ->
              Pids, Count, ExpectedValue]),
   Time = run_int(Pids, Count),
   Value = case prometheus_counter:value(test_counter) of
-            ExpectedValue -> color:greenb(io_lib:format("~p", [ExpectedValue]));
+            CValue when CValue == ExpectedValue -> color:greenb(io_lib:format("~p", [ExpectedValue]));
             CValue -> color:redb(io_lib:format("~p", [CValue]))
           end,
   io:format("  Counter value: ~s~n", [Value]),
@@ -88,7 +88,7 @@ run_multi_test(Pids, Count, ExpectedValue) ->
   Time = run_int_multi(Pids, Count),
   Sum = lists:sum([prometheus_counter:value(multi_counter_name(N)) || N <- lists:seq(1, Pids)]),
   Value = case Sum of
-            ExpectedValue -> color:greenb(io_lib:format("~p", [ExpectedValue]));
+            CValue when CValue == ExpectedValue -> color:greenb(io_lib:format("~p", [ExpectedValue]));
             CValue -> color:redb(io_lib:format("~p", [CValue]))
           end,
   io:format("  Counters sum: ~s~n", [Value]),
@@ -124,7 +124,7 @@ run_semimulti_test(Pids, Count, ExpectedValue) ->
   Time = run_int_semimulti(Pids, Counters, Count),
   Sum = lists:sum([prometheus_counter:value(Counter) || Counter <- lists:usort(Counters)]),
   Value = case Sum of
-            ExpectedValue -> color:greenb(io_lib:format("~p", [ExpectedValue]));
+            CValue when CValue == ExpectedValue -> color:greenb(io_lib:format("~p", [ExpectedValue]));
             CValue -> color:redb(io_lib:format("~p", [CValue]))
           end,
   io:format("  Counters sum: ~s~n", [Value]),
@@ -209,7 +209,7 @@ loop(Mgr, Printer, N, Name) ->
     %%   Printer ! ten;
     _ -> ok
   end,
-  prometheus_counter:inc(Name, 1),
+  prometheus_counter:dinc(Name, 1),
   loop(Mgr, Printer, N-1, Name).
 
 floor(X,Y) ->

@@ -233,16 +233,17 @@ dinc(Name, LabelValues, Value) ->
 %% mismatch.
 %% @end
 dinc(Registry, Name, LabelValues, Value) when is_number(Value), Value >= 0 ->
-  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  CallTimeout = prometheus_metric:mf_call_timeout(MF),
-  case CallTimeout of
-    false ->
-      gen_server:cast(?MODULE,
-                      {inc, {Registry, Name, LabelValues, Value}});
-    _ -> gen_server:call(?MODULE,
-                         {inc, {Registry, Name, LabelValues, Value}},
-                         CallTimeout)
-  end,
+  %% MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  %% CallTimeout = prometheus_metric:mf_call_timeout(MF),
+  %% case CallTimeout of
+  %%   false ->
+  %%     gen_server:cast(?MODULE,
+  %%                     {inc, {Registry, Name, LabelValues, Value}});
+  %%   _ -> gen_server:call(?MODULE,
+  %%                        {inc, {Registry, Name, LabelValues, Value}},
+  %%                        CallTimeout)
+  %% end,
+  dinc_nif_impl(Registry, Name, LabelValues, Value),
   ok;
 dinc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
@@ -291,10 +292,17 @@ reset(Name, LabelValues) ->
 %% @end
 reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  case lists:usort([ets:update_element(?TABLE,
-                                       {Registry, Name, LabelValues, Scheduler},
-                                       {?SUM_POS, 0})
-                    || Scheduler <- schedulers_seq()]) of
+  case lists:usort([case ets:lookup(?TABLE, key(Registry, Name, LabelValues, Scheduler)) of
+                      [{_Key, OldValue}] when is_number(OldValue) ->
+                        ets:update_element(?TABLE,
+                                           key(Registry, Name, LabelValues, Scheduler),
+                                           {?SUM_POS, 0});
+                      [{_Key, Counter}] ->
+                        prometheus_nif_counter:reset(Counter),
+                        true;
+                      [] ->
+                        false
+                    end || Scheduler <- schedulers_seq()]) of
     [_, _] -> true;
     [true] -> true;
     _ -> false
@@ -323,7 +331,7 @@ value(Registry, Name, LabelValues) ->
                             [],
                             ['$1']}]) of
     [] -> undefined;
-    List -> lists:sum(List)
+    List -> lists:sum(nif_catch(List))
   end.
 
 %%====================================================================
@@ -400,9 +408,28 @@ dinc_impl(Registry, Name, LabelValues, Value) ->
       insert_metric(Registry, Name, LabelValues, Value, fun dinc_impl/4)
   end.
 
+dinc_nif_impl(Registry, Name, LabelValues, Value) ->
+  case ets:lookup(?TABLE, key(Registry, Name, LabelValues)) of
+    [{_Key, OldValue}] when is_number(OldValue) ->
+      erlang:error({dinc_after_inc, key(Registry, Name, LabelValues),
+                    "Looks like you are using dinc after inc!"});
+    [{_Key, Counter}] ->
+      prometheus_nif_counter:inc(Counter, Value);
+    [] ->
+      insert_metric(Registry, Name, LabelValues, Value, fun dinc_nif_impl/4)
+  end.
+
+nif_catch(Values) ->
+  [case Value of
+     _ when is_number(Value) ->
+       Value;
+     _ ->
+       prometheus_nif_counter:value(Value)
+   end || Value <- Values].
+
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  case ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), Value}) of
+  case ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), prometheus_nif_counter:new(Value)}) of
     false -> %% some sneaky process already inserted
       ConflictCB(Registry, Name, LabelValues, Value);
     true ->
@@ -414,7 +441,10 @@ schedulers_seq() ->
 
 key(Registry, Name, LabelValues) ->
   X = erlang:system_info(scheduler_id),
-  Rnd = X band (?WIDTH-1),
+  key(Registry, Name, LabelValues, X).
+
+key(Registry, Name, LabelValues, Scheduler) ->
+  Rnd = Scheduler band (?WIDTH-1),
   {Registry, Name, LabelValues, Rnd}.
 
 collect_unique_labels(MFValues) ->

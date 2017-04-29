@@ -42,16 +42,22 @@ mk_error(ErlNifEnv* env, const char* mesg)
 static ERL_NIF_TERM
 make_counter(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-  if(argc != 0)
-    {
-      return enif_make_badarg(env);
-    }
-  
+  if(argc != 1) {
+    return enif_make_badarg(env);
+  }
+
   counter_t* counter;
 
   counter = (counter_t*)enif_alloc_resource(prom_counter, sizeof(counter_t));
 
-  counter->counter = 0;
+  unsigned uvalue;
+
+  if(enif_get_uint(env, argv[0], &uvalue)) {
+    counter->counter = (double)uvalue;
+  }
+  else if (!enif_get_double(env, argv[0], (double*)&(counter->counter))) {
+    return enif_make_badarg(env);
+  }
 
   ERL_NIF_TERM term = enif_make_resource(env, counter);
 
@@ -63,7 +69,7 @@ make_counter(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 static ERL_NIF_TERM
 inc_counter(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-  if(argc != 1)
+  if(argc != 2)
     {
       return enif_make_badarg(env);
     }
@@ -72,11 +78,21 @@ inc_counter(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
   enif_get_resource(env, argv[0], prom_counter, (void**)&counter);
 
+  unsigned uvalue;
+  double dvalue;
+
+  if(enif_get_uint(env, argv[1], &uvalue)) {
+    dvalue = (double)uvalue;
+  }
+  else if (!enif_get_double(env, argv[1], (double*)&dvalue)) {
+    return enif_make_badarg(env);
+  }
+
   counter_t expected = *counter;
   counter_t desired;
 
   do {
-    desired.counter = expected.counter + 1;
+    desired.counter = expected.counter + dvalue;
   } while (!atomic_compare_exchange_strong(counter, &expected, desired));
 
   return enif_make_double(env, desired.counter);
@@ -98,9 +114,9 @@ get_value(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 }
 
 static ERL_NIF_TERM
-reset (ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
+set (ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-  if(argc != 1)
+  if(argc != 2)
     {
       return enif_make_badarg(env);
     }
@@ -109,24 +125,42 @@ reset (ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 
   enif_get_resource(env, argv[0], prom_counter, (void**)&counter);
 
-  counter->counter = 0;
+
+  unsigned uvalue;
+  double dvalue;
+
+  if(enif_get_uint(env, argv[1], &uvalue)) {
+    dvalue = (double)uvalue;
+  }
+  else if (!enif_get_double(env, argv[1], (double*)&dvalue)) {
+    return enif_make_badarg(env);
+  }
+
+  /* counter_t expected = *counter; */
+  /* counter_t desired; */
+
+  /* do { */
+  /*   desired.counter = dvalue; */
+  /* } while (!atomic_compare_exchange_strong(counter, &expected, desired)); */
+
+  counter->counter = dvalue;
 
   return enif_make_double(env, counter->counter);
 }
 
 
 static ErlNifFunc nif_funcs[] = {
-  {"make_counter", 0, make_counter},
-  {"inc_counter", 1, inc_counter},
-  {"value", 1, get_value},
-  {"reset", 1, reset}
+                                 {"new", 1, make_counter},
+                                 {"inc", 2, inc_counter},
+                                 {"value", 1, get_value},
+                                 {"set", 2, set}
 };
 
 static int
 load(ErlNifEnv* env, void** priv, ERL_NIF_TERM load_info)
 {
   prom_counter = enif_open_resource_type(env, NULL, "prom_counter", NULL,
-					 ERL_NIF_RT_CREATE, NULL);
+                                         ERL_NIF_RT_CREATE, NULL);
   return 0;
 }
 

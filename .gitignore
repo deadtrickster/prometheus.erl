@@ -3,6 +3,7 @@ rebar3.crashdump
 _*
 .eunit
 *.o
+*.so
 *.beam
 *.plt
 *.swp

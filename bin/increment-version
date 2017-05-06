@@ -74,6 +74,8 @@ echo "New version: ${new_version}"
 
 sed -i s/\"${oa[0]}\.${oa[1]}\.${oa[2]}\"/\"${a[0]}\.${a[1]}\.${a[2]}\"/g src/prometheus.app.src
 sed -i s/\"${oa[0]}\.${oa[1]}\.${oa[2]}\"/\"${a[0]}\.${a[1]}\.${a[2]}\"/g mix.exs
+sed -i s/@version\ ${oa[0]}\.${oa[1]}\.${oa[2]}/@version\ ${a[0]}\.${a[1]}\.${a[2]}/g doc/overview.md
+rebar3 edoc
 
 git add mix.exs src/prometheus.app.src
 git commit -m "Bump to v${new_version}"

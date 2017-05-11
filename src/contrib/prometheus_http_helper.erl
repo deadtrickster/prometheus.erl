@@ -1,5 +1,5 @@
 %% @doc HTTP instrumentation helpers
--module(prometheus_http).
+-module(prometheus_http_helper).
 
 -export([microseconds_duration_buckets/0,
          status_class/1]).

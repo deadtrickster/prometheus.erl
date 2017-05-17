@@ -16,7 +16,7 @@ prometheus_format_test_() ->
     fun test_observe_duration_seconds/1,
     fun test_observe_duration_milliseconds/1,
     fun test_remove/1,
-    fun test_undefined_value/1]}.
+    fun test_default_value/1]}.
 
 test_registration(_)->
   Name = request_duration,
@@ -327,7 +327,17 @@ test_remove(_) ->
    ?_assertEqual(false, RResult3),
    ?_assertEqual(false, RResult4)].
 
-test_undefined_value(_) ->
-  prometheus_histogram:new([{name, duraiton_histogram}, {labels, [label]}, {help, ""}]),
-  Value = prometheus_histogram:value(duraiton_histogram, [label]),
-  [?_assertEqual(undefined, Value)].
+test_default_value(_) ->
+  prometheus_histogram:new([{name, duraiton_histogram},
+                            {labels, [label]},
+                            {help, ""}]),
+  UndefinedValue = prometheus_histogram:value(duraiton_histogram, [label]),
+
+  prometheus_histogram:new([{name, something_histogram},
+                            {labels, []},
+                            {help, ""},
+                            {buckets, [5, 10]}]),
+  SomethingValue = prometheus_histogram:value(something_histogram),
+
+  [?_assertEqual(undefined, UndefinedValue),
+   ?_assertEqual({[0, 0, 0], 0}, SomethingValue)].

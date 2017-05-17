@@ -39,6 +39,7 @@
          new/2,
          declare/1,
          declare/2,
+         set_default/2,
          observe/2,
          observe/3,
          observe/4,
@@ -177,6 +178,10 @@ declare(Spec, Registry) ->
   ?DEPRECATED("prometheus_histogram:declare/2", "prometheus_histogram:declare/1"
               " with registry key"),
   declare([{registry, Registry} | Spec]).
+
+%% @private
+set_default(Registry, Name) ->
+  insert_placeholders(Registry, Name, []).
 
 %% @equiv observe(default, Name, [], Value)
 observe(Name, Value) ->
@@ -515,6 +520,10 @@ dobserve_impl(Registry, Name, LabelValues, Value) ->
   end.
 
 insert_metric(Registry, Name, LabelValues, Value, CB) ->
+  insert_placeholders(Registry, Name, LabelValues),
+  CB(Registry, Name, LabelValues, Value).
+
+insert_placeholders(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   MFBuckets = prometheus_metric:mf_data(MF),
   DU = prometheus_metric:mf_duration_unit(MF),
@@ -526,8 +535,7 @@ insert_metric(Registry, Name, LabelValues, Value, CB) ->
     [key(Registry, Name, LabelValues), lists:map(Fun, MFBuckets)]
     ++ BoundCounters
     ++ [0],
-  ets:insert(?TABLE, list_to_tuple(MetricSpec)),
-  CB(Registry, Name, LabelValues, Value).
+  ets:insert_new(?TABLE, list_to_tuple(MetricSpec)).
 
 calculate_histogram_update_positions(Metric, Value) ->
   Buckets = metric_buckets(Metric),

@@ -57,6 +57,10 @@
 
 -callback declare(Spec :: prometheus_metric_spec:spec()) -> boolean().
 
+-callback set_default(Registry, Name) -> any() when
+    Registry :: prometheus_registry:registry(),
+    Name     :: name().
+
 -callback remove(Name :: name()) -> boolean() | no_return().
 -callback remove(Name :: name(), LValues :: list()) -> boolean() | no_return().
 -callback remove(Registry, Name, LValues) -> boolean() | no_return()  when
@@ -99,11 +103,17 @@ insert_mf(Table, Module, Spec) ->
   {Registry, Name, Labels, Help, UseCall, DurationUnit, Data} =
     prometheus_metric_spec:extract_common_params(Spec),
   prometheus_registry:register_collector(Registry, Module),
-  ets:insert_new(Table, {{Registry, mf, Name},
-                         {Labels, Help},
-                         UseCall,
-                         DurationUnit,
-                         Data}).
+  case ets:insert_new(Table, {{Registry, mf, Name},
+                              {Labels, Help},
+                              UseCall,
+                              DurationUnit,
+                              Data}) of
+    true ->
+      maybe_set_default(Module, Registry, Name, Labels),
+      true;
+    false ->
+      false
+  end.
 
 %% @private
 deregister_mf(Table, Registry) ->
@@ -145,6 +155,16 @@ metrics(Table, Registry) ->
 %%====================================================================
 %% Private Parts
 %%===================================================================
+
+-spec maybe_set_default(Module, Registry, Name, Labels) -> ok when
+    Module    :: atom(),
+    Registry :: prometheus_registry:registry(),
+    Name     :: name(),
+    Labels  :: list().
+maybe_set_default(Module, Registry, Name, []) ->
+  Module:set_default(Registry, Name);
+maybe_set_default(_, _, _, _) ->
+  ok.
 
 -spec remove_labels(Table, Registry, Name, LValues) ->
                        boolean() | no_return() when

@@ -11,7 +11,7 @@ prometheus_format_test_() ->
     fun test_inc/1,
     fun test_dinc/1,
     fun test_remove/1,
-    fun test_undefined_value/1]}.
+    fun test_default_value/1]}.
 
 test_registration(_)->
   Name = http_requests_total,
@@ -158,9 +158,16 @@ test_remove(_) ->
    ?_assertEqual(false, RResult3),
    ?_assertEqual(false, RResult4)].
 
-test_undefined_value(_) ->
+test_default_value(_) ->
   prometheus_counter:new([{name, http_requests_total},
                           {labels, [method]},
                           {help, "Http request count"}]),
   UndefinedValue = prometheus_counter:value(http_requests_total, [post]),
-  [?_assertEqual(undefined, UndefinedValue)].
+
+  prometheus_counter:new([{name, something_total},
+                          {labels, []},
+                          {help, ""}]),
+  SomethingValue = prometheus_counter:value(something_total),
+
+  [?_assertEqual(undefined, UndefinedValue),
+   ?_assertEqual(0, SomethingValue)].

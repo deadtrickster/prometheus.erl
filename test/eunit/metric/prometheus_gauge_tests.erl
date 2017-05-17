@@ -20,7 +20,7 @@ prometheus_format_test_() ->
     fun test_set_duration_seconds/1,
     fun test_set_duration_milliseconds/1,
     fun test_remove/1,
-    fun test_undefined_value/1]}.
+    fun test_default_value/1]}.
 
 test_registration(_)->
   Name = pool_size,
@@ -313,7 +313,16 @@ test_remove(_) ->
    ?_assertEqual(false, RResult3),
    ?_assertEqual(false, RResult4)].
 
-test_undefined_value(_) ->
-  prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),
+test_default_value(_) ->
+  prometheus_gauge:new([{name, pool_size},
+                        {labels, [client]},
+                        {help, ""}]),
   UndefinedValue = prometheus_gauge:value(pool_size, [post]),
-  [?_assertEqual(undefined, UndefinedValue)].
+
+  prometheus_gauge:new([{name, something_gauge},
+                        {labels, []},
+                        {help, ""}]),
+  SomethingValue = prometheus_gauge:value(something_gauge),
+
+  [?_assertEqual(undefined, UndefinedValue),
+   ?_assertEqual(0, SomethingValue)].

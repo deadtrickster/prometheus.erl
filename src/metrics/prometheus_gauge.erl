@@ -44,6 +44,7 @@
          new/2,
          declare/1,
          declare/2,
+         set_default/2,
          set/2,
          set/3,
          set/4,
@@ -172,6 +173,10 @@ declare(Spec, Registry) ->
   ?DEPRECATED("prometheus_gauge:declare/2", "prometheus_gauge:declare/1"
               " with registry key"),
   declare([{registry, Registry} | Spec]).
+
+%% @private
+set_default(Registry, Name) ->
+  ets:insert_new(?TABLE, {{Registry, Name, []}, 0}).
 
 %% @equiv set(default, Name, [], Value)
 set(Name, Value) ->

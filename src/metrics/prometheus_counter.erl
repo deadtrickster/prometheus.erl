@@ -57,6 +57,7 @@
          new/2,
          declare/1,
          declare/2,
+         set_default/2,
          inc/1,
          inc/2,
          inc/3,
@@ -162,6 +163,10 @@ declare(Spec, Registry) ->
   ?DEPRECATED("prometheus_counter:declare/2", "prometheus_counter:declare/1"
               " with registry key"),
   declare([{registry, Registry} | Spec]).
+
+%% @private
+set_default(Registry, Name) ->
+  ets:insert_new(?TABLE, {key(Registry, Name, []), 0}).
 
 %% @equiv inc(default, Name, [], 1)
 inc(Name) ->

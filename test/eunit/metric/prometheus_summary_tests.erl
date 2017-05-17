@@ -15,7 +15,7 @@ prometheus_format_test_() ->
     fun test_observe_duration_seconds/1,
     fun test_observe_duration_milliseconds/1,
     fun test_remove/1,
-    fun test_undefined_value/1]}.
+    fun test_default_value/1]}.
 
 test_registration(_)->
   Name = orders_summary,
@@ -225,9 +225,15 @@ test_remove(_) ->
    ?_assertEqual(false, RResult3),
    ?_assertEqual(false, RResult4)].
 
-test_undefined_value(_) ->
+test_default_value(_) ->
   prometheus_summary:new([{name, orders_summary},
                           {labels, [department]},
                           {help, "Track orders count/total sum"}]),
-  Value = prometheus_summary:value(orders_summary, [electronics]),
-  [?_assertEqual(undefined, Value)].
+  UndefinedValue = prometheus_summary:value(orders_summary, [electronics]),
+
+  prometheus_summary:new([{name, something_summary},
+                          {labels, []},
+                          {help, ""}]),
+  SomethingValue = prometheus_summary:value(something_summary),
+  [?_assertEqual(undefined, UndefinedValue),
+   ?_assertEqual({0, 0}, SomethingValue)].

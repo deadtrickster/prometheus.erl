@@ -31,6 +31,7 @@
          new/2,
          declare/1,
          declare/2,
+         set_default/2,
          observe/2,
          observe/3,
          observe/4,
@@ -145,6 +146,10 @@ declare(Spec, Registry) ->
   ?DEPRECATED("prometheus_summary:declare/2", "prometheus_summary:declare/1"
               " with registry key"),
   declare([{registry, Registry} | Spec]).
+
+%% @private
+set_default(Registry, Name) ->
+  ets:insert_new(?TABLE, {key(Registry, Name, []), 0, 0}).
 
 %% @equiv observe(default, Name, [], Value)
 observe(Name, Value) ->

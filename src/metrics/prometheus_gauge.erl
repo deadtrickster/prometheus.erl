@@ -441,7 +441,7 @@ remove(Name, LabelValues) ->
 %% @doc Removes gauge series identified by `Registry', `Name'
 %% and `LabelValues'.
 %%
-%% Raises `{unknown_metric, Registry, Name}' error if gauge with named `Name'
+%% Raises `{unknown_metric, Registry, Name}' error if gauge with name `Name'
 %% can't be found in `Registry'.<br/>
 %% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
 %% mismatch.
@@ -460,7 +460,7 @@ reset(Name, LabelValues) ->
 %% @doc Resets the value of the gauge identified by `Registry', `Name'
 %% and `LabelValues'.
 %%
-%% Raises `{unknown_metric, Registry, Name}' error if gauge with named `Name'
+%% Raises `{unknown_metric, Registry, Name}' error if gauge with name `Name'
 %% can't be found in `Registry'.<br/>
 %% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
 %% mismatch.

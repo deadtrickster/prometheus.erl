@@ -231,7 +231,7 @@ Equivalent to [`remove(default, Name, LabelValues)`](#remove-3).
 Removes summary series identified by `Registry`, `Name`
 and `LabelValues`.
 
-Raises `{unknown_metric, Registry, Name}` error if summary with named `Name`
+Raises `{unknown_metric, Registry, Name}` error if summary with name `Name`
 can't be found in `Registry`.<br />
 Raises `{invalid_metric_arity, Present, Expected}` error if labels count
 mismatch.
@@ -261,7 +261,7 @@ Equivalent to [`reset(default, Name, LabelValues)`](#reset-3).
 Resets the value of the summary identified by `Registry`, `Name`
 and `LabelValues`.
 
-Raises `{unknown_metric, Registry, Name}` error if summary with named `Name`
+Raises `{unknown_metric, Registry, Name}` error if summary with name `Name`
 can't be found in `Registry`.<br />
 Raises `{invalid_metric_arity, Present, Expected}` error if labels count
 mismatch.

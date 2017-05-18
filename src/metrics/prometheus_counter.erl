@@ -91,10 +91,6 @@
          start_link/0]).
 
 -import(prometheus_model_helpers, [create_mf/5,
-                                   gauge_metrics/1,
-                                   gauge_metric/1,
-                                   gauge_metric/2,
-                                   counter_metric/1,
                                    counter_metric/2]).
 
 -include("prometheus.hrl").
@@ -264,7 +260,7 @@ remove(Name, LabelValues) ->
 %% @doc Removes counter series identified by `Registry', `Name'
 %% and `LabelValues'.
 %%
-%% Raises `{unknown_metric, Registry, Name}' error if counter with named `Name'
+%% Raises `{unknown_metric, Registry, Name}' error if counter with name `Name'
 %% can't be found in `Registry'.<br/>
 %% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
 %% mismatch.
@@ -289,7 +285,7 @@ reset(Name, LabelValues) ->
 %% @doc Resets the value of the counter identified by `Registry', `Name'
 %% and `LabelValues'.
 %%
-%% Raises `{unknown_metric, Registry, Name}' error if counter with named `Name'
+%% Raises `{unknown_metric, Registry, Name}' error if counter with name `Name'
 %% can't be found in `Registry'.<br/>
 %% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
 %% mismatch.

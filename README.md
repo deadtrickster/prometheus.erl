@@ -153,6 +153,7 @@ API can be grouped like this:
 - [`prometheus_gauge`](https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_gauge.md) - gauge metric, to report instantaneous values;
 - [`prometheus_histogram`](https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_histogram.md) - histogram metric, to track distributions of events;
 - [`prometheus_summary`](https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_summary.md) - summary metric, to track the size of events;
+- [`prometheus_boolean`](https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_boolean.md) - boolean metric, to track the state of something;
 - [`prometheus_registry`](https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_registry.md) - working with Prometheus registries.
 
 All metrics created via `new/1` or `declare/1`. The difference is that `new/1` actually wants metric to be
@@ -244,6 +245,7 @@ MIT
 
 
 <table width="100%" border="0" summary="list of modules">
+<tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_boolean.md" class="module">prometheus_boolean</a></td></tr>
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_buckets.md" class="module">prometheus_buckets</a></td></tr>
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_collector.md" class="module">prometheus_collector</a></td></tr>
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_counter.md" class="module">prometheus_counter</a></td></tr>

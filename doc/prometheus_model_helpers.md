@@ -50,6 +50,16 @@ label_value() = term()
 
 
 
+### <a name="type-prometheus_boolean">prometheus_boolean()</a> ###
+
+
+<pre><code>
+prometheus_boolean() = boolean() | number() | list() | undefined
+</code></pre>
+
+
+
+
 ### <a name="type-value">value()</a> ###
 
 
@@ -62,7 +72,11 @@ value() = float() | integer() | undefined | infinity
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#counter_metric-1">counter_metric/1</a></td><td>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#boolean_metric-1">boolean_metric/1</a></td><td>
+Equivalent to
+<a href="#boolean_metric-2"><tt>boolean_metric(Labels, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#boolean_metric-2">boolean_metric/2</a></td><td>
+Creates boolean metric with <code>Labels</code> and <code>Value</code>.</td></tr><tr><td valign="top"><a href="#boolean_metrics-1">boolean_metrics/1</a></td><td>Equivalent to
+<a href="#boolean_metric-1"><code>lists:map(fun boolean_metric/1, Values)</code></a>.</td></tr><tr><td valign="top"><a href="#counter_metric-1">counter_metric/1</a></td><td>
 Equivalent to
 <a href="#counter_metric-2"><tt>counter_metric(Labels, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#counter_metric-2">counter_metric/2</a></td><td>
 Creates counter metric with <code>Labels</code> and <code>Value</code>.</td></tr><tr><td valign="top"><a href="#counter_metrics-1">counter_metrics/1</a></td><td>Equivalent to
@@ -92,6 +106,40 @@ Creates untyped metric with <code>Labels</code> and <code>Value</code>.</td></tr
 <a name="functions"></a>
 
 ## Function Details ##
+
+<a name="boolean_metric-1"></a>
+
+### boolean_metric/1 ###
+
+<pre><code>
+boolean_metric(Spec) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
+</code></pre>
+
+<ul class="definitions"><li><code>Spec = boolean() | {boolean()} | {[<a href="#type-label">label()</a>], <a href="#type-prometheus_boolean">prometheus_boolean()</a>}</code></li></ul>
+
+Equivalent to
+[`boolean_metric(Labels, Value)`](#boolean_metric-2).
+
+<a name="boolean_metric-2"></a>
+
+### boolean_metric/2 ###
+
+<pre><code>
+boolean_metric(Labels, Value) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
+</code></pre>
+
+<ul class="definitions"><li><code>Labels = [<a href="#type-label">label()</a>]</code></li><li><code>Value = <a href="#type-prometheus_boolean">prometheus_boolean()</a></code></li></ul>
+
+Creates boolean metric with `Labels` and `Value`.
+
+<a name="boolean_metrics-1"></a>
+
+### boolean_metrics/1 ###
+
+`boolean_metrics(Values) -> any()`
+
+Equivalent to
+[`lists:map(fun boolean_metric/1, Values)`](#boolean_metric-1).
 
 <a name="counter_metric-1"></a>
 

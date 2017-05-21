@@ -31,7 +31,8 @@ default_registry() ->
                  prometheus_mnesia_collector,
                  prometheus_histogram,
                  prometheus_gauge,
-                 prometheus_counter],
+                 prometheus_counter,
+                 prometheus_boolean],
                 prometheus_registry:collectors(default)).
 
 test_registry() ->

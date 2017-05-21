@@ -12,6 +12,10 @@
          untyped_metrics/1,
          untyped_metric/1,
          untyped_metric/2,
+         boolean_metrics/1,
+         boolean_metric/1,
+         boolean_metric/2,
+         boolean_value/1,
          counter_metrics/1,
          counter_metric/1,
          counter_metric/2,
@@ -32,6 +36,8 @@
          ensure_binary_or_string/1]).
 -endif.
 
+-export_type([prometheus_boolean/0]).
+
 -include("prometheus_model.hrl").
 
 %%%===================================================================
@@ -42,6 +48,7 @@
 -type label_value() :: term().
 -type label() :: {label_name(), label_value()}.
 -type value() :: float() | integer() | undefined | infinity.
+-type prometheus_boolean() :: boolean() | number() | list() | undefined.
 
 %%%===================================================================
 %%% Public API
@@ -119,6 +126,50 @@ untyped_metric(Value)           -> untyped_metric([], Value).
 untyped_metric(Labels, Value) ->
   #'Metric'{label = label_pairs(Labels),
             untyped = #'Untyped'{value = Value}}.
+
+%% @doc Equivalent to
+%% {@link boolean_metric/1. `lists:map(fun boolean_metric/1, Values)'}.
+%% @end
+boolean_metrics(Values) -> lists:map(fun boolean_metric/1, Values).
+
+%% @doc
+%% Equivalent to
+%% <a href="#boolean_metric-2"><tt>boolean_metric(Labels, Value)</tt></a>.
+%% @end
+-spec boolean_metric(Spec) -> prometheus_model:'Metric'() when
+    Spec :: boolean()
+          | {boolean()}
+          | {[label()], prometheus_boolean()}.
+boolean_metric({Labels, Value}) -> boolean_metric(Labels, Value);
+boolean_metric({Value})         -> boolean_metric([], Value);
+boolean_metric(Value)           -> boolean_metric([], Value).
+
+%% @doc
+%% Creates boolean metric with `Labels' and `Value'.
+%% @end
+-spec boolean_metric(Labels, Value) -> prometheus_model:'Metric'() when
+    Labels :: [label()],
+    Value  :: prometheus_boolean().
+boolean_metric(Labels, Value0) ->
+  Value = boolean_value(Value0),
+  untyped_metric(Labels, Value).
+
+%% @private
+-spec boolean_value(Value) -> RealValue when
+    Value :: prometheus_boolean(),
+    RealValue :: undefined | 0 | 1.
+boolean_value(Value) ->
+  case Value of
+    true -> 1;
+    false -> 0;
+    1 -> 1;
+    0 -> 0;
+    [] -> 0;
+    _ when is_number(Value) andalso Value > 0 -> 1;
+    _ when is_list(Value) -> 1;
+    undefined -> undefined;
+    _ -> erlang:error({invalid_value, Value, "value is not boolean"})
+  end.
 
 %% @doc Equivalent to
 %% {@link counter_metric/1. `lists:map(fun counter_metric/1, Specs)'}.
@@ -275,4 +326,5 @@ ensure_mf_type(counter)   -> 'COUNTER';
 ensure_mf_type(summary)   -> 'SUMMARY';
 ensure_mf_type(histogram) -> 'HISTOGRAM';
 ensure_mf_type(untyped)   -> 'UNTYPED';
+ensure_mf_type(boolean)   -> 'UNTYPED';
 ensure_mf_type(Type)      -> erlang:error({invalid_metric_type, Type}).

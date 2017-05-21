@@ -17,7 +17,8 @@ collector_setup_test() ->
                 prometheus_mnesia_collector,
                 prometheus_histogram,
                 prometheus_gauge,
-                prometheus_counter], prometheus_collector:enabled_collectors()).
+                prometheus_counter,
+                prometheus_boolean], prometheus_collector:enabled_collectors()).
 
 collector_deprecations_test() ->
   ok = prometheus_collector:register(prometheus_registry_tests),

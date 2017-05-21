@@ -132,6 +132,7 @@ API can be grouped like this:
 - {@link prometheus_gauge} - gauge metric, to report instantaneous values;
 - {@link prometheus_histogram} - histogram metric, to track distributions of events;
 - {@link prometheus_summary} - summary metric, to track the size of events;
+- {@link prometheus_boolean} - boolean metric, to track the state of something;
 - {@link prometheus_registry} - working with Prometheus registries.
 
 All metrics created via `new/1' or `declare/1'. The difference is that `new/1' actually wants metric to be

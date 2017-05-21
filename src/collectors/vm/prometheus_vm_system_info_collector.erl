@@ -149,7 +149,9 @@
                                    gauge_metric/1,
                                    gauge_metric/2,
                                    counter_metric/1,
-                                   counter_metric/2]).
+                                   counter_metric/2,
+                                   boolean_metric/1,
+                                   boolean_metric/2]).
 
 -include("prometheus.hrl").
 
@@ -332,12 +334,4 @@ create_gauge(Name, Help, Data) ->
   create_mf(Name, Help, gauge, ?MODULE, Data).
 
 create_boolean(Name, Help, Data) ->
-  create_mf(Name, Help, untyped, ?MODULE, Data).
-
-boolean_metric(Value) ->
-  case Value of
-    true ->
-      untyped_metric(1);
-    _ ->
-      untyped_metric(0)
-  end.
+  create_mf(Name, Help, boolean, ?MODULE, Data).

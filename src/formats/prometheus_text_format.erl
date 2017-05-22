@@ -72,7 +72,7 @@ format(Registry) ->
                  registry_collect_callback(Fd, Registry, Collector)
              end,
   prometheus_registry:collect(Registry, Callback),
-  file:write(Fd, io_lib:format("\n", [])),
+  file:write(Fd, "\n"),
   {ok, Size} = ram_file:get_size(Fd),
   {ok, Str} = file:pread(Fd, 0, Size),
   ok = file:close(Fd),
@@ -91,9 +91,8 @@ registry_collect_callback(Fd, Registry, Collector) ->
 
 %% @private
 emit_mf_prologue(Fd, #'MetricFamily'{name=Name, help=Help, type=Type}) ->
-  Bytes = io_lib:format("# TYPE ~s ~s\n# HELP ~s ~s\n",
-                        [Name, string_type(Type),
-                         Name, escape_metric_help(Help)]),
+  Bytes = ["# TYPE ", Name, " ", string_type(Type), "\n# HELP ",
+           Name, " ", escape_metric_help(Help), "\n"],
   file:write(Fd, Bytes).
 
 %% @private
@@ -142,23 +141,23 @@ string_type('UNTYPED') ->
 labels_string([])     -> "";
 labels_string(Labels) ->
   Fun = fun (#'LabelPair'{name=Name, value=Value}) ->
-            io_lib:format("~s=\"~s\"", [Name, escape_label_value(Value)])
+            [Name, "=\"", escape_label_value(Value), "\""]
         end,
-  "{" ++ string:join(lists:map(Fun, Labels), ",") ++ "}".
+  ["{", lists:join(",", lists:map(Fun, Labels)), "}"].
 
 emit_series(Fd, Name, Labels, undefined) ->
   LString = labels_string(Labels),
-  file:write(Fd, io_lib:format("~s" ++ LString ++ " NaN\n", [Name]));
+  file:write(Fd, [Name, LString, " NaN\n"]);
 emit_series(Fd, Name, Labels, Value) ->
   LString = labels_string(Labels),
-  file:write(Fd, io_lib:format("~s" ++ LString ++ " ~p\n", [Name, Value])).
+  file:write(Fd, [Name, LString, " ", io_lib:format("~p", [Value]) , "\n"]).
 
 %% @private
 escape_metric_help(Help) ->
   sub(sub(Help, "\\", "\\\\\\\\"), "\n", "\\\\n").
 
 bound_to_label_value(Bound) when is_number(Bound) ->
-  Bound;
+  io_lib:format("~p", [Bound]);
 bound_to_label_value(infinity) ->
   "+Inf".
 
@@ -168,8 +167,9 @@ escape_label_value(LValue) when is_list(LValue)->
   ?ESCAPE_LVALUE(LValue);
 escape_label_value(LValue) when is_binary(LValue) ->
   ?ESCAPE_LVALUE(LValue);
-escape_label_value(LValue) ->
-  ?ESCAPE_LVALUE(io_lib:format("~p", [LValue])).
+escape_label_value(Value) ->
+  erlang:error({wtf, Value}).
+
 
 -spec sub(iodata(), string(), string()) -> string().
 sub(Str, Old, New) ->

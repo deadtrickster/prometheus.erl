@@ -1,6 +1,6 @@
 {application, prometheus,
  [{description, "Prometheus.io client in Erlang"},
-  {vsn, "3.2.3"},
+  {vsn, "3.3.0"},
   {registered, []},
   {mod, { prometheus, []}},
   {applications,

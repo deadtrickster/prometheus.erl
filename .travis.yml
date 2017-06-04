@@ -11,4 +11,4 @@ cache:
 otp_release:
 - 19.0
 - 18.0
-script: "./bin/checks.sh && ./rebar3 coveralls send"
+script: "./bin/checks.sh && ./rebar3 as test coveralls send"

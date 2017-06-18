@@ -88,15 +88,6 @@
          collect_mf/2,
          collect_metrics/2]).
 
-%%% gen_server
--export([init/1,
-         handle_call/3,
-         handle_cast/2,
-         handle_info/2,
-         terminate/2,
-         code_change/3,
-         start_link/0]).
-
 -import(prometheus_model_helpers, [create_mf/5,
                                    gauge_metrics/1,
                                    gauge_metric/1,
@@ -108,7 +99,6 @@
 
 -behaviour(prometheus_metric).
 -behaviour(prometheus_collector).
--behaviour(gen_server).
 
 %%====================================================================
 %% Macros
@@ -238,7 +228,7 @@ inc(Name, LabelValues, Value) ->
 %% @end
 inc(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   try
-    ets:update_counter(?TABLE, {Registry, Name, LabelValues},
+    ets:update_counter(?TABLE, key(Registry, Name, LabelValues),
                        {?GAUGE_POS, Value})
   catch error:badarg ->
       insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
@@ -278,17 +268,16 @@ dinc(Name, LabelValues, Value) ->
 %% mismatch.
 %% @end
 dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  CallTimeout = prometheus_metric:mf_call_timeout(MF),
-  case CallTimeout of
-    false ->
-      gen_server:cast(?MODULE,
-                      {inc, {Registry, Name, LabelValues, Value}});
-    _ -> gen_server:call(?MODULE,
-                         {inc, {Registry, Name, LabelValues, Value}},
-                         CallTimeout)
-  end,
-  ok;
+  Key = key(Registry, Name, LabelValues),
+  case ets:select_replace(?TABLE,
+                          [{{Key, '$1'},
+                            [],
+                            [{{{Key}, {'+', '$1', Value}}}]}]) of
+    0 ->
+      insert_metric(Registry, Name, LabelValues, Value, fun dinc/4);
+    1 ->
+      ok
+  end;
 dinc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
                 "dinc accepts only numbers"}).
@@ -520,55 +509,9 @@ collect_metrics(Name, {Labels, Registry, DU}) ->
                 prometheus_time:maybe_convert_to_du(DU, Value)) ||
     [LabelValues, Value] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'})].
 
-
-%%====================================================================
-%% Gen_server API
-%%====================================================================
-
-%% @private
-init(_Args) ->
-  {ok, []}.
-
-%% @private
-handle_call({inc, {Registry, Name, LabelValues, Value}}, _From, State) ->
-  dinc_impl(Registry, Name, LabelValues, Value),
-  {reply, ok, State}.
-
-%% @private
-handle_cast({inc, {Registry, Name, LabelValues, Value}}, State) ->
-  dinc_impl(Registry, Name, LabelValues, Value),
-  {noreply, State}.
-
-%% @private
-handle_info(_Info, State) ->
-  {noreply, State}.
-
-%% @private
-terminate(_Reason, _State) ->
-  ok.
-
-%% @private
-code_change(_OldVsn, State, _Extra) ->
-  {ok, State}.
-
-%% @private
-start_link() ->
-  gen_server:start_link({local, prometheus_gauge},
-                        prometheus_gauge, [], []).
-
-
 %%====================================================================
 %% Private Parts
 %%====================================================================
-
-dinc_impl(Registry, Name, LabelValues, Value) ->
-  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
-    [{_Key, OldValue}] ->
-      ets:update_element(?TABLE, {Registry, Name, LabelValues},
-                         {?GAUGE_POS, Value + OldValue});
-    [] ->
-      insert_metric(Registry, Name, LabelValues, Value, fun dinc_impl/4)
-  end.
 
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
@@ -578,6 +521,9 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
     true ->
       ok
   end.
+
+key(Registry, Name, LabelValues) ->
+  {Registry, Name, LabelValues}.
 
 create_gauge(Name, Help, Data) ->
   prometheus_model_helpers:create_mf(Name, Help, gauge, ?MODULE, Data).

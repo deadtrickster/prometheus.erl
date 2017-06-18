@@ -56,15 +56,6 @@
          collect_mf/2,
          collect_metrics/2]).
 
-%%% gen_server
--export([init/1,
-         handle_call/3,
-         handle_cast/2,
-         handle_info/2,
-         terminate/2,
-         code_change/3,
-         start_link/0]).
-
 -import(prometheus_model_helpers, [create_mf/5,
                                    summary_metrics/1,
                                    summary_metric/1,
@@ -77,7 +68,6 @@
 
 -behaviour(prometheus_metric).
 -behaviour(prometheus_collector).
--behaviour(gen_server).
 
 %%====================================================================
 %% Macros
@@ -199,18 +189,17 @@ dobserve(Name, LabelValues, Value) ->
 %% mismatch.
 %% @end
 dobserve(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  CallTimeout = prometheus_metric:mf_call_timeout(MF),
-  case CallTimeout of
-    false ->
-      gen_server:cast(?MODULE,
-                      {observe, {Registry, Name, LabelValues, Value}});
-    _ ->
-      gen_server:call(?MODULE,
-                      {observe, {Registry, Name, LabelValues, Value}},
-                      CallTimeout)
-  end,
-  ok;
+  Key = key(Registry, Name, LabelValues),
+  case
+    ets:select_replace(?TABLE,
+                       [{{Key, '$1', '$2'},
+                         [],
+                         [{{{Key}, {'+', '$1', 1}, {'+', '$2', Value}}}]}]) of
+    0 ->
+      insert_metric(Registry, Name, LabelValues, Value, fun dobserve/4);
+    1 ->
+      ok
+  end;
 dobserve(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "dobserve accepts only numbers"}).
 
@@ -353,42 +342,6 @@ collect_metrics(Name, {Labels, Registry, DU}) ->
     LabelValues <- collect_unique_labels(MFValues)].
 
 %%====================================================================
-%% Gen_server API
-%%====================================================================
-
-%% @private
-init(_Args) ->
-  {ok, []}.
-
-%% @private
-
-handle_call({observe, {Registry, Name, LabelValues, Value}}, _From, State) ->
-  dobserve_impl(Registry, Name, LabelValues, Value),
-  {reply, ok, State}.
-
-%% @private
-handle_cast({observe, {Registry, Name, LabelValues, Value}}, State) ->
-  dobserve_impl(Registry, Name, LabelValues, Value),
-  {noreply, State}.
-
-%% @private
-handle_info(_Info, State) ->
-  {noreply, State}.
-
-%% @private
-terminate(_Reason, _State) ->
-  ok.
-
-%% @private
-code_change(_OldVsn, State, _Extra) ->
-  {ok, State}.
-
-%% @private
-start_link() ->
-  gen_server:start_link({local, prometheus_summary},
-                        prometheus_summary, [], []).
-
-%%====================================================================
 %% Private Parts
 %%====================================================================
 
@@ -406,17 +359,6 @@ raise_error_if_quantile_label_found("quantile") ->
 raise_error_if_quantile_label_found(Label) ->
   Label.
 
-dobserve_impl(Registry, Name, LabelValues, Value) ->
-  case ets:lookup(?TABLE, key(Registry, Name, LabelValues)) of
-    [Metric] ->
-      ets:update_element(?TABLE, key(Registry, Name, LabelValues),
-                         {?SUM_POS, sum(Metric) + Value}),
-      ets:update_counter(?TABLE, key(Registry, Name, LabelValues),
-                         {?COUNTER_POS, 1});
-    [] ->
-      insert_metric(Registry, Name, LabelValues, Value, fun dobserve_impl/4)
-  end.
-
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   case ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), 1, Value}) of
@@ -425,9 +367,6 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
     true ->
       ok
   end.
-
-sum(Metric) ->
-  element(?SUM_POS, Metric).
 
 schedulers_seq() ->
   lists:seq(0, ?WIDTH-1).

@@ -147,34 +147,6 @@ test_dinc(_) ->
   [?_assertEqual(4.5, PSValue),
    ?_assertEqual(4.5, TValue)].
 
-call_cast_test() ->
-  prometheus_gauge:declare([{name, cast}, {help, ""}]),
-  prometheus_gauge:declare([{name, call}, {help, ""}, {call_timeout, 1000}]),
-  prometheus_gauge:dinc(cast),
-  prometheus_gauge:dinc(call),
-
-  ?assertEqual(1, prometheus_gauge:value(cast)),
-  ?assertEqual(1, prometheus_gauge:value(call)),
-
-  try
-    sys:suspend(prometheus_gauge),
-
-    prometheus_gauge:dinc(cast),
-    ?assertException(exit, {timeout, _}, prometheus_gauge:dinc(call)),
-
-    ?assertEqual(1, prometheus_gauge:value(cast)),
-    ?assertEqual(1, prometheus_gauge:value(call))
-
-  after
-    sys:resume(prometheus_gauge)
-  end,
-
-  %% wait for genserver
-  timer:sleep(10),
-
-  ?assertEqual(2, prometheus_gauge:value(cast)),
-  ?assertEqual(2, prometheus_gauge:value(call)).
-
 test_dec(_) ->
   prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),
   prometheus_gauge:new([{name, temperature}, {help, ""}]),

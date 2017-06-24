@@ -27,9 +27,15 @@ test_registration(_)->
   [?_assertEqual(true,
                  prometheus_summary:declare(SpecWithRegistry)),
    ?_assertEqual(false,
-                 prometheus_summary:declare(SpecWithoutRegistry, qwe)),
+                 prometheus_summary:declare(SpecWithRegistry)),
    ?_assertError({mf_already_exists, {qwe, Name}, "Consider using declare instead."},
-                 prometheus_summary:new(SpecWithoutRegistry, qwe))].
+                 prometheus_summary:new(SpecWithRegistry)),
+   ?_assertEqual(true,
+                 prometheus_summary:declare(SpecWithoutRegistry)),
+   ?_assertEqual(false,
+                 prometheus_summary:declare(SpecWithoutRegistry)),
+   ?_assertError({mf_already_exists, {default, Name}, "Consider using declare instead."},
+                 prometheus_summary:new(SpecWithoutRegistry))].
 
 test_errors(_) ->
   prometheus_summary:new([{name, db_query_duration}, {labels, [repo]}, {help, ""}]),

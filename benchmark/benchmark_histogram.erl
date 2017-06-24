@@ -1,4 +1,4 @@
--module(benchmark_counter).
+-module(benchmark_histogram).
 
 -export([
          run/0
@@ -12,32 +12,27 @@
 
 setup() ->
   prometheus:start(),
-  [ets:insert(prometheus_counter_table, {{key, Index1}, 5}) || Index1 <- lists:seq(1, 500000)],
-  prometheus_counter:declare([{name, test_counter},
-                              {help, ""}]),
-  prometheus_counter:reset(test_counter),
-  [init_multi_counter(N) || N <- lists:seq(1, 100)],
-  [ets:insert(prometheus_counter_table, {{key, Index1}, 5}) || Index1 <- lists:seq(500000, 1000000)],
-  io:format("~p", [ets:info(prometheus_counter_table)]),
-  ok.
+  prometheus_histogram:declare([{name, test_counter},
+                                {buckets, [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5, 5, 9]},
+                                {help, ""}]).
 
 run() ->
   io:format("Setting up environment~n"),
   setup(),
   io:format("Finished~n"),
-  run_single_counter(),
-  run_multi_counter(),
-  run_semimulti_counter(),
-  prometheus:stop().
+  run_single_counter()%% ,
+  %% run_multi_counter(),
+  %% run_semimulti_counter()
+    .
 
 run_single_counter() ->
 
-  prometheus_counter:reset(test_counter),
+  prometheus_histogram:reset(test_counter),
 
-  run_test(1, ?MILLIONS(1), ?MILLIONS(1)),
-  run_test(5, ?MILLIONS(1), ?MILLIONS(6)),
-  run_test(10, ?MILLIONS(1), ?MILLIONS(16)),
-  run_test(100, ?MILLIONS(1), ?MILLIONS(116)),
+  run_test(1, ?MILLIONS(1), {[0,0,0,0,0,0,0,0,0,0,0,?MILLIONS(1)],?MILLIONS(10)}),
+  run_test(5, ?MILLIONS(1), {[0,0,0,0,0,0,0,0,0,0,0,?MILLIONS(6)],?MILLIONS(60)}),
+  run_test(10, ?MILLIONS(1), {[0,0,0,0,0,0,0,0,0,0,0,?MILLIONS(16)],?MILLIONS(160)}),
+  run_test(100, ?MILLIONS(1), {[0,0,0,0,0,0,0,0,0,0,0,?MILLIONS(116)],?MILLIONS(1160)}),
 
   io:format("Finished~n").
 
@@ -50,12 +45,12 @@ run_test(Pids, Count, ExpectedValue) ->
             [color:blueb("Running single counter benchmark:"),
              Pids, Count, ExpectedValue]),
   Time = run_int(Pids, Count),
-  Value = case prometheus_counter:value(test_counter) of
+  Value = case prometheus_histogram:value(test_counter) of
             ExpectedValue -> color:greenb(io_lib:format("~p", [ExpectedValue]));
             CValue -> color:redb(io_lib:format("~p", [CValue]))
           end,
   io:format("  Counter value: ~s~n", [Value]),
-  {Time, prometheus_counter:value(test_counter)}.
+  {Time, prometheus_histogram:value(test_counter)}.
 
 run_int(PCount, Count) ->
   StartTime = erlang:monotonic_time(),
@@ -216,7 +211,7 @@ loop(Mgr, Printer, N, Name) ->
     %%   Printer ! ten;
     _ -> ok
   end,
-  prometheus_counter:inc(Name, 1),
+  prometheus_histogram:observe(Name, 10),
   loop(Mgr, Printer, N-1, Name).
 
 floor(X,Y) ->

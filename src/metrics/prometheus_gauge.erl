@@ -41,9 +41,7 @@
 
 %%% metric
 -export([new/1,
-         new/2,
          declare/1,
-         declare/2,
          set_default/2,
          set/2,
          set/3,
@@ -131,13 +129,6 @@
 new(Spec) ->
   prometheus_metric:insert_new_mf(?TABLE, ?MODULE, Spec).
 
-%% @deprecated Please use {@link new/1} with registry
-%% key instead.
-new(Spec, Registry) ->
-  ?DEPRECATED("prometheus_gauge:new/2", "prometheus_gauge:new/1"
-              " with registry key"),
-  new([{registry, Registry} | Spec]).
-
 %% @doc Creates a gauge using `Spec'.
 %% If a gauge with the same `Spec' exists returns `false'.
 %%
@@ -156,13 +147,6 @@ new(Spec, Registry) ->
 %% @end
 declare(Spec) ->
   prometheus_metric:insert_mf(?TABLE, ?MODULE, Spec).
-
-%% @deprecated Please use {@link declare/1} with registry
-%% key instead.
-declare(Spec, Registry) ->
-  ?DEPRECATED("prometheus_gauge:declare/2", "prometheus_gauge:declare/1"
-              " with registry key"),
-  declare([{registry, Registry} | Spec]).
 
 %% @private
 set_default(Registry, Name) ->

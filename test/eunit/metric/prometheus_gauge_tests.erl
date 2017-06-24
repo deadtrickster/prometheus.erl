@@ -32,9 +32,15 @@ test_registration(_)->
   [?_assertEqual(true,
                  prometheus_gauge:declare(SpecWithRegistry)),
    ?_assertEqual(false,
-                 prometheus_gauge:declare(SpecWithoutRegistry, qwe)),
+                 prometheus_gauge:declare(SpecWithRegistry)),
    ?_assertError({mf_already_exists, {qwe, Name}, "Consider using declare instead."},
-                 prometheus_gauge:new(SpecWithoutRegistry, qwe))].
+                 prometheus_gauge:new(SpecWithRegistry)),
+   ?_assertEqual(true,
+                 prometheus_gauge:declare(SpecWithoutRegistry)),
+   ?_assertEqual(false,
+                 prometheus_gauge:declare(SpecWithoutRegistry)),
+   ?_assertError({mf_already_exists, {default, Name}, "Consider using declare instead."},
+                 prometheus_gauge:new(SpecWithoutRegistry))].
 
 test_errors(_) ->
   prometheus_gauge:new([{name, with_label}, {labels, [label]}, {help, ""}]),

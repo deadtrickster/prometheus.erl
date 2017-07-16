@@ -5,6 +5,7 @@
          insert_mf/3,
          deregister_mf/2,
          deregister_mf/3,
+         check_mf_exists/3,
          check_mf_exists/4,
          mf_call_timeout/1,
          mf_duration_unit/1,
@@ -146,6 +147,15 @@ check_mf_exists(Table, Registry, Name, LabelValues) ->
         LabelsLength ->
           erlang:error({invalid_metric_arity, LVLength, LabelsLength})
       end
+  end.
+
+%% @private
+check_mf_exists(Table, Registry, Name) ->
+  case ets:lookup(Table, {Registry, mf, Name}) of
+    [] ->
+      false;
+    [MF] ->
+      MF
   end.
 
 %% @private

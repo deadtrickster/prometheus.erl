@@ -39,6 +39,8 @@
          new/2,
          declare/1,
          declare/2,
+         deregister/1,
+         deregister/2,
          set_default/2,
          observe/2,
          observe/3,
@@ -178,6 +180,31 @@ declare(Spec, Registry) ->
   ?DEPRECATED("prometheus_histogram:declare/2", "prometheus_histogram:declare/1"
               " with registry key"),
   declare([{registry, Registry} | Spec]).
+
+%% @equiv deregister(default, Name)
+deregister(Name) ->
+  deregister(default, Name).
+
+%% @doc
+%% Removes all histogram series with name `Name' and
+%% removes Metric Family from `Registry'.
+%%
+%% After this call new/1 for `Name' and `Registry' will succeed.
+%%
+%% Returns `{true, _}' if `Name' was a registered histogram.
+%% Otherwise returns `{false, _}'.
+%% @end
+deregister(Registry, Name) ->
+  try
+    MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name),
+    Buckets = prometheus_metric:mf_data(MF),
+    prometheus_metric:deregister_mf(?TABLE, Registry, Name),
+    Select = deregister_select(Registry, Name, Buckets),
+    NumDeleted = ets:select_delete(?TABLE, Select),
+    {true, NumDeleted > 0}
+  catch
+    _:_ -> {false, false}
+  end.
 
 %% @private
 set_default(Registry, Name) ->
@@ -607,6 +634,11 @@ create_histogram_metric(Labels, DU, Buckets, LabelValues, Stat) ->
                    Buckets1,
                    lists:last(BCounters),
                    prometheus_time:maybe_convert_to_du(DU, lists:last(Stat))).
+
+deregister_select(Registry, Name, Buckets) ->
+  BoundCounters = lists:duplicate(length(Buckets), '_'),
+  MetricSpec = [{Registry, Name, '_', '_'}, '_'] ++ BoundCounters ++ ['_'],
+  [{list_to_tuple(MetricSpec), [], [true]}].
 
 delete_metrics(Registry, Buckets) ->
   BoundCounters = lists:duplicate(length(Buckets), '_'),

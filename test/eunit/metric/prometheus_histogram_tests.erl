@@ -15,6 +15,7 @@ prometheus_format_test_() ->
     fun test_dobserve/1,
     fun test_observe_duration_seconds/1,
     fun test_observe_duration_milliseconds/1,
+    fun test_deregister/1,
     fun test_remove/1,
     fun test_default_value/1]}.
 
@@ -291,6 +292,27 @@ test_observe_duration_milliseconds(_) ->
    ?_assertEqual([1, 1, 0], BucketsE),
    ?_assertMatch(true, 900 < Sum andalso Sum < 1200),
    ?_assertMatch(true, 900 < SumE andalso SumE < 1200)].
+
+test_deregister(_) ->
+  prometheus_histogram:new([{name, histogram},
+                            {buckets, [5, 10]},
+                            {labels, [pool]},
+                            {help, ""}]),
+  prometheus_histogram:new([{name, simple_histogram},
+                            {buckets, [5, 10]},
+                            {help, ""}]),
+
+  prometheus_histogram:observe(histogram, [mongodb], 1),
+  prometheus_histogram:observe(simple_histogram, 1),
+  prometheus_histogram:observe(histogram, [mongodb], 6),
+  prometheus_histogram:observe(simple_histogram, 6),
+
+
+  [?_assertMatch({true, true}, prometheus_histogram:deregister(histogram)),
+   ?_assertMatch({false, false}, prometheus_histogram:deregister(histogram)),
+   ?_assertEqual(2, length(ets:tab2list(prometheus_histogram_table))),
+   ?_assertEqual({[1, 1, 0], 7}, prometheus_histogram:value(simple_histogram))
+  ].
 
 test_remove(_) ->
   prometheus_histogram:new([{name, histogram},

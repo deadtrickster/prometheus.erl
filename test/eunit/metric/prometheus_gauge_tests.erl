@@ -19,6 +19,7 @@ prometheus_format_test_() ->
     fun test_track_inprogress/1,
     fun test_set_duration_seconds/1,
     fun test_set_duration_milliseconds/1,
+    fun test_deregister/1,
     fun test_remove/1,
     fun test_default_value/1]}.
 
@@ -282,6 +283,21 @@ test_set_duration_milliseconds(_) ->
   [?_assertMatch(1, ValueF),
    ?_assertMatch(true, 900 < Value andalso Value < 1200),
    ?_assertMatch(true, 0 < ValueE andalso ValueE < 100)].
+
+test_deregister(_) ->
+  prometheus_gauge:new([{name, pool_size},
+                        {labels, [pool]},
+                        {help, "Http request count"}]),
+  prometheus_gauge:new([{name, simple_gauge}, {help, ""}]),
+
+  prometheus_gauge:inc(pool_size, [mongodb]),
+  prometheus_gauge:inc(simple_gauge),
+
+  [?_assertMatch({true, true}, prometheus_gauge:deregister(pool_size)),
+   ?_assertMatch({false, false}, prometheus_gauge:deregister(pool_size)),
+   ?_assertEqual(2, length(ets:tab2list(prometheus_gauge_table))),
+   ?_assertEqual(1, prometheus_gauge:value(simple_gauge))
+  ].
 
 test_remove(_) ->
   prometheus_gauge:new([{name, pool_size},

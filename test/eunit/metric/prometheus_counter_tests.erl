@@ -10,6 +10,7 @@ prometheus_format_test_() ->
     fun test_errors/1,
     fun test_inc/1,
     fun test_dinc/1,
+    fun test_deregister/1,
     fun test_remove/1,
     fun test_default_value/1]}.
 
@@ -127,6 +128,21 @@ call_cast_test() ->
 
   ?assertEqual(2, prometheus_counter:value(cast)),
   ?assertEqual(2, prometheus_counter:value(call)).
+
+test_deregister(_) ->
+  prometheus_counter:new([{name, http_requests_total},
+                          {labels, [method]},
+                          {help, "Http request count"}]),
+  prometheus_counter:new([{name, simple_counter}, {help, ""}]),
+
+  prometheus_counter:inc(http_requests_total, [get]),
+  prometheus_counter:inc(simple_counter),
+
+  [?_assertMatch({true, true}, prometheus_counter:deregister(http_requests_total)),
+   ?_assertMatch({false, false}, prometheus_counter:deregister(http_requests_total)),
+   ?_assertEqual(2, length(ets:tab2list(prometheus_counter_table))),
+   ?_assertEqual(1, prometheus_counter:value(simple_counter))
+  ].
 
 test_remove(_) ->
   prometheus_counter:new([{name, http_requests_total},

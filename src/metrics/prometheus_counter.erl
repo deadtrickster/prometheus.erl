@@ -57,6 +57,8 @@
          new/2,
          declare/1,
          declare/2,
+         deregister/1,
+         deregister/2,
          set_default/2,
          inc/1,
          inc/2,
@@ -159,6 +161,24 @@ declare(Spec, Registry) ->
   ?DEPRECATED("prometheus_counter:declare/2", "prometheus_counter:declare/1"
               " with registry key"),
   declare([{registry, Registry} | Spec]).
+
+%% @equiv deregister(default, Name)
+deregister(Name) ->
+  deregister(default, Name).
+
+%% @doc
+%% Removes all counter series with name `Name' and
+%% removes Metric Family from `Registry'.
+%%
+%% After this call new/1 for `Name' and `Registry' will succeed.
+%%
+%% Returns `true' if `Name' was a registered counter.
+%% Otherwise returns `false'.
+%% @end
+deregister(Registry, Name) ->
+  MFR = prometheus_metric:deregister_mf(?TABLE, Registry, Name),
+  NumDeleted = ets:select_delete(?TABLE, deregister_select(Registry, Name)),
+  {MFR, NumDeleted > 0}.
 
 %% @private
 set_default(Registry, Name) ->
@@ -391,6 +411,9 @@ start_link() ->
 %%====================================================================
 %% Private Parts
 %%====================================================================
+
+deregister_select(Registry, Name) ->
+  [{{{Registry, Name, '_', '_'}, '_'}, [], [true]}].
 
 dinc_impl(Registry, Name, LabelValues, Value) ->
   case ets:lookup(?TABLE, key(Registry, Name, LabelValues)) of

@@ -61,7 +61,9 @@ otherwise equivalent to
 <a href="#dinc-4"><tt>dinc(default, Name, [], -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#ddec-3">ddec/3</a></td><td>Equivalent to <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#ddec-4">ddec/4</a></td><td>Equivalent to <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dec-1">dec/1</a></td><td>Equivalent to <a href="#inc-4"><tt>inc(default, Name, [], -1)</tt></a>.</td></tr><tr><td valign="top"><a href="#dec-2">dec/2</a></td><td>If the second argument is a list, equivalent to
 <a href="#inc-4"><tt>inc(default, Name, LabelValues, -1)</tt></a>
 otherwise equivalent to
-<a href="#inc-4"><tt>inc(default, Name, [], -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dec-3">dec/3</a></td><td>Equivalent to <a href="#inc-4"><tt>inc(default, Name, LabelValues, -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dec-4">dec/4</a></td><td>Equivalent to <a href="#inc-4"><tt>inc(Registry, Name, LabelValues, -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#declare-1">declare/1</a></td><td>Creates a gauge using <code>Spec</code>.</td></tr><tr><td valign="top"><a href="#declare-2">declare/2</a></td><td>(<em>Deprecated</em>.) </td></tr><tr><td valign="top"><a href="#dinc-1">dinc/1</a></td><td>Equivalent to <a href="#dinc-4"><tt>dinc(default, Name, [], 1)</tt></a>.</td></tr><tr><td valign="top"><a href="#dinc-2">dinc/2</a></td><td>If the second argument is a list, equivalent to
+<a href="#inc-4"><tt>inc(default, Name, [], -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dec-3">dec/3</a></td><td>Equivalent to <a href="#inc-4"><tt>inc(default, Name, LabelValues, -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dec-4">dec/4</a></td><td>Equivalent to <a href="#inc-4"><tt>inc(Registry, Name, LabelValues, -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#declare-1">declare/1</a></td><td>Creates a gauge using <code>Spec</code>.</td></tr><tr><td valign="top"><a href="#declare-2">declare/2</a></td><td>(<em>Deprecated</em>.) </td></tr><tr><td valign="top"><a href="#deregister-1">deregister/1</a></td><td>Equivalent to <a href="#deregister-2"><tt>deregister(default, Name)</tt></a>.</td></tr><tr><td valign="top"><a href="#deregister-2">deregister/2</a></td><td>
+Removes all gauge series with name <code>Name</code> and
+removes Metric Family from <code>Registry</code>.</td></tr><tr><td valign="top"><a href="#dinc-1">dinc/1</a></td><td>Equivalent to <a href="#dinc-4"><tt>dinc(default, Name, [], 1)</tt></a>.</td></tr><tr><td valign="top"><a href="#dinc-2">dinc/2</a></td><td>If the second argument is a list, equivalent to
 <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, 1)</tt></a>
 otherwise equivalent to
 <a href="#dinc-4"><tt>dinc(default, Name, [], Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dinc-3">dinc/3</a></td><td>Equivalent to <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dinc-4">dinc/4</a></td><td>Increments the gauge identified by <code>Registry</code>, <code>Name</code>
@@ -183,6 +185,28 @@ unknown or doesn't match metric name.<br />
 
 __This function is deprecated:__ Please use [`declare/1`](#declare-1) with registry
 key instead.
+
+<a name="deregister-1"></a>
+
+### deregister/1 ###
+
+`deregister(Name) -> any()`
+
+Equivalent to [`deregister(default, Name)`](#deregister-2).
+
+<a name="deregister-2"></a>
+
+### deregister/2 ###
+
+`deregister(Registry, Name) -> any()`
+
+Removes all gauge series with name `Name` and
+removes Metric Family from `Registry`.
+
+After this call new/1 for `Name` and `Registry` will succeed.
+
+Returns `{true, _}` if `Name` was a registered gauge.
+Otherwise returns `{false, _}`.
 
 <a name="dinc-1"></a>
 

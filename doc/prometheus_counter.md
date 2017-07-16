@@ -67,7 +67,9 @@ Example:
 
 
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#declare-1">declare/1</a></td><td>Creates a counter using <code>Spec</code>, if a counter with the same <code>Spec</code> exists
-returns <code>false</code>.</td></tr><tr><td valign="top"><a href="#declare-2">declare/2</a></td><td>(<em>Deprecated</em>.) </td></tr><tr><td valign="top"><a href="#dinc-1">dinc/1</a></td><td>Equivalent to <a href="#dinc-4"><tt>dinc(default, Name, [], 1)</tt></a>.</td></tr><tr><td valign="top"><a href="#dinc-2">dinc/2</a></td><td>If the second argument is a list, equivalent to
+returns <code>false</code>.</td></tr><tr><td valign="top"><a href="#declare-2">declare/2</a></td><td>(<em>Deprecated</em>.) </td></tr><tr><td valign="top"><a href="#deregister-1">deregister/1</a></td><td>Equivalent to <a href="#deregister-2"><tt>deregister(default, Name)</tt></a>.</td></tr><tr><td valign="top"><a href="#deregister-2">deregister/2</a></td><td>
+Removes all counter series with name <code>Name</code> and
+removes Metric Family from <code>Registry</code>.</td></tr><tr><td valign="top"><a href="#dinc-1">dinc/1</a></td><td>Equivalent to <a href="#dinc-4"><tt>dinc(default, Name, [], 1)</tt></a>.</td></tr><tr><td valign="top"><a href="#dinc-2">dinc/2</a></td><td>If the second argument is a list, equivalent to
 <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, 1)</tt></a>
 otherwise equivalent to
 <a href="#dinc-4"><tt>dinc(default, Name, [], Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dinc-3">dinc/3</a></td><td>Equivalent to <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dinc-4">dinc/4</a></td><td>Increments the counter identified by <code>Registry</code>, <code>Name</code>
@@ -113,6 +115,28 @@ label name.
 
 __This function is deprecated:__ Please use [`declare/1`](#declare-1) with registry
 key instead.
+
+<a name="deregister-1"></a>
+
+### deregister/1 ###
+
+`deregister(Name) -> any()`
+
+Equivalent to [`deregister(default, Name)`](#deregister-2).
+
+<a name="deregister-2"></a>
+
+### deregister/2 ###
+
+`deregister(Registry, Name) -> any()`
+
+Removes all counter series with name `Name` and
+removes Metric Family from `Registry`.
+
+After this call new/1 for `Name` and `Registry` will succeed.
+
+Returns `{true, _}` if `Name` was a registered counter.
+Otherwise returns `{true, _}`.
 
 <a name="dinc-1"></a>
 

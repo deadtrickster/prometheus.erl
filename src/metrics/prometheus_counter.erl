@@ -172,8 +172,8 @@ deregister(Name) ->
 %%
 %% After this call new/1 for `Name' and `Registry' will succeed.
 %%
-%% Returns `true' if `Name' was a registered counter.
-%% Otherwise returns `false'.
+%% Returns `{true, _}' if `Name' was a registered counter.
+%% Otherwise returns `{true, _}'.
 %% @end
 deregister(Registry, Name) ->
   MFR = prometheus_metric:deregister_mf(?TABLE, Registry, Name),

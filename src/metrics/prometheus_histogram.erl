@@ -228,11 +228,12 @@ observe(Name, LabelValues, Value) ->
 %% mismatch.
 %% @end
 observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
-  case ets:lookup(?TABLE, key(Registry, Name, LabelValues)) of
+  Key = key(Registry, Name, LabelValues),
+  case ets:lookup(?TABLE, Key) of
     [Metric] ->
       {BucketPosition, SumPosition} =
         calculate_histogram_update_positions(Metric, Value),
-      ets:update_counter(?TABLE, key(Registry, Name, LabelValues),
+      ets:update_counter(?TABLE, Key,
                          [{BucketPosition, 1}, {SumPosition, Value}]);
     [] ->
       insert_metric(Registry, Name, LabelValues, Value, fun observe/4)

@@ -40,7 +40,9 @@ Example:
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#declare-1">declare/1</a></td><td>Creates a boolean using <code>Spec</code>.</td></tr><tr><td valign="top"><a href="#new-1">new/1</a></td><td>Creates a boolean using <code>Spec</code>.</td></tr><tr><td valign="top"><a href="#remove-1">remove/1</a></td><td>Equivalent to <a href="#remove-3"><tt>remove(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#remove-2">remove/2</a></td><td>Equivalent to <a href="#remove-3"><tt>remove(default, Name, LabelValues)</tt></a>.</td></tr><tr><td valign="top"><a href="#remove-3">remove/3</a></td><td>Removes boolean series identified by <code>Registry</code>, <code>Name</code>
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#declare-1">declare/1</a></td><td>Creates a boolean using <code>Spec</code>.</td></tr><tr><td valign="top"><a href="#deregister-1">deregister/1</a></td><td>Equivalent to <a href="#deregister-2"><tt>deregister(default, Name)</tt></a>.</td></tr><tr><td valign="top"><a href="#deregister-2">deregister/2</a></td><td>
+Removes all boolean series with name <code>Name</code> and
+removes Metric Family from <code>Registry</code>.</td></tr><tr><td valign="top"><a href="#new-1">new/1</a></td><td>Creates a boolean using <code>Spec</code>.</td></tr><tr><td valign="top"><a href="#remove-1">remove/1</a></td><td>Equivalent to <a href="#remove-3"><tt>remove(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#remove-2">remove/2</a></td><td>Equivalent to <a href="#remove-3"><tt>remove(default, Name, LabelValues)</tt></a>.</td></tr><tr><td valign="top"><a href="#remove-3">remove/3</a></td><td>Removes boolean series identified by <code>Registry</code>, <code>Name</code>
 and <code>LabelValues</code>.</td></tr><tr><td valign="top"><a href="#reset-1">reset/1</a></td><td>Equivalent to <a href="#reset-3"><tt>reset(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#reset-2">reset/2</a></td><td>Equivalent to <a href="#reset-3"><tt>reset(default, Name, LabelValues)</tt></a>.</td></tr><tr><td valign="top"><a href="#reset-3">reset/3</a></td><td>Resets the value of the boolean identified by <code>Registry</code>, <code>Name</code>
 and <code>LabelValues</code>.</td></tr><tr><td valign="top"><a href="#set-2">set/2</a></td><td>Equivalent to <a href="#set-4"><tt>set(default, Name, [], Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#set-3">set/3</a></td><td>Equivalent to <a href="#set-4"><tt>set(default, Name, LabelValues, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#set-4">set/4</a></td><td>Sets the boolean identified by <code>Registry</code>, <code>Name</code>
 and <code>LabelValues</code> to <code>Value</code>.</td></tr><tr><td valign="top"><a href="#toggle-1">toggle/1</a></td><td>Equivalent to <a href="#toggle-3"><tt>toggle(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#toggle-2">toggle/2</a></td><td>Equivalent to <a href="#toggle-4"><tt>toggle(default, Name, LabelValues, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#toggle-3">toggle/3</a></td><td>Toggles the boolean identified by <code>Registry</code>, <code>Name</code>
@@ -73,6 +75,28 @@ Raises `{invalid_label_name, Name, Message}` error if `Name` isn't a valid
 label name.<br />
 Raises `{invalid_value_error, Value, MessagE}` error if `duration_unit` is
 unknown or doesn't match metric name.<br />
+
+<a name="deregister-1"></a>
+
+### deregister/1 ###
+
+`deregister(Name) -> any()`
+
+Equivalent to [`deregister(default, Name)`](#deregister-2).
+
+<a name="deregister-2"></a>
+
+### deregister/2 ###
+
+`deregister(Registry, Name) -> any()`
+
+Removes all boolean series with name `Name` and
+removes Metric Family from `Registry`.
+
+After this call new/1 for `Name` and `Registry` will succeed.
+
+Returns `{true, _}` if `Name` was a registered boolean.
+Otherwise returns `{true, _}`.
 
 <a name="new-1"></a>
 

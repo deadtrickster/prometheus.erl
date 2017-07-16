@@ -30,6 +30,8 @@
 %%% metric
 -export([new/1,
          declare/1,
+         deregister/1,
+         deregister/2,
          set_default/2,
          set/2,
          set/3,
@@ -109,6 +111,24 @@ new(Spec) ->
 %% @end
 declare(Spec) ->
   prometheus_metric:insert_mf(?TABLE, ?MODULE, Spec).
+
+%% @equiv deregister(default, Name)
+deregister(Name) ->
+  deregister(default, Name).
+
+%% @doc
+%% Removes all boolean series with name `Name' and
+%% removes Metric Family from `Registry'.
+%%
+%% After this call new/1 for `Name' and `Registry' will succeed.
+%%
+%% Returns `{true, _}' if `Name' was a registered boolean.
+%% Otherwise returns `{true, _}'.
+%% @end
+deregister(Registry, Name) ->
+  MFR = prometheus_metric:deregister_mf(?TABLE, Registry, Name),
+  NumDeleted = ets:select_delete(?TABLE, deregister_select(Registry, Name)),
+  {MFR, NumDeleted > 0}.
 
 %% @private
 set_default(Registry, Name) ->
@@ -273,6 +293,9 @@ collect_metrics(Name, {Labels, Registry, DU}) ->
 %%====================================================================
 %% Private Parts
 %%====================================================================
+
+deregister_select(Registry, Name) ->
+  [{{{Registry, Name, '_'}, '_'}, [], [true]}].
 
 set_(Registry, Name, LabelValues, Value) ->
   case ets:update_element(?TABLE, {Registry, Name, LabelValues},

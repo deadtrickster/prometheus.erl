@@ -12,6 +12,7 @@ prometheus_format_test_() ->
     fun test_errors/1,
     fun test_set/1,
     fun test_toggle/1,
+    fun test_deregister/1,
     fun test_remove/1,
     fun test_default_value/1]}.
 
@@ -96,6 +97,19 @@ test_toggle(_) ->
   [?_assertEqual(true, PSValue),
    ?_assertEqual(false, TValue1),
    ?_assertEqual(true, TValue2)].
+
+test_deregister(_) ->
+  prometheus_boolean:new([{name, fuse_state}, {labels, [pool]}, {help, ""}]),
+  prometheus_boolean:new([{name, simple_boolean}, {help, ""}]),
+
+  prometheus_boolean:set(fuse_state, [mongodb], true),
+  prometheus_boolean:set(simple_boolean, true),
+
+  [?_assertMatch({true, true}, prometheus_boolean:deregister(fuse_state)),
+   ?_assertMatch({false, false}, prometheus_boolean:deregister(fuse_state)),
+   ?_assertEqual(2, length(ets:tab2list(prometheus_boolean_table))),
+   ?_assertEqual(true, prometheus_boolean:value(simple_boolean))
+  ].
 
 test_remove(_) ->
   prometheus_boolean:new([{name, fuse_state},

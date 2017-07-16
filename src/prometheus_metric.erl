@@ -4,6 +4,7 @@
 -export([insert_new_mf/3,
          insert_mf/3,
          deregister_mf/2,
+         deregister_mf/3,
          check_mf_exists/4,
          mf_call_timeout/1,
          mf_duration_unit/1,
@@ -122,6 +123,15 @@ deregister_mf(Table, Registry) ->
                            '_',
                            '_',
                            '_'}).
+
+%% @private
+deregister_mf(Table, Registry, Name) ->
+  case ets:take(Table, {Registry, mf, Name}) of
+    [] ->
+      false;
+    _ ->
+      true
+  end.
 
 %% @private
 check_mf_exists(Table, Registry, Name, LabelValues) ->

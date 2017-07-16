@@ -14,6 +14,7 @@ prometheus_format_test_() ->
     fun test_dobserve/1,
     fun test_observe_duration_seconds/1,
     fun test_observe_duration_milliseconds/1,
+    fun test_deregister/1,
     fun test_remove/1,
     fun test_default_value/1]}.
 
@@ -196,6 +197,19 @@ test_observe_duration_milliseconds(_) ->
    ?_assertEqual(2, CountE),
    ?_assertMatch(true, 900 < Sum andalso Sum < 1200),
    ?_assertMatch(true, 900 < SumE andalso SumE < 1200)].
+
+test_deregister(_) ->
+  prometheus_summary:new([{name, summary}, {labels, [pool]}, {help, ""}]),
+  prometheus_summary:new([{name, simple_summary}, {help, ""}]),
+
+  prometheus_summary:observe(summary, [mongodb], 1),
+  prometheus_summary:observe(simple_summary, 1),
+
+  [?_assertMatch({true, true}, prometheus_summary:deregister(summary)),
+   ?_assertMatch({false, false}, prometheus_summary:deregister(summary)),
+   ?_assertEqual(2, length(ets:tab2list(prometheus_summary_table))),
+   ?_assertEqual({1, 1}, prometheus_summary:value(simple_summary))
+  ].
 
 test_remove(_) ->
   prometheus_summary:new([{name, summary}, {labels, [pool]}, {help, ""}]),

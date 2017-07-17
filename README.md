@@ -71,7 +71,7 @@ prometheus_counter:new([{name, http_requests_total}, {help, "Http request count"
 prometheus_summary:new([{name, orders}, {help, "Track orders count/total sum"}]).
 prometheus_histogram:new([{name, http_request_duration_milliseconds},
                                {labels, [method]},
-                               {bounds, [100, 300, 500, 750, 1000]},
+                               {buckets, [100, 300, 500, 750, 1000]},
                                {help, "Http Request execution time"}]).
 
 ```

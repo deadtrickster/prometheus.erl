@@ -81,6 +81,17 @@
 
 -compile({no_auto_import, [register/2]}).
 
+-define(DEFAULT_COLLECTORS,
+        [prometheus_boolean,
+         prometheus_counter,
+         prometheus_gauge,
+         prometheus_histogram,
+         prometheus_mnesia_collector,
+         prometheus_summary,
+         prometheus_vm_memory_collector,
+         prometheus_vm_statistics_collector,
+         prometheus_vm_system_info_collector]).
+
 -include("prometheus.hrl").
 
 %%====================================================================
@@ -117,10 +128,11 @@
 %% @private
 -spec enabled_collectors() -> [collector()].
 enabled_collectors() ->
-  case application:get_env(prometheus, collectors) of
-    undefined -> all_known_collectors();
-    {ok, Collectors} -> Collectors
-  end.
+  lists:usort(
+    case application:get_env(prometheus, collectors) of
+      undefined -> all_known_collectors();
+      {ok, Collectors} -> catch_default_collectors(Collectors)
+    end).
 
 %% @equiv register(Collector, default)
 %% @deprecated Please use {@link prometheus_registry:register_collector/1}
@@ -191,4 +203,17 @@ get_list(Key) ->
 %%====================================================================
 
 all_known_collectors() ->
-  prometheus_misc:behaviour_modules(prometheus_collector).
+  lists:umerge(
+    prometheus_misc:behaviour_modules(prometheus_collector),
+    ?DEFAULT_COLLECTORS).
+
+catch_default_collectors(Collectors) ->
+    maybe_replace_default(Collectors, []).
+
+maybe_replace_default([default|Rest], Acc) ->
+  maybe_replace_default(Rest, ?DEFAULT_COLLECTORS ++ Acc);
+maybe_replace_default([], Acc) ->
+  Acc;
+maybe_replace_default([H|R], Acc) ->
+  maybe_replace_default(R, [H|Acc]).
+

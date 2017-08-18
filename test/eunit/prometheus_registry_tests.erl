@@ -24,15 +24,15 @@ stop(ok) ->
 %% this should be moved to app-level tests [as well as default instrumenters]
 %% maybe after migration to CT
 default_registry() ->
-  ?_assertEqual([prometheus_vm_system_info_collector,
-                 prometheus_vm_statistics_collector,
-                 prometheus_vm_memory_collector,
-                 prometheus_summary,
-                 prometheus_mnesia_collector,
-                 prometheus_histogram,
-                 prometheus_gauge,
+  ?_assertEqual([prometheus_boolean,
                  prometheus_counter,
-                 prometheus_boolean],
+                 prometheus_gauge,
+                 prometheus_histogram,
+                 prometheus_mnesia_collector,
+                 prometheus_summary,
+                 prometheus_vm_memory_collector,
+                 prometheus_vm_statistics_collector,
+                 prometheus_vm_system_info_collector],
                 prometheus_registry:collectors(default)).
 
 test_registry() ->

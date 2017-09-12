@@ -32,7 +32,7 @@ collect_mf(_Registry, Callback) ->
 
   ok.
 
-%% called to callect Time Series for the Metric Family
+%% called to collect Time Series for the Metric Family
 collect_metrics(pool_size, #{pool_size := PoolSize} = _Data) ->
   prometheus_model_helpers:untyped_metric(PoolSize).
 

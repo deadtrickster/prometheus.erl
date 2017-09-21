@@ -212,7 +212,7 @@ test_ddec(_) ->
 
 test_set_to_current_time(_) ->
   prometheus_gauge:new([{name, cur_time}, {labels, []}, {help, ""}]),
-  Timestamp = os:system_time(seconds),
+  Timestamp = prometheus_time_compat:os_system_time(seconds),
   prometheus_gauge:set_to_current_time(cur_time),
   STimestamp = prometheus_gauge:value(cur_time),
   [?_assertEqual(Timestamp, STimestamp)].

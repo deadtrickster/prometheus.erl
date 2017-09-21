@@ -135,7 +135,7 @@ clear() ->
 -spec clear(Registry :: prometheus_registry:registry()) -> ok.
 clear(Registry) ->
   [Collector:deregister_cleanup(Registry) ||
-    {_, Collector} <- ets:take(?TABLE, Registry)],
+    {_, Collector} <- prometheus_ets_compat:take(?TABLE, Registry)],
   ok.
 
 %% @equiv collector_registeredp(default, Collector)

@@ -2043,7 +2043,7 @@ verify_msg(Msg, Opts) ->
     end.
 
 
--dialyzer({nowarn_function,v_msg_Bucket/3}).
+%-dialyzer({nowarn_function,v_msg_Bucket/3}).
 v_msg_Bucket(#'Bucket'{cumulative_count = F1,
 		       upper_bound = F2},
 	     Path, _) ->
@@ -2057,7 +2057,7 @@ v_msg_Bucket(#'Bucket'{cumulative_count = F1,
 v_msg_Bucket(X, Path, _TrUserData) ->
     mk_type_error({expected_msg, 'Bucket'}, X, Path).
 
--dialyzer({nowarn_function,v_msg_Histogram/3}).
+%-dialyzer({nowarn_function,v_msg_Histogram/3}).
 v_msg_Histogram(#'Histogram'{sample_count = F1,
 			     sample_sum = F2, bucket = F3},
 		Path, TrUserData) ->
@@ -2079,7 +2079,7 @@ v_msg_Histogram(#'Histogram'{sample_count = F1,
 v_msg_Histogram(X, Path, _TrUserData) ->
     mk_type_error({expected_msg, 'Histogram'}, X, Path).
 
--dialyzer({nowarn_function,v_msg_Untyped/3}).
+%-dialyzer({nowarn_function,v_msg_Untyped/3}).
 v_msg_Untyped(#'Untyped'{value = F1}, Path, _) ->
     if F1 == undefined -> ok;
        true -> v_type_double(F1, [value | Path])
@@ -2088,7 +2088,7 @@ v_msg_Untyped(#'Untyped'{value = F1}, Path, _) ->
 v_msg_Untyped(X, Path, _TrUserData) ->
     mk_type_error({expected_msg, 'Untyped'}, X, Path).
 
--dialyzer({nowarn_function,v_msg_Quantile/3}).
+%-dialyzer({nowarn_function,v_msg_Quantile/3}).
 v_msg_Quantile(#'Quantile'{quantile = F1, value = F2},
 	       Path, _) ->
     if F1 == undefined -> ok;
@@ -2101,7 +2101,7 @@ v_msg_Quantile(#'Quantile'{quantile = F1, value = F2},
 v_msg_Quantile(X, Path, _TrUserData) ->
     mk_type_error({expected_msg, 'Quantile'}, X, Path).
 
--dialyzer({nowarn_function,v_msg_Summary/3}).
+%-dialyzer({nowarn_function,v_msg_Summary/3}).
 v_msg_Summary(#'Summary'{sample_count = F1,
 			 sample_sum = F2, quantile = F3},
 	      Path, TrUserData) ->
@@ -2123,7 +2123,7 @@ v_msg_Summary(#'Summary'{sample_count = F1,
 v_msg_Summary(X, Path, _TrUserData) ->
     mk_type_error({expected_msg, 'Summary'}, X, Path).
 
--dialyzer({nowarn_function,v_msg_Counter/3}).
+%-dialyzer({nowarn_function,v_msg_Counter/3}).
 v_msg_Counter(#'Counter'{value = F1}, Path, _) ->
     if F1 == undefined -> ok;
        true -> v_type_double(F1, [value | Path])
@@ -2132,7 +2132,7 @@ v_msg_Counter(#'Counter'{value = F1}, Path, _) ->
 v_msg_Counter(X, Path, _TrUserData) ->
     mk_type_error({expected_msg, 'Counter'}, X, Path).
 
--dialyzer({nowarn_function,v_msg_Gauge/3}).
+%-dialyzer({nowarn_function,v_msg_Gauge/3}).
 v_msg_Gauge(#'Gauge'{value = F1}, Path, _) ->
     if F1 == undefined -> ok;
        true -> v_type_double(F1, [value | Path])
@@ -2141,7 +2141,7 @@ v_msg_Gauge(#'Gauge'{value = F1}, Path, _) ->
 v_msg_Gauge(X, Path, _TrUserData) ->
     mk_type_error({expected_msg, 'Gauge'}, X, Path).
 
--dialyzer({nowarn_function,v_msg_LabelPair/3}).
+%-dialyzer({nowarn_function,v_msg_LabelPair/3}).
 v_msg_LabelPair(#'LabelPair'{name = F1, value = F2},
 		Path, _) ->
     if F1 == undefined -> ok;
@@ -2154,7 +2154,7 @@ v_msg_LabelPair(#'LabelPair'{name = F1, value = F2},
 v_msg_LabelPair(X, Path, _TrUserData) ->
     mk_type_error({expected_msg, 'LabelPair'}, X, Path).
 
--dialyzer({nowarn_function,v_msg_Metric/3}).
+%-dialyzer({nowarn_function,v_msg_Metric/3}).
 v_msg_Metric(#'Metric'{label = F1, gauge = F2,
 		       counter = F3, summary = F4, untyped = F5,
 		       histogram = F6, timestamp_ms = F7},
@@ -2190,7 +2190,7 @@ v_msg_Metric(#'Metric'{label = F1, gauge = F2,
 v_msg_Metric(X, Path, _TrUserData) ->
     mk_type_error({expected_msg, 'Metric'}, X, Path).
 
--dialyzer({nowarn_function,v_msg_MetricFamily/3}).
+%-dialyzer({nowarn_function,v_msg_MetricFamily/3}).
 v_msg_MetricFamily(#'MetricFamily'{name = F1, help = F2,
 				   type = F3, metric = F4},
 		   Path, TrUserData) ->
@@ -2213,7 +2213,7 @@ v_msg_MetricFamily(#'MetricFamily'{name = F1, help = F2,
     end,
     ok.
 
--dialyzer({nowarn_function,v_enum_MetricType/2}).
+%-dialyzer({nowarn_function,v_enum_MetricType/2}).
 v_enum_MetricType('COUNTER', _Path) -> ok;
 v_enum_MetricType('GAUGE', _Path) -> ok;
 v_enum_MetricType('SUMMARY', _Path) -> ok;
@@ -2224,7 +2224,7 @@ v_enum_MetricType(V, Path) when is_integer(V) ->
 v_enum_MetricType(X, Path) ->
     mk_type_error({invalid_enum, 'MetricType'}, X, Path).
 
--dialyzer({nowarn_function,v_type_sint32/2}).
+%-dialyzer({nowarn_function,v_type_sint32/2}).
 v_type_sint32(N, _Path)
     when -2147483648 =< N, N =< 2147483647 ->
     ok;
@@ -2235,7 +2235,7 @@ v_type_sint32(X, Path) ->
     mk_type_error({bad_integer, sint32, signed, 32}, X,
 		  Path).
 
--dialyzer({nowarn_function,v_type_int64/2}).
+%-dialyzer({nowarn_function,v_type_int64/2}).
 v_type_int64(N, _Path)
     when -9223372036854775808 =< N,
 	 N =< 9223372036854775807 ->
@@ -2247,7 +2247,7 @@ v_type_int64(X, Path) ->
     mk_type_error({bad_integer, int64, signed, 64}, X,
 		  Path).
 
--dialyzer({nowarn_function,v_type_uint64/2}).
+%-dialyzer({nowarn_function,v_type_uint64/2}).
 v_type_uint64(N, _Path)
     when 0 =< N, N =< 18446744073709551615 ->
     ok;
@@ -2259,7 +2259,7 @@ v_type_uint64(X, Path) ->
     mk_type_error({bad_integer, uint64, unsigned, 64}, X,
 		  Path).
 
--dialyzer({nowarn_function,v_type_double/2}).
+%-dialyzer({nowarn_function,v_type_double/2}).
 v_type_double(N, _Path) when is_float(N) -> ok;
 v_type_double(N, _Path) when is_integer(N) -> ok;
 v_type_double(infinity, _Path) -> ok;
@@ -2268,7 +2268,7 @@ v_type_double(nan, _Path) -> ok;
 v_type_double(X, Path) ->
     mk_type_error(bad_double_value, X, Path).
 
--dialyzer({nowarn_function,v_type_string/2}).
+%-dialyzer({nowarn_function,v_type_string/2}).
 v_type_string(S, Path) when is_list(S); is_binary(S) ->
     try unicode:characters_to_binary(S) of
       B when is_binary(B) -> ok;

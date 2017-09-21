@@ -385,7 +385,7 @@ set_to_current_time(Name, LabelValues) ->
 %% mismatch.
 %% @end
 set_to_current_time(Registry, Name, LabelValues) ->
-  set(Registry, Name, LabelValues, os:system_time(seconds)).
+  set(Registry, Name, LabelValues, prometheus_time_compat:os_system_time(seconds)).
 
 %% @equiv track_inprogress(default, Name, [], Fun)
 track_inprogress(Name, Fun) ->
@@ -434,11 +434,11 @@ set_duration(Name, LabelValues, Fun) ->
 %% isn't a function.<br/>
 %% @end
 set_duration(Registry, Name, LabelValues, Fun) when is_function(Fun) ->
-  Start = erlang:monotonic_time(),
+  Start = prometheus_time_compat:monotonic_time(),
   try
     Fun()
   after
-    set(Registry, Name, LabelValues, erlang:monotonic_time() - Start)
+    set(Registry, Name, LabelValues, prometheus_time_compat:monotonic_time() - Start)
   end;
 set_duration(_Registry, _Name, _LabelValues, Fun) ->
   erlang:error({invalid_value, Fun, "set_duration accepts only functions"}).

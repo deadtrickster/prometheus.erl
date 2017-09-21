@@ -36,7 +36,7 @@ test_mnesia_on_collector_env_on() ->
   ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_committed_transactions")),
   ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_logged_transactions")),
   ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_restarted_transactions")),
-  application:unset_env(prometheus,mnesia_collector_metrics,[]).
+  application:unset_env(prometheus,mnesia_collector_metrics).
 
 test_mnesia_on_collector_env_off() ->
   prometheus_registry:register_collector(prometheus_mnesia_collector),
@@ -50,7 +50,7 @@ test_mnesia_on_collector_env_off() ->
   ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_committed_transactions")),
   ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_logged_transactions")),
   ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_restarted_transactions")),
-  application:unset_env(prometheus,mnesia_collector_metrics,[]).
+  application:unset_env(prometheus,mnesia_collector_metrics).
 
 test_mnesia_on_collector() ->
   prometheus_registry:register_collector(prometheus_mnesia_collector),

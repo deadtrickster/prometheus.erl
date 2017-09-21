@@ -127,7 +127,7 @@ deregister_mf(Table, Registry) ->
 
 %% @private
 deregister_mf(Table, Registry, Name) ->
-  case ets:take(Table, {Registry, mf, Name}) of
+  case prometheus_ets_compat:take(Table, {Registry, mf, Name}) of
     [] ->
       false;
     _ ->
@@ -194,7 +194,7 @@ maybe_set_default(_, _, _, _) ->
     LValues  :: list().
 remove_labels(Table, Registry, Name, LabelValues) ->
   check_mf_exists(Table, Registry, Name, LabelValues),
-  case ets:take(Table, {Registry, Name, LabelValues}) of
+  case prometheus_ets_compat:take(Table, {Registry, Name, LabelValues}) of
     [] -> false;
     _ -> true
   end.

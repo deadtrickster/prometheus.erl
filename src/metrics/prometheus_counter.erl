@@ -284,7 +284,7 @@ remove(Name, LabelValues) ->
 %% @end
 remove(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  case lists:flatten([ets:take(?TABLE,
+  case lists:flatten([prometheus_ets_compat:take(?TABLE,
                                {Registry, Name, LabelValues, Scheduler})
                       || Scheduler <- schedulers_seq()]) of
     [] -> false;

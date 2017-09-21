@@ -38,8 +38,8 @@ test_errors(_) ->
                  prometheus_boolean:new([{name, "qwe"}, {help, 12}])),
 
    %% boolean specific errors,
-   ?_assertError({invalid_value, #{}, "value is not boolean"},
-                 prometheus_boolean:set(fuse_state, #{})),
+   ?_assertError({invalid_value, {}, "value is not boolean"},
+                 prometheus_boolean:set(fuse_state, {})),
    begin
      prometheus_boolean:set(with_label, [label], undefined),
      ?_assertError({invalid_value, undefined, "can't toggle undefined boolean"},

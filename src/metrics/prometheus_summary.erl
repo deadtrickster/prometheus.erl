@@ -244,11 +244,11 @@ observe_duration(Name, LabelValues, Fun) ->
 %% isn't a function.<br/>
 %% @end
 observe_duration(Registry, Name, LabelValues, Fun) when is_function(Fun)->
-  Start = erlang:monotonic_time(),
+  Start = prometheus_time_compat:monotonic_time(),
   try
     Fun()
   after
-    observe(Registry, Name, LabelValues, erlang:monotonic_time() - Start)
+    observe(Registry, Name, LabelValues, prometheus_time_compat:monotonic_time() - Start)
   end;
 observe_duration(_Regsitry, _Name, _LabelValues, Fun) ->
   erlang:error({invalid_value, Fun, "observe_duration accepts only functions"}).
@@ -271,7 +271,7 @@ remove(Name, LabelValues) ->
 %% @end
 remove(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  case lists:flatten([ets:take(?TABLE,
+  case lists:flatten([prometheus_ets_compat:take(?TABLE,
                                {Registry, Name, LabelValues, Scheduler})
                       || Scheduler <- schedulers_seq()]) of
     [] -> false;

@@ -162,7 +162,7 @@ duration_unit_from_string(_, []) ->
 
 %% @private
 from_native(Value) ->
-  erlang:convert_time_unit(trunc(Value), native, nano_seconds).
+  prometheus_time_compat:convert_time_unit(trunc(Value), native, nano_seconds).
 
 %% @private
 from_native(Value, microseconds) ->
@@ -186,7 +186,7 @@ from_native(Value, days) ->
 
 %% @private
 to_native(Value) ->
-  erlang:convert_time_unit(trunc(Value), nano_seconds, native).
+  prometheus_time_compat:convert_time_unit(trunc(Value), nano_seconds, native).
 
 %% @private
 to_native(Value, microseconds) ->

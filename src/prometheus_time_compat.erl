@@ -107,29 +107,29 @@ maybe_inject_integer_time_unit() ->
       {attribute,1,noop, [noop]}
   end.
 
-maybe_inject_floor() ->
-  case no_monotonic_time() of
-    true ->
-      {function,1,floor,1,
-       [{clause,1,
-         [{var,1,'Num'}],
-         [[{call,1,{atom,1,is_float},[{var,1,'Num'}]}]],
-         [{match,1,
-           {var,1,'T'},
-           {call,1,{atom,1,trunc},[{var,1,'Num'}]}},
-          {match,1,
-           {var,1,'V'},
-           {'case',1,
-            {op,1,'>',
-             {op,1,'-',{var,1,'Num'},{var,1,'T'}},
-             {integer,1,0}},
-            [{clause,1,[{atom,1,true}],[],[{float,1,1.0}]},
-             {clause,1,[{atom,1,false}],[],[{float,1,0.0}]}]}},
-          {op,1,'+',{var,1,'T'},{var,1,'V'}}]},
-        {clause,1,[{var,1,'Num'}],[],[{var,1,'Num'}]}]};
-    _ ->      
-      {attribute,1,noop, [noop]}
-  end.
+%% maybe_inject_floor() ->
+%%   case no_monotonic_time() of
+%%     true ->
+%%       {function,1,floor,1,
+%%        [{clause,1,
+%%          [{var,1,'Num'}],
+%%          [[{call,1,{atom,1,is_float},[{var,1,'Num'}]}]],
+%%          [{match,1,
+%%            {var,1,'T'},
+%%            {call,1,{atom,1,trunc},[{var,1,'Num'}]}},
+%%           {match,1,
+%%            {var,1,'V'},
+%%            {'case',1,
+%%             {op,1,'>',
+%%              {op,1,'-',{var,1,'Num'},{var,1,'T'}},
+%%              {integer,1,0}},
+%%             [{clause,1,[{atom,1,true}],[],[{float,1,1.0}]},
+%%              {clause,1,[{atom,1,false}],[],[{float,1,0.0}]}]}},
+%%           {op,1,'+',{var,1,'T'},{var,1,'V'}}]},
+%%         {clause,1,[{var,1,'Num'}],[],[{var,1,'Num'}]}]};
+%%     _ ->      
+%%       {attribute,1,noop, [noop]}
+%%   end.
 
 patch_os_system_time() ->
   case no_monotonic_time() of
@@ -191,7 +191,7 @@ regen() ->
        {attribute,1,export,
         [{os_system_time,1}]},
        maybe_inject_integer_time_unit(),
-       maybe_inject_floor(),
+       %% maybe_inject_floor(),
        {function,1,monotonic_time,0,
         [{clause,1,[],[],
           patch_monotonic_time()}]},

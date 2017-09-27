@@ -1,7 +1,14 @@
-case os:getenv("TRAVIS") of
+TravisConfig = case os:getenv("TRAVIS") of
   "true" ->
     JobId   = os:getenv("TRAVIS_JOB_ID"),
     lists:keystore(coveralls_service_job_id, 1, CONFIG, {coveralls_service_job_id, JobId});
   _ ->
     CONFIG
+end,
+
+case erlang:function_exported(rebar3, main, 1) of
+    true -> % rebar3
+        TravisConfig;
+    false -> % rebar 2.x or older
+        lists:keystore(proto_opts, 1, TravisConfig, {proto_opts, [{src_dirs, []}]})
 end.

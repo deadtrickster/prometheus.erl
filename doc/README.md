@@ -45,12 +45,17 @@ __Version:__ 3.4.0
 - [Statistics Collector](prometheus_vm_statistics_collector.md)
 - [System Information Collector](prometheus_vm_system_info_collector.md).
 
-## Prometheus.erl and OTP versions
+## Compatibility
+
+### OTP versions
 Version 3.x works on OTP18+. For older version (oldest tested is R16B03) please use
 [3.x-pre18 branch](https://github.com/deadtrickster/prometheus.erl/tree/3.x-pre18).
 3.x-pre18 will work on all OTP releases starting from R16B03 and its beam will recompile itself to accommodate.
 For example, this branch is used by [RabbitMQ Exporter](https://github.com/deadtrickster/prometheus_rabbitmq_exporter) 3.6.x
 that should be compatible with all versions starting from R16B03.
+
+### Build tools
+Rebar3 and rebar2 are supported.
 
 ## Example Console Session
 

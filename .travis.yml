@@ -3,7 +3,9 @@ language: erlang
 install: 'true'
 before_script:
 - wget https://s3.amazonaws.com/rebar3/rebar3
+- wget https://github.com/rebar/rebar/wiki/rebar
 - chmod +x rebar3
+- chmod +x rebar
 env: PATH=$PATH:.
 cache:
   directories:

@@ -190,7 +190,7 @@ You'll use that if you want to create custom collector.
 
 Prometheus.erl supports standard Erlang app configuration.
 - `collectors` - List of custom collectors modules to be registered automatically. If undefined list of all modules implementing `prometheus_collector` behaviour will be used.
-- `default_metrics` - List of metrics to be registered during app startup. Metric format: `{Type, Spec}` where `Type` is metric type (counter, gauge ... etc), `Spec` is a list to be passed to `Metric:declare/1`.
+- `default_metrics` - List of metrics to be registered during app startup. Metric format: `{Type, Spec}` where `Type` is a metric type (counter, gauge, etc), `Spec` is a list to be passed to `Metric:declare/1`. Deprecated format `{Registry, Metric, Spec}` also supported.
 
 Collectors config also supports "alias" option `default`. When used these collectors will be registered:
 <pre>

@@ -83,10 +83,7 @@ register_collectors() ->
   prometheus_registry:register_collectors(Collectors).
 
 register_metrics() ->
-  [begin
-     Module = type_to_module(Metric),
-     Module:declare(Spec)
-   end || {Metric, Spec} <- default_metrics()].
+  [declare_metric(Decl) || Decl <- default_metrics()].
 
 setup_instrumenters() ->
   [prometheus_instrumenter:setup(Instrumenter) ||
@@ -105,6 +102,15 @@ maybe_create_table(Name, {Type, Concurrency}) ->
 maybe_create_table(Name, Concurrency) ->
   maybe_create_table(Name, {set, Concurrency}).
 
+declare_metric({Metric, Spec}) ->
+  declare_metric(Metric, Spec);
+declare_metric({Registry, Metric, Spec}) ->
+  declare_metric(Metric, [{registry, Registry}] ++ Spec).
+
+declare_metric(Metric, Spec) ->
+  Module = type_to_module(Metric),
+  Module:declare(Spec).
+
 type_to_module(counter) ->
   prometheus_counter;
 type_to_module(gauge) ->
@@ -114,6 +120,6 @@ type_to_module(summary) ->
 type_to_module(histogram) ->
   prometheus_histogram;
 type_to_module(boolean) ->
-  prometheus_boolean.
-
-
+  prometheus_boolean;
+type_to_module(Type) ->
+  Type.

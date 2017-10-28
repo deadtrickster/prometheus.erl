@@ -113,6 +113,8 @@
     Registry :: prometheus_registry:registry(),
     Callback :: collect_mf_callback().
 
+%% TODO: either add mandatory Type argument here or track Type
+%% automatically and don't ask collector implementers to care
 -callback collect_metrics(Name, Data) -> Metrics when
     Name    :: prometheus_metric:name(),
     Data    :: data(),

@@ -30,6 +30,14 @@ The total number of bytes received through ports.
 Type: counter.<br />
 The total number of context switches since the system started.
 
+* `erlang_vm_statistics_dirty_cpu_run_queue_length_total`<br />
+Type: gauge.<br />
+The total length of the dirty CPU run-queue.
+
+* `erlang_vm_statistics_dirty_io_run_queue_length_total`<br />
+Type: gauge.<br />
+The total length of the dirty IO run-queue.
+
 * `erlang_vm_statistics_garbage_collection_number_of_gcs`<br />
 Type: counter.<br />
 The total number of garbage collections since the system started.
@@ -48,8 +56,9 @@ Total reductions count.
 
 * `erlang_vm_statistics_run_queues_length_total`<br />
 Type: gauge.<br />
-The total length of the run-queues. That is, the number of
-processes and ports that are ready to run on all available run-queues.
+The total length of all normal run-queues. That is, the number of
+processes and ports that are ready to run on all available normal
+run-queues.
 
 * `erlang_vm_statistics_runtime_milliseconds`<br />
 Type: counter.<br />

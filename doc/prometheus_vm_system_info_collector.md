@@ -18,6 +18,18 @@ __Behaviours:__ [`prometheus_collector`](prometheus_collector.md).
 ### <a name="Exported_metrics">Exported metrics</a> ###
 
 
+* `erlang_vm_dirty_cpu_schedulers`<br />
+Type: gauge.<br />
+The number of scheduler dirty CPU scheduler threads used by the emulator.
+
+* `erlang_vm_dirty_cpu_schedulers_online`<br />
+Type: gauge.<br />
+The number of dirty CPU scheduler threads online.
+
+* `erlang_vm_dirty_io_schedulers`<br />
+Type: gauge.<br />
+The number of scheduler dirty I/O scheduler threads used by the emulator.
+
 * `erlang_vm_ets_limit`<br />
 Type: gauge.<br />
 The maximum number of ETS tables allowed.

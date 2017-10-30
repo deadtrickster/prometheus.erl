@@ -22,6 +22,16 @@
 %%     The total number of context switches since the system started.
 %%   </li>
 %%   <li>
+%%     `erlang_vm_statistics_dirty_cpu_run_queue_length_total'<br/>
+%%     Type: gauge.<br/>
+%%     The total length of the dirty CPU run-queue.
+%%   </li>
+%%   <li>
+%%     `erlang_vm_statistics_dirty_io_run_queue_length_total'<br/>
+%%     Type: gauge.<br/>
+%%     The total length of the dirty IO run-queue.
+%%   </li>
+%%   <li>
 %%     `erlang_vm_statistics_garbage_collection_number_of_gcs'<br/>
 %%     Type: counter.<br/>
 %%     The total number of garbage collections since the system started.
@@ -44,8 +54,9 @@
 %%   <li>
 %%     `erlang_vm_statistics_run_queues_length_total'<br/>
 %%     Type: gauge.<br/>
-%%     The total length of the run-queues. That is, the number of
-%%     processes and ports that are ready to run on all available run-queues.
+%%     The total length of all normal run-queues. That is, the number of
+%%     processes and ports that are ready to run on all available normal
+%%     run-queues.
 %%   </li>
 %%   <li>
 %%     `erlang_vm_statistics_runtime_milliseconds'<br/>
@@ -115,6 +126,8 @@
 
 -include("prometheus.hrl").
 
+-include_lib("eunit/include/eunit.hrl").
+
 -behaviour(prometheus_collector).
 
 %%====================================================================
@@ -124,6 +137,10 @@
 -define(BYTES_OUTPUT, erlang_vm_statistics_bytes_output_total).
 -define(BYTES_RECEIVED, erlang_vm_statistics_bytes_received_total).
 -define(CONTEXT_SWITCHES, erlang_vm_statistics_context_switches).
+-define(DIRTY_CPU_RUN_QUEUE_LENGTH,
+        erlang_vm_statistics_dirty_cpu_run_queue_length_total).
+-define(DIRTY_IO_RUN_QUEUE_LENGTH,
+        erlang_vm_statistics_dirty_io_run_queue_length_total).
 -define(GC_NUM_GCS, erlang_vm_statistics_garbage_collection_number_of_gcs).
 -define(GC_WORDS_RECLAIMED,
         erlang_vm_statistics_garbage_collection_words_reclaimed).
@@ -136,6 +153,7 @@
 
 -define(PROMETHEUS_VM_STATISTICS, [
                                    context_switches,
+                                   dirty_run_queues,
                                    garbage_collection,
                                    io,
                                    reductions,
@@ -167,6 +185,11 @@ add_metric_family(context_switches, Stat, Callback) ->
   do_add_metric_family(?CONTEXT_SWITCHES, Stat, Callback,
                        "Total number of context switches "
                        "since the system started");
+add_metric_family(dirty_run_queues, Stat, Callback) ->
+  do_add_metric_family(?DIRTY_CPU_RUN_QUEUE_LENGTH, Stat, Callback,
+                       "The total length of the dirty CPU run-queue."),
+  do_add_metric_family(?DIRTY_IO_RUN_QUEUE_LENGTH, Stat, Callback,
+                       "The total length of the dirty IO run-queue.");
 add_metric_family(garbage_collection, Stat, Callback) ->
   do_add_metric_family(?GC_NUM_GCS, Stat, Callback,
                        "Garbage collection: number of GCs"),
@@ -204,6 +227,10 @@ collect_metrics(?BYTES_RECEIVED, {{input, Input}, _}) ->
   counter_metric(Input);
 collect_metrics(?CONTEXT_SWITCHES, {Stat, _}) ->
   counter_metric(Stat);
+collect_metrics(?DIRTY_CPU_RUN_QUEUE_LENGTH, [Stat, _]) ->
+  gauge_metric(Stat);
+collect_metrics(?DIRTY_IO_RUN_QUEUE_LENGTH, [_, Stat]) ->
+  gauge_metric(Stat);
 collect_metrics(?GC_NUM_GCS, {NumberOfGCs, _, _}) ->
   counter_metric(NumberOfGCs);
 collect_metrics(?GC_WORDS_RECLAIMED, {_, WordsReclaimed, _}) ->
@@ -223,6 +250,13 @@ collect_metrics(?WALLCLOCK_TIME_MS, {WallclockTime, _}) ->
 %% Private Parts
 %%====================================================================
 
+call_if_statistics_exists(dirty_run_queues, Fun) ->
+  SO = erlang:system_info(schedulers_online),
+  RQ = statistics(run_queue_lengths_all),
+  case length(RQ) > SO of
+    true -> Fun(lists:sublist(RQ, length(RQ) - 1, 2));
+    false -> undefined
+  end;
 call_if_statistics_exists(StatItem, Fun) ->
   try
     Stat = erlang:statistics(StatItem),
@@ -237,6 +271,10 @@ enabled_statistics_metrics() ->
 
 do_add_metric_family(?RUN_QUEUES_LENGTH, Stat, Callback, Help) ->
   Callback(create_gauge(?RUN_QUEUES_LENGTH, Help, Stat));
+do_add_metric_family(?DIRTY_CPU_RUN_QUEUE_LENGTH, Stat, Callback, Help) ->
+  Callback(create_gauge(?DIRTY_CPU_RUN_QUEUE_LENGTH, Help, Stat));
+do_add_metric_family(?DIRTY_IO_RUN_QUEUE_LENGTH, Stat, Callback, Help) ->
+  Callback(create_gauge(?DIRTY_IO_RUN_QUEUE_LENGTH, Help, Stat));
 do_add_metric_family(Name, Stat, Callback, Help) ->
   Callback(create_counter(Name, Help, Stat)).
 

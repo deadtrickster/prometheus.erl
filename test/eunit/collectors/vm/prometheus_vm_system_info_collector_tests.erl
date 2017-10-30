@@ -14,6 +14,9 @@ test_default_metrics(_) ->
   prometheus_registry:register_collector(prometheus_vm_system_info_collector),
   Metrics = prometheus_text_format:format(),
   [
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dirty_cpu_schedulers")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dirty_cpu_schedulers_online")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dirty_io_schedulers")),
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_ets_limit")),
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_logical_processors")),
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_logical_processors_available")),

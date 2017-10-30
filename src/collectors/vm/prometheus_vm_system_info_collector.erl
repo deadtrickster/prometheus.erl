@@ -7,6 +7,21 @@
 %% ==Exported metrics==
 %% <ul>
 %%   <li>
+%%     `erlang_vm_dirty_cpu_schedulers'<br/>
+%%     Type: gauge.<br/>
+%%     The number of scheduler dirty CPU scheduler threads used by the emulator.
+%%   </li>
+%%   <li>
+%%     `erlang_vm_dirty_cpu_schedulers_online'<br/>
+%%     Type: gauge.<br/>
+%%     The number of dirty CPU scheduler threads online.
+%%   </li>
+%%   <li>
+%%     `erlang_vm_dirty_io_schedulers'<br/>
+%%     Type: gauge.<br/>
+%%     The number of scheduler dirty I/O scheduler threads used by the emulator.
+%%   </li>
+%%   <li>
 %%     `erlang_vm_ets_limit'<br/>
 %%     Type: gauge.<br/>
 %%     The maximum number of ETS tables allowed.
@@ -161,6 +176,9 @@
 %% Macros
 %%====================================================================
 
+-define(DIRTY_CPU_SCHEDULERS, erlang_vm_dirty_cpu_schedulers).
+-define(DIRTY_CPU_SCHEDULERS_ONLINE, erlang_vm_dirty_cpu_schedulers_online).
+-define(DIRTY_IO_SCHEDULERS, erlang_vm_dirty_io_schedulers).
 -define(ETS_LIMIT, erlang_vm_ets_limit).
 -define(LOGICAL_PROCESSORS, erlang_vm_logical_processors).
 -define(LOGICAL_PROCESSORS_AVAILABLE, erlang_vm_logical_processors_available).
@@ -177,6 +195,9 @@
 -define(TIME_CORRECTION, erlang_vm_time_correction).
 
 -define(PROMETHEUS_VM_SYSTEM_INFO, [
+                                    dirty_cpu_schedulers,
+                                    dirty_cpu_schedulers_online,
+                                    dirty_io_schedulers,
                                     ets_limit,
                                     logical_processors,
                                     logical_processors_available,
@@ -212,6 +233,20 @@ collect_mf(_Registry, Callback) ->
    || MFName <- enabled_system_info_metrics()],
   ok.
 
+add_metric_family(dirty_cpu_schedulers, Value, Callback) ->
+  Callback(create_gauge(?DIRTY_CPU_SCHEDULERS,
+                        "The number of scheduler dirty CPU scheduler "
+                        "threads used by the emulator.",
+                        Value));
+add_metric_family(dirty_cpu_schedulers_online, Value, Callback) ->
+  Callback(create_gauge(?DIRTY_CPU_SCHEDULERS_ONLINE,
+                        "The number of dirty CPU scheduler threads online.",
+                        Value));
+add_metric_family(dirty_io_schedulers, Value, Callback) ->
+  Callback(create_gauge(?DIRTY_IO_SCHEDULERS,
+                        "The number of scheduler dirty I/O scheduler "
+                        "threads used by the emulator.",
+                        Value));
 add_metric_family(ets_limit, Value, Callback) ->
   Callback(create_gauge(?ETS_LIMIT,
                         "The maximum number of ETS tables allowed.",
@@ -280,6 +315,12 @@ add_metric_family(time_correction, Value, Callback) ->
                           Value)).
 
 %% @private
+collect_metrics(?DIRTY_CPU_SCHEDULERS, Value) ->
+  gauge_metric(Value);
+collect_metrics(?DIRTY_CPU_SCHEDULERS_ONLINE, Value) ->
+  gauge_metric(Value);
+collect_metrics(?DIRTY_IO_SCHEDULERS, Value) ->
+  gauge_metric(Value);
 collect_metrics(?ETS_LIMIT, Value) ->
   gauge_metric(Value);
 collect_metrics(?LOGICAL_PROCESSORS, Value) ->

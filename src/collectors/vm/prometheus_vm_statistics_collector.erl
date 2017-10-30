@@ -126,8 +126,6 @@
 
 -include("prometheus.hrl").
 
--include_lib("eunit/include/eunit.hrl").
-
 -behaviour(prometheus_collector).
 
 %%====================================================================

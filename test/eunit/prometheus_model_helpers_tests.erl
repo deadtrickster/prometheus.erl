@@ -4,6 +4,8 @@
 
 -include("prometheus_model.hrl").
 
+-compile(export_all).
+
 gauge_metric_test() ->
   Value = 11,
   NoLabels = [],
@@ -220,3 +222,27 @@ ensure_binary_or_string_test() ->
   ?assertEqual("qwe", prometheus_model_helpers:ensure_binary_or_string("qwe")),
   ?assertEqual(<<"qwe">>, prometheus_model_helpers:ensure_binary_or_string(<<"qwe">>)),
   ?assertEqual(["2"], prometheus_model_helpers:ensure_binary_or_string(2)).
+
+
+create_mf_test() ->
+  ?assertMatch(#'MetricFamily'{name = <<"gauge1">>,
+                               help = "help",
+                               type = 'GAUGE',
+                               metric = [#'Metric'{label = [],
+                                                   gauge=#'Gauge'{value=gauge1_value}}]},
+               create_mf(gauge1, "help", gauge)),
+  
+  ?assertMatch(#'MetricFamily'{name = <<"gauge1">>,
+                               help = "help",
+                               type = 'GAUGE',
+                               metric = [#'Metric'{label = [],
+                                                   gauge=#'Gauge'{value=gauge1_value}}]},
+               create_mf(gauge1, "help", gauge, {[], gauge1_value})).
+
+collect_metrics(gauge1, _Data) ->
+    prometheus_model_helpers:gauge_metric(gauge1_value).
+
+create_mf(Name, Help, Type, Metrics) ->
+  prometheus_model_helpers:create_mf(Name, Help, Type, Metrics).
+create_mf(Name, Help, Type) ->
+    prometheus_model_helpers:create_mf(Name, Help, Type, ?MODULE, undefined).

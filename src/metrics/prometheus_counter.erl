@@ -92,9 +92,6 @@
          code_change/3,
          start_link/0]).
 
--import(prometheus_model_helpers, [create_mf/5,
-                                   counter_metric/2]).
-
 -include("prometheus.hrl").
 
 -behaviour(prometheus_metric).
@@ -369,7 +366,8 @@ collect_metrics(Name, {Labels, Registry}) ->
   MFValues = ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2'}),
   [begin
      Value = reduce_label_values(LabelValues, MFValues),
-     counter_metric(lists:zip(Labels, LabelValues), Value)
+     prometheus_model_helpers:counter_metric(
+       lists:zip(Labels, LabelValues), Value)
    end ||
     LabelValues <- collect_unique_labels(MFValues)].
 
@@ -448,4 +446,4 @@ reduce_label_values(Labels, MFValues) ->
   lists:sum([Y || [L, Y] <- MFValues, L == Labels]).
 
 create_counter(Name, Help, Data) ->
-  create_mf(Name, Help, counter, ?MODULE, Data).
+  prometheus_model_helpers:create_mf(Name, Help, counter, ?MODULE, Data).

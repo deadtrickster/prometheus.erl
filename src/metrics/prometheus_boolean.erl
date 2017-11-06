@@ -54,9 +54,6 @@
          collect_mf/2,
          collect_metrics/2]).
 
--import(prometheus_model_helpers, [create_mf/5,
-                                   boolean_metric/2]).
-
 -include("prometheus.hrl").
 
 -behaviour(prometheus_metric).
@@ -286,8 +283,9 @@ collect_mf(Registry, Callback) ->
 
 %% @private
 collect_metrics(Name, {Labels, Registry, DU}) ->
-  [boolean_metric(lists:zip(Labels, LabelValues),
-                  prometheus_time:maybe_convert_to_du(DU, Value)) ||
+  [prometheus_model_helpers:boolean_metric(
+     lists:zip(Labels, LabelValues),
+     prometheus_time:maybe_convert_to_du(DU, Value)) ||
     [LabelValues, Value] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'})].
 
 %%====================================================================
@@ -326,4 +324,4 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   end.
 
 create_boolean(Name, Help, Data) ->
-  create_mf(Name, Help, boolean, ?MODULE, Data).
+  prometheus_model_helpers:create_mf(Name, Help, boolean, ?MODULE, Data).

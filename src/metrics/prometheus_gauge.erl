@@ -99,13 +99,6 @@
          code_change/3,
          start_link/0]).
 
--import(prometheus_model_helpers, [create_mf/5,
-                                   gauge_metrics/1,
-                                   gauge_metric/1,
-                                   gauge_metric/2,
-                                   counter_metric/1,
-                                   counter_metric/2]).
-
 -include("prometheus.hrl").
 
 -behaviour(prometheus_metric).
@@ -536,8 +529,9 @@ collect_mf(Registry, Callback) ->
 
 %% @private
 collect_metrics(Name, {Labels, Registry, DU}) ->
-  [gauge_metric(lists:zip(Labels, LabelValues),
-                prometheus_time:maybe_convert_to_du(DU, Value)) ||
+  [prometheus_model_helpers:gauge_metric(
+     lists:zip(Labels, LabelValues),
+     prometheus_time:maybe_convert_to_du(DU, Value)) ||
     [LabelValues, Value] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'})].
 
 

@@ -85,15 +85,6 @@
          exponential_buckets/3]).
 -endif.
 
--import(prometheus_model_helpers, [create_mf/5,
-                                   gauge_metrics/1,
-                                   gauge_metric/1,
-                                   gauge_metric/2,
-                                   counter_metric/1,
-                                   counter_metric/2,
-                                   histogram_metric/3,
-                                   histogram_metric/4]).
-
 -include("prometheus.hrl").
 
 -behaviour(prometheus_metric).
@@ -631,10 +622,11 @@ create_histogram_metric(Labels, DU, Buckets, LabelValues, Stat) ->
                                {Bound, BCounter}
                            end,
                            lists:map(Fun, Buckets), BCounters),
-  histogram_metric(lists:zip(Labels, LabelValues),
-                   Buckets1,
-                   lists:last(BCounters),
-                   prometheus_time:maybe_convert_to_du(DU, lists:last(Stat))).
+  prometheus_model_helpers:histogram_metric(
+    lists:zip(Labels, LabelValues),
+    Buckets1,
+    lists:last(BCounters),
+    prometheus_time:maybe_convert_to_du(DU, lists:last(Stat))).
 
 deregister_select(Registry, Name, Buckets) ->
   BoundCounters = lists:duplicate(length(Buckets), '_'),

@@ -25,7 +25,7 @@
 %% Types
 %%====================================================================
 
--type name() :: atom() | binary() | nonempty_string().
+-type name() :: atom() | binary() | nonempty_string() | iolist().
 
 -type help() :: binary() | nonempty_string().
 

@@ -16,8 +16,8 @@ test_default_metrics(_) ->
   [
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_memory_atom_bytes_total")),
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_memory_bytes_total")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dets_tables")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_ets_tables")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_memory_dets_tables")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_memory_ets_tables")),
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_memory_processes_bytes_total")),
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_memory_system_bytes_total"))
   ].
@@ -37,8 +37,8 @@ test_all_metrics(_) ->
     [
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_memory_atom_bytes_total")),
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_memory_bytes_total")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dets_tables")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_ets_tables")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_memory_dets_tables")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_memory_ets_tables")),
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_memory_processes_bytes_total")),
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_memory_system_bytes_total"))
     ]
@@ -58,8 +58,8 @@ test_custom_metrics(_) ->
     [
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_memory_atom_bytes_total")),
      ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_memory_bytes_total")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dets_tables")),
-     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_ets_tables")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_memory_dets_tables")),
+     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_memory_ets_tables")),
      ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_memory_processes_bytes_total")),
      ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_memory_system_bytes_total"))
     ]

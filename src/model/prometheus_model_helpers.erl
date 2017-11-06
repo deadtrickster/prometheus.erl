@@ -80,7 +80,8 @@
     Name          :: prometheus_metric:name(),
     Help          :: prometheus_metric:help(),
     Type          :: atom(),
-    Metrics       :: [#'Metric'{}] | #'Metric'{} | metrics(),
+    Metrics       :: [prometheus_model:'Metric'()] |
+                     prometheus_model:'Metric'() | metrics(),
     MetricFamily  :: prometheus_model:'MetricFamily'().
 create_mf(Name, Help, Type, Metrics0) ->
   Metrics = metrics_from_tuples(Type, Metrics0),

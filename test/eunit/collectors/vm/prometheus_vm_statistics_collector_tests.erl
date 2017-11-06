@@ -21,9 +21,9 @@ test_default_metrics(_) ->
    ?_assertMatch({match, _},
                  re:run(Metrics, "erlang_vm_statistics_context_switches")),
    ?_assertMatch({match, _},
-                 re:run(Metrics, "erlang_vm_statistics_dirty_cpu_run_queue_length_total")),
+                 re:run(Metrics, "erlang_vm_statistics_dirty_cpu_run_queue_length")),
    ?_assertMatch({match, _},
-                 re:run(Metrics, "erlang_vm_statistics_dirty_io_run_queue_length_total")),
+                 re:run(Metrics, "erlang_vm_statistics_dirty_io_run_queue_length")),
    ?_assertMatch({match, _},
                  re:run(Metrics,
                         "erlang_vm_statistics_garbage_collection_number_of_gcs")),
@@ -45,15 +45,21 @@ test_default_metrics(_) ->
 
 test_all_metrics(_) ->
   try
-    application:set_env(prometheus, vm_statistics_collector_metrics, [
-                                                                      context_switches,
-                                                                      garbage_collection,
-                                                                      io,
-                                                                      reductions,
-                                                                      run_queue,
-                                                                      runtime,
-                                                                      wall_clock
-                                                                     ]),
+    application:set_env(prometheus, vm_statistics_collector_metrics,
+                        [
+                         bytes_output_total,
+                         bytes_received_total,
+                         context_switches,
+                         dirty_cpu_run_queue_length,
+                         dirty_io_run_queue_length,
+                         garbage_collection_number_of_gcs,
+                         garbage_collection_bytes_reclaimed,
+                         garbage_collection_words_reclaimed,
+                         reductions_total,
+                         run_queues_length_total,
+                         runtime_milliseconds,
+                         wallclock_time_milliseconds
+                        ]),
     prometheus_registry:register_collector(prometheus_vm_statistics_collector),
     Metrics = prometheus_text_format:format(),
     [
@@ -63,6 +69,10 @@ test_all_metrics(_) ->
                    re:run(Metrics, "erlang_vm_statistics_bytes_received_total")),
      ?_assertMatch({match, _},
                    re:run(Metrics, "erlang_vm_statistics_context_switches")),
+     ?_assertMatch({match, _},
+                   re:run(Metrics, "erlang_vm_statistics_dirty_cpu_run_queue_length")),
+     ?_assertMatch({match, _},
+                   re:run(Metrics, "erlang_vm_statistics_dirty_io_run_queue_length")),
      ?_assertMatch({match, _},
                    re:run(Metrics,
                           "erlang_vm_statistics_garbage_collection_number_of_gcs")),
@@ -88,8 +98,10 @@ test_all_metrics(_) ->
 
 test_custom_metrics(_) ->
   try
-    application:set_env(prometheus, vm_statistics_collector_metrics, [io,
-                                                                      reductions]),
+    application:set_env(prometheus, vm_statistics_collector_metrics, [
+                                                                      bytes_output_total,
+                                                                      bytes_received_total,
+                                                                      reductions_total]),
     prometheus_registry:register_collector(prometheus_vm_statistics_collector),
     Metrics = prometheus_text_format:format(),
     [

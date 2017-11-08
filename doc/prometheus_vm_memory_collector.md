@@ -29,11 +29,11 @@ Type: gauge.<br />
 The total amount of memory currently allocated.
 This is the same as the sum of the memory size for processes and system.
 
-* `erlang_vm_dets_tables`<br />
+* `erlang_vm_memory_dets_tables`<br />
 Type: gauge.<br />
 Erlang VM DETS Tables count.
 
-* `erlang_vm_ets_tables`<br />
+* `erlang_vm_memory_ets_tables`<br />
 Type: gauge.<br />
 Erlang VM ETS Tables count.
 

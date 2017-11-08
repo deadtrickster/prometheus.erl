@@ -20,6 +20,46 @@ Probably will be used with [`prometheus_collector`](prometheus_collector.md).
 
 
 
+### <a name="type-buckets">buckets()</a> ###
+
+
+<pre><code>
+buckets() = [{<a href="prometheus_buckets.md#type-bucket_bound">prometheus_buckets:bucket_bound()</a>, non_neg_integer()}, ...]
+</code></pre>
+
+
+
+
+### <a name="type-counter">counter()</a> ###
+
+
+<pre><code>
+counter() = <a href="#type-value">value()</a> | {<a href="#type-value">value()</a>} | {<a href="#type-labels">labels()</a>, <a href="#type-value">value()</a>}
+</code></pre>
+
+
+
+
+### <a name="type-gauge">gauge()</a> ###
+
+
+<pre><code>
+gauge() = <a href="#type-value">value()</a> | {<a href="#type-value">value()</a>} | {<a href="#type-labels">labels()</a>, <a href="#type-value">value()</a>}
+</code></pre>
+
+
+
+
+### <a name="type-histogram">histogram()</a> ###
+
+
+<pre><code>
+histogram() = {<a href="#type-buckets">buckets()</a>, non_neg_integer(), <a href="#type-value">value()</a>} | {<a href="#type-labels">labels()</a>, <a href="#type-buckets">buckets()</a>, non_neg_integer(), <a href="#type-value">value()</a>}
+</code></pre>
+
+
+
+
 ### <a name="type-label">label()</a> ###
 
 
@@ -50,11 +90,71 @@ label_value() = term()
 
 
 
+### <a name="type-labels">labels()</a> ###
+
+
+<pre><code>
+labels() = [<a href="#type-labels">labels()</a>]
+</code></pre>
+
+
+
+
+### <a name="type-metrics">metrics()</a> ###
+
+
+<pre><code>
+metrics() = [<a href="#type-tmetric">tmetric()</a>]
+</code></pre>
+
+
+
+
+### <a name="type-pbool">pbool()</a> ###
+
+
+<pre><code>
+pbool() = <a href="#type-prometheus_boolean">prometheus_boolean()</a> | {<a href="#type-prometheus_boolean">prometheus_boolean()</a>} | {<a href="#type-labels">labels()</a>, <a href="#type-prometheus_boolean">prometheus_boolean()</a>}
+</code></pre>
+
+
+
+
 ### <a name="type-prometheus_boolean">prometheus_boolean()</a> ###
 
 
 <pre><code>
 prometheus_boolean() = boolean() | number() | list() | undefined
+</code></pre>
+
+
+
+
+### <a name="type-summary">summary()</a> ###
+
+
+<pre><code>
+summary() = {non_neg_integer(), <a href="#type-value">value()</a>} | {<a href="#type-labels">labels()</a>, non_neg_integer(), <a href="#type-value">value()</a>}
+</code></pre>
+
+
+
+
+### <a name="type-tmetric">tmetric()</a> ###
+
+
+<pre><code>
+tmetric() = <a href="#type-gauge">gauge()</a> | <a href="#type-counter">counter()</a> | <a href="#type-untyped">untyped()</a> | <a href="#type-summary">summary()</a> | <a href="#type-histogram">histogram()</a> | <a href="#type-pbool">pbool()</a>
+</code></pre>
+
+
+
+
+### <a name="type-untyped">untyped()</a> ###
+
+
+<pre><code>
+untyped() = <a href="#type-value">value()</a> | {<a href="#type-value">value()</a>} | {<a href="#type-labels">labels()</a>, <a href="#type-value">value()</a>}
 </code></pre>
 
 
@@ -80,7 +180,8 @@ Creates boolean metric with <code>Labels</code> and <code>Value</code>.</td></tr
 Equivalent to
 <a href="#counter_metric-2"><tt>counter_metric(Labels, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#counter_metric-2">counter_metric/2</a></td><td>
 Creates counter metric with <code>Labels</code> and <code>Value</code>.</td></tr><tr><td valign="top"><a href="#counter_metrics-1">counter_metrics/1</a></td><td>Equivalent to
-<a href="#counter_metric-1"><code>lists:map(fun counter_metric/1, Specs)</code></a>.</td></tr><tr><td valign="top"><a href="#create_mf-5">create_mf/5</a></td><td>
+<a href="#counter_metric-1"><code>lists:map(fun counter_metric/1, Specs)</code></a>.</td></tr><tr><td valign="top"><a href="#create_mf-4">create_mf/4</a></td><td>
+Create Metric Family of <code>Type</code>, <code>Name</code> and <code>Help</code>.</td></tr><tr><td valign="top"><a href="#create_mf-5">create_mf/5</a></td><td>
 Create Metric Family of <code>Type</code>, <code>Name</code> and <code>Help</code>.</td></tr><tr><td valign="top"><a href="#gauge_metric-1">gauge_metric/1</a></td><td>
 Equivalent to
 <a href="#gauge_metric-2"><tt>gauge_metric(Labels, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#gauge_metric-2">gauge_metric/2</a></td><td>
@@ -112,10 +213,10 @@ Creates untyped metric with <code>Labels</code> and <code>Value</code>.</td></tr
 ### boolean_metric/1 ###
 
 <pre><code>
-boolean_metric(Spec) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
+boolean_metric(Boolean) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Spec = boolean() | {boolean()} | {[<a href="#type-label">label()</a>], <a href="#type-prometheus_boolean">prometheus_boolean()</a>}</code></li></ul>
+<ul class="definitions"><li><code>Boolean = <a href="#type-pbool">pbool()</a></code></li></ul>
 
 Equivalent to
 [`boolean_metric(Labels, Value)`](#boolean_metric-2).
@@ -128,7 +229,7 @@ Equivalent to
 boolean_metric(Labels, Value) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Labels = [<a href="#type-label">label()</a>]</code></li><li><code>Value = <a href="#type-prometheus_boolean">prometheus_boolean()</a></code></li></ul>
+<ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Value = <a href="#type-prometheus_boolean">prometheus_boolean()</a></code></li></ul>
 
 Creates boolean metric with `Labels` and `Value`.
 
@@ -149,7 +250,7 @@ Equivalent to
 counter_metric(Spec) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Spec = <a href="#type-value">value()</a> | {<a href="#type-value">value()</a>} | {[<a href="#type-label">label()</a>], <a href="#type-value">value()</a>}</code></li></ul>
+<ul class="definitions"><li><code>Spec = <a href="#type-counter">counter()</a></code></li></ul>
 
 Equivalent to
 [`counter_metric(Labels, Value)`](#counter_metric-2).
@@ -162,7 +263,7 @@ Equivalent to
 counter_metric(Labels, Value) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Labels = [<a href="#type-label">label()</a>]</code></li><li><code>Value = <a href="#type-value">value()</a></code></li></ul>
+<ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Value = <a href="#type-value">value()</a></code></li></ul>
 
 Creates counter metric with `Labels` and `Value`.
 
@@ -174,6 +275,20 @@ Creates counter metric with `Labels` and `Value`.
 
 Equivalent to
 [`lists:map(fun counter_metric/1, Specs)`](#counter_metric-1).
+
+<a name="create_mf-4"></a>
+
+### create_mf/4 ###
+
+<pre><code>
+create_mf(Name, Help, Type, Metrics) -&gt; MetricFamily
+</code></pre>
+
+<ul class="definitions"><li><code>Name = <a href="prometheus_metric.md#type-name">prometheus_metric:name()</a></code></li><li><code>Help = <a href="prometheus_metric.md#type-help">prometheus_metric:help()</a></code></li><li><code>Type = atom()</code></li><li><code>Metrics = [<a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>] | <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a> | <a href="#type-metrics">metrics()</a></code></li><li><code>MetricFamily = <a href="prometheus_model.md#type-MetricFamily">prometheus_model:'MetricFamily'()</a></code></li></ul>
+
+Create Metric Family of `Type`, `Name` and `Help`.
+`Collector:collect_metrics/2` callback will be called and expected to
+return individual metrics list.
 
 <a name="create_mf-5"></a>
 
@@ -194,10 +309,10 @@ return individual metrics list.
 ### gauge_metric/1 ###
 
 <pre><code>
-gauge_metric(Spec) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
+gauge_metric(Gauge) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Spec = <a href="#type-value">value()</a> | {<a href="#type-value">value()</a>} | {[<a href="#type-label">label()</a>], <a href="#type-value">value()</a>}</code></li></ul>
+<ul class="definitions"><li><code>Gauge = <a href="#type-gauge">gauge()</a></code></li></ul>
 
 Equivalent to
 [`gauge_metric(Labels, Value)`](#gauge_metric-2).
@@ -210,7 +325,7 @@ Equivalent to
 gauge_metric(Labels, Value) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Labels = [<a href="#type-label">label()</a>]</code></li><li><code>Value = <a href="#type-value">value()</a></code></li></ul>
+<ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Value = <a href="#type-value">value()</a></code></li></ul>
 
 Creates gauge metric with `Labels` and `Value`.
 
@@ -228,10 +343,10 @@ Equivalent to
 ### histogram_metric/1 ###
 
 <pre><code>
-histogram_metric(Spec) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
+histogram_metric(Histogram) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Spec = {Labels, Buckets, Count, Sum} | {Buckets, Count, Sum}</code></li><li><code>Labels = [<a href="#type-label">label()</a>]</code></li><li><code>Buckets = [{Bound, Count}]</code></li><li><code>Bound = <a href="prometheus_buckets.md#type-bucket_bound">prometheus_buckets:bucket_bound()</a></code></li><li><code>Count = non_neg_integer()</code></li><li><code>Sum = <a href="#type-value">value()</a></code></li></ul>
+<ul class="definitions"><li><code>Histogram = <a href="#type-histogram">histogram()</a></code></li></ul>
 
 Equivalent to
 [
@@ -253,7 +368,7 @@ Equivalent to [`histogram_metric([], Buckets, Count, Sum)`](#histogram_metric-4)
 histogram_metric(Labels, Buckets, Count, Sum) -&gt; Metric
 </code></pre>
 
-<ul class="definitions"><li><code>Labels = [<a href="#type-label">label()</a>]</code></li><li><code>Buckets = [{Bound, Count}]</code></li><li><code>Bound = <a href="prometheus_buckets.md#type-bucket_bound">prometheus_buckets:bucket_bound()</a></code></li><li><code>Count = non_neg_integer()</code></li><li><code>Sum = <a href="#type-value">value()</a></code></li><li><code>Metric = <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a></code></li></ul>
+<ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Buckets = [{Bound, Count}]</code></li><li><code>Bound = <a href="prometheus_buckets.md#type-bucket_bound">prometheus_buckets:bucket_bound()</a></code></li><li><code>Count = non_neg_integer()</code></li><li><code>Sum = <a href="#type-value">value()</a></code></li><li><code>Metric = <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a></code></li></ul>
 
 Creates histogram metric with `Labels`, `Buckets`, `Count` and `Sum`.
 
@@ -291,10 +406,10 @@ Equivalent to
 ### summary_metric/1 ###
 
 <pre><code>
-summary_metric(Spec) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
+summary_metric(Summary) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Spec = {Labels, Count, Sum} | {Count, Sum}</code></li><li><code>Labels = [<a href="#type-label">label()</a>]</code></li><li><code>Count = non_neg_integer()</code></li><li><code>Sum = <a href="#type-value">value()</a></code></li></ul>
+<ul class="definitions"><li><code>Summary = <a href="#type-summary">summary()</a></code></li></ul>
 
 Equivalent to
 [`summary_metric(Labels, Count, Sum)`](#summary_metric-3).
@@ -315,7 +430,7 @@ Equivalent to [`summary_metric([], Count, Sum)`](#summary_metric-3).
 summary_metric(Labels, Count, Sum) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Labels = [<a href="#type-label">label()</a>]</code></li><li><code>Count = non_neg_integer()</code></li><li><code>Sum = <a href="#type-value">value()</a></code></li></ul>
+<ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Count = non_neg_integer()</code></li><li><code>Sum = <a href="#type-value">value()</a></code></li></ul>
 
 Creates summary metric with `Labels`, `Count` and `Sum`.
 
@@ -333,10 +448,10 @@ Equivalent to
 ### untyped_metric/1 ###
 
 <pre><code>
-untyped_metric(Spec) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
+untyped_metric(Untyped) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Spec = <a href="#type-value">value()</a> | {<a href="#type-value">value()</a>} | {[<a href="#type-label">label()</a>], <a href="#type-value">value()</a>}</code></li></ul>
+<ul class="definitions"><li><code>Untyped = <a href="#type-untyped">untyped()</a></code></li></ul>
 
 Equivalent to
 [`untyped_metric(Labels, Value)`](#untyped_metric-2).
@@ -349,7 +464,7 @@ Equivalent to
 untyped_metric(Labels, Value) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Labels = [<a href="#type-label">label()</a>]</code></li><li><code>Value = <a href="#type-value">value()</a></code></li></ul>
+<ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Value = <a href="#type-value">value()</a></code></li></ul>
 
 Creates untyped metric with `Labels` and `Value`.
 

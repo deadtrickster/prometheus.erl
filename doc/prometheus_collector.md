@@ -8,7 +8,7 @@
 
 A collector for a set of metrics.
 
-__This module defines the `prometheus_collector` behaviour.__<br /> Required callback functions: `collect_mf/2`, `collect_metrics/2`, `deregister_cleanup/1`.
+__This module defines the `prometheus_collector` behaviour.__<br /> Required callback functions: `collect_mf/2`, `deregister_cleanup/1`.
 
 <a name="description"></a>
 

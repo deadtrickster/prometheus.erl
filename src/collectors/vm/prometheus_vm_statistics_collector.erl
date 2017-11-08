@@ -157,13 +157,7 @@ add_metric_family({Name, Type, Help, Metrics}, Callback) ->
 metrics() ->
   {{input, Input}, {output, Output}} = erlang:statistics(io),
   {ContextSwitches, _} = erlang:statistics(context_switches),
-  SO = erlang:system_info(schedulers_online),
-  RQ = erlang:statistics(run_queue_lengths_all),
-  [DirtyCPURunQueueLength, DirtyIORunQueueLength] =
-    case length(RQ) > SO of
-      true -> lists:sublist(RQ, length(RQ) - 1, 2);
-      false -> [undefined, undefined]
-    end,
+  [DirtyCPURunQueueLength, DirtyIORunQueueLength] = dirty_stat(),
   {NumberOfGCs, WordsReclaimed, _} = erlang:statistics(garbage_collection),
   WordSize = erlang:system_info(wordsize),
   {ReductionsTotal, _} = erlang:statistics(reductions),
@@ -212,6 +206,17 @@ metrics() ->
     "Same as erlang_vm_statistics_runtime_milliseconds "
     "except that real time is measured.",
     WallclockTime}].
+
+dirty_stat() ->
+  try
+    SO = erlang:system_info(schedulers_online),
+    RQ = erlang:statistics(run_queue_lengths_all),
+    case length(RQ) > SO of
+      true -> lists:sublist(RQ, length(RQ) - 1, 2);
+      false -> [undefined, undefined]
+    end
+  catch _:_ -> [undefined, undefined]
+  end.
 
 enabled_metrics() ->
   application:get_env(prometheus, vm_statistics_collector_metrics, all).

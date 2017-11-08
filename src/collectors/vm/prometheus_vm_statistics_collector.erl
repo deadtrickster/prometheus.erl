@@ -207,6 +207,7 @@ metrics() ->
     "except that real time is measured.",
     WallclockTime}].
 
+-ifdef(recent_otp).
 dirty_stat() ->
   try
     SO = erlang:system_info(schedulers_online),
@@ -217,6 +218,10 @@ dirty_stat() ->
     end
   catch _:_ -> [undefined, undefined]
   end.
+-else.
+dirty_stat() ->
+  [undefined, undefined].
+-endif.
 
 enabled_metrics() ->
   application:get_env(prometheus, vm_statistics_collector_metrics, all).

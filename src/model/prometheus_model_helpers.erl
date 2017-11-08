@@ -64,7 +64,7 @@
                  {labels(), prometheus_boolean()}.
 -type tmetric() :: gauge() | counter() | untyped() | summary() |
                    histogram() | pbool().
--type metrics() :: [tmetric()].
+-type metrics() :: tmetric() | [tmetric()].
 
 %%%===================================================================
 %%% Public API

@@ -82,8 +82,6 @@
 %% isn't a list.<br/>
 %% Raises `{invalid_label_name, Name, Message}' error if `Name' isn't a valid
 %% label name.<br/>
-%% Raises `{invalid_value_error, Value, Message}' error if `duration_unit' is
-%% unknown or doesn't match metric name.<br/>
 %% Raises `{mf_already_exists, {Registry, Name}, Message}' error if a boolean
 %% with the same `Spec' already exists.
 %% @end
@@ -103,8 +101,6 @@ new(Spec) ->
 %% isn't a list.<br/>
 %% Raises `{invalid_label_name, Name, Message}' error if `Name' isn't a valid
 %% label name.<br/>
-%% Raises `{invalid_value_error, Value, MessagE}' error if `duration_unit' is
-%% unknown or doesn't match metric name.<br/>
 %% @end
 declare(Spec) ->
   prometheus_metric:insert_mf(?TABLE, ?MODULE, Spec).
@@ -243,9 +239,6 @@ value(Name, LabelValues) ->
 %% and `LabelValues'. If there is no boolean for `LabelValues',
 %% returns `undefined'.
 %%
-%% If duration unit set, value will be converted to the duration unit.
-%% {@link prometheus_time. Read more here.}
-%%
 %% Raises `{unknown_metric, Registry, Name}' error if boolean named `Name'
 %% can't be found in `Registry'.<br/>
 %% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
@@ -276,16 +269,15 @@ deregister_cleanup(Registry) ->
 
 %% @private
 collect_mf(Registry, Callback) ->
-  [Callback(create_boolean(Name, Help, {Labels, Registry, DU})) ||
-    [Name, {Labels, Help}, _, DU, _] <- prometheus_metric:metrics(?TABLE,
+  [Callback(create_boolean(Name, Help, {Labels, Registry})) ||
+    [Name, {Labels, Help}, _, _, _] <- prometheus_metric:metrics(?TABLE,
                                                                   Registry)],
   ok.
 
 %% @private
-collect_metrics(Name, {Labels, Registry, DU}) ->
+collect_metrics(Name, {Labels, Registry}) ->
   [prometheus_model_helpers:boolean_metric(
-     lists:zip(Labels, LabelValues),
-     prometheus_time:maybe_convert_to_du(DU, Value)) ||
+     lists:zip(Labels, LabelValues), Value) ||
     [LabelValues, Value] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'})].
 
 %%====================================================================

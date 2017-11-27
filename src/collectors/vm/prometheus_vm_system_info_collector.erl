@@ -94,6 +94,16 @@
 %%     Type: boolean.<br/>
 %%     1 if time correction is enabled, otherwise 0.
 %%   </li>
+%%   <li>
+%%     `erlang_vm_atom_count'<br/>
+%%     Type: gauge.<br/>
+%%     The number of atom currently existing at the local node.
+%%   </li>
+%%   <li>
+%%     `erlang_vm_atom_limit'<br/>
+%%     Type: gauge.<br/>
+%%     The maximum number of simultaneously existing atom at the local node.
+%%   </li>
 %% </ul>
 %%
 %% ==Configuration==
@@ -148,6 +158,12 @@
 %%   </li>
 %%   <li>
 %%     `time_correction' for `erlang_vm_time_correction'.
+%%   </li>
+%%   <li>
+%%     `atom_count' for `erlang_vm_atom_count'.
+%%   </li>
+%%   <li>
+%%     `atom_limit' for `erlang_vm_atom_limit'.
 %%   </li>
 %% </ul>
 %%
@@ -242,7 +258,13 @@ metrics() ->
     "The number of async threads in the async thread pool "
     "used for asynchronous driver calls."},
    {time_correction, boolean,
-    "1 if time correction is enabled, otherwise 0."}
+    "1 if time correction is enabled, otherwise 0."},
+   {atom_count, gauge,
+    "The number of atom currently existing "
+    "at the local node."},
+   {atom_limit, gauge,
+    "The maximum number of simultaneously existing "
+    "atom at the local node."}
   ].
 
 collect_metrics(Name) ->

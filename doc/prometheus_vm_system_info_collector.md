@@ -89,6 +89,14 @@ used for asynchronous driver calls.
 Type: boolean.<br />
 1 if time correction is enabled, otherwise 0.
 
+* `erlang_vm_atom_count`<br />
+Type: gauge.<br />
+The number of atom currently existing at the local node.
+
+* `erlang_vm_atom_limit`<br />
+Type: gauge.<br />
+The maximum number of simultaneously existing atom at the local node.
+
 
 
 ### <a name="Configuration">Configuration</a> ###
@@ -129,6 +137,10 @@ erlang:system_info/1
 * `thread_pool_size` for `erlang_vm_thread_pool_size`.
 
 * `time_correction` for `erlang_vm_time_correction`.
+
+* `atom_count` for `erlang_vm_atom_count`.
+
+* `atom_limit` for `erlang_vm_atom_limit`.
 
 
 By default all metrics are enabled.

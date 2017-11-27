@@ -73,8 +73,6 @@ Raises `{invalid_metric_labels, Labels, Message}` error if `Labels`
 isn't a list.<br />
 Raises `{invalid_label_name, Name, Message}` error if `Name` isn't a valid
 label name.<br />
-Raises `{invalid_value_error, Value, MessagE}` error if `duration_unit` is
-unknown or doesn't match metric name.<br />
 
 <a name="deregister-1"></a>
 
@@ -116,8 +114,6 @@ Raises `{invalid_metric_labels, Labels, Message}` error if `Labels`
 isn't a list.<br />
 Raises `{invalid_label_name, Name, Message}` error if `Name` isn't a valid
 label name.<br />
-Raises `{invalid_value_error, Value, Message}` error if `duration_unit` is
-unknown or doesn't match metric name.<br />
 Raises `{mf_already_exists, {Registry, Name}, Message}` error if a boolean
 with the same `Spec` already exists.
 
@@ -282,9 +278,6 @@ Equivalent to [`value(default, Name, LabelValues)`](#value-3).
 Returns the value of the boolean identified by `Registry`, `Name`
 and `LabelValues`. If there is no boolean for `LabelValues`,
 returns `undefined`.
-
-If duration unit set, value will be converted to the duration unit.
-[Read more here.](prometheus_time.md)
 
 Raises `{unknown_metric, Registry, Name}` error if boolean named `Name`
 can't be found in `Registry`.<br />

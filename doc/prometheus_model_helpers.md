@@ -104,7 +104,7 @@ labels() = [<a href="#type-labels">labels()</a>]
 
 
 <pre><code>
-metrics() = [<a href="#type-tmetric">tmetric()</a>]
+metrics() = <a href="#type-tmetric">tmetric()</a> | [<a href="#type-tmetric">tmetric()</a>]
 </code></pre>
 
 

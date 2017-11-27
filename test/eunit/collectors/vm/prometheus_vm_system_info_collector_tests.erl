@@ -30,7 +30,9 @@ test_default_metrics(_) ->
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_smp_support")),
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_threads")),
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_thread_pool_size")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_time_correction"))
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_time_correction")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_atom_count")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_atom_limit"))
   ].
 
 
@@ -51,7 +53,9 @@ test_all_metrics(_) ->
                          smp_support,
                          threads,
                          thread_pool_size,
-                         time_correction
+                         time_correction,
+                         atom_count,
+                         atom_limit
                         ]),
     prometheus_registry:register_collector(prometheus_vm_system_info_collector),
     Metrics = prometheus_text_format:format(),
@@ -69,7 +73,9 @@ test_all_metrics(_) ->
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_smp_support")),
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_threads")),
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_thread_pool_size")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_time_correction"))
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_time_correction")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_atom_count")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_atom_limit"))
     ]
 
   after

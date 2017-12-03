@@ -64,8 +64,16 @@ exists(Name) when is_atom(Name) ->
     _ -> true
   end;
 exists(Name) when is_list(Name) orelse is_binary(Name) ->
-  First = ets:first(?PROMETHEUS_REGISTRY_TABLE),
-  registry_exists(First, iolist_to_binary(Name)).
+  try binary_to_existing_atom(iolist_to_binary(Name), utf8) of
+    Atom ->
+      case exists(Atom) of
+        true -> Atom;
+        false -> false
+      end
+  catch
+    error:badarg ->
+      false
+  end.
 
 %% @doc
 %% Calls `Callback' for each collector with two arguments:
@@ -157,14 +165,3 @@ collector_registeredp(Registry, Collector) ->
 %%%===================================================================
 %%% Private functions
 %%%===================================================================
-
-registry_exists('$end_of_table', _) ->
-  false;
-registry_exists(Registry, Name) ->
-  case atom_to_binary(Registry, utf8) of
-    Name ->
-      Registry;
-    _ ->
-      Next = ets:next(?PROMETHEUS_REGISTRY_TABLE, Registry),
-      registry_exists(Next, Name)
-  end.

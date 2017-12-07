@@ -16,13 +16,14 @@
  - [Slack](https://elixir-slackin.herokuapp.com/): #prometheus channel - [Browser](https://elixir-lang.slack.com/messages/prometheus) or App(slack://elixir-lang.slack.com/messages/prometheus).
 
 ## Integrations
+- [Cowboy1/2 Exporters and Cowboy2 instrumenter](https://hex.pm/packages/prometheus_cowboy)
 - [Ecto Instrumenter](https://hex.pm/packages/prometheus_ecto)
 - [Elixir client](https://github.com/deadtrickster/prometheus.ex)
 - [Elixir plugs Instrumenters and Exporter](https://hex.pm/packages/prometheus_plugs)
 - [Extatus - App to report metrics to Prometheus from Elixir GenServers](https://github.com/gmtprime/extatus)
 - [Fuse plugin](https://github.com/jlouis/fuse#fuse_stats_prometheus)
 - [Inets HTTPD Exporter](https://github.com/deadtrickster/prometheus_httpd)
-- [OS process info Collector](https://hex.pm/packages/prometheus_process_collector) (linux, freebsd)
+- [OS process info Collector](https://hex.pm/packages/prometheus_process_collector) (linux, freebsd, macos)
 - [Phoenix Instrumenter](https://hex.pm/packages/prometheus_phoenix)
 - [RabbitMQ Exporter](https://github.com/deadtrickster/prometheus_rabbitmq_exporter).
 

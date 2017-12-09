@@ -5,7 +5,8 @@
 
 -module(prometheus_model_helpers).
 
--export([create_mf/4,
+-export([metric_name/1,
+         create_mf/4,
          create_mf/5,
          gauge_metrics/1,
          gauge_metric/1,
@@ -70,6 +71,26 @@
 %%% Public API
 %%%===================================================================
 
+%% @doc
+%% If `Name' is a list, looks for atoms and converts them to binaries.
+%% Why iolists do not support atoms?
+%% @end
+-spec metric_name(Name) -> iolist() when
+    Name :: atom() | binary() | list(char() | iolist() | binary() | atom()).
+metric_name(Name) ->
+  case Name of
+    _ when is_atom(Name) ->
+      atom_to_binary(Name, utf8);
+    _ when is_list(Name) ->
+      [
+       case is_atom(P) of
+         true -> atom_to_binary(P, utf8);
+         _ -> P
+       end
+       || P <- Name];
+    _ ->
+      Name
+  end.
 
 %% @doc
 %%  Create Metric Family of `Type', `Name' and `Help'.

@@ -4,7 +4,25 @@
 
 -export([collect_metrics/2]).
 
+-include("prometheus.hrl").
 -include("prometheus_model.hrl").
+
+-define(METRIC_NAME_PREFIX, "rabbitmq_").
+
+metric_name_test() ->
+  %% test ?METRIC_NAME macro here too
+  ?assertMatch("rabbitmq_memory_ets_bytes",
+               prometheus_model_helpers:metric_name("rabbitmq_memory_ets_bytes")),
+  ?assertMatch(<<"rabbitmq_memory_ets_bytes">>,
+               prometheus_model_helpers:metric_name(<<"rabbitmq_memory_ets_bytes">>)),
+  ?assertMatch(<<"rabbitmq_memory_ets_bytes">>,
+               prometheus_model_helpers:metric_name(rabbitmq_memory_ets_bytes)),
+  ?assertMatch(["rabbitmq_", <<"memory_ets_bytes">>],
+               prometheus_model_helpers:metric_name(?METRIC_NAME(memory_ets_bytes))),
+  ?assertMatch(["rabbitmq_", ["memory_", <<"ets">>, "_bytes"]],
+               prometheus_model_helpers:metric_name(
+                 ?METRIC_NAME(["memory_", ets, "_bytes"]))).
+
 
 gauge_metric_test() ->
   Value = 11,

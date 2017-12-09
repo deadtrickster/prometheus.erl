@@ -193,7 +193,8 @@ Equivalent to
 Creates histogram metric with <code>Labels</code>, <code>Buckets</code>, <code>Count</code> and <code>Sum</code>.</td></tr><tr><td valign="top"><a href="#histogram_metrics-1">histogram_metrics/1</a></td><td>Equivalent to
 <a href="#histogram_metric-1"><code>lists:map(fun histogram_metric/1, Specs)</code></a>.</td></tr><tr><td valign="top"><a href="#label_pair-1">label_pair/1</a></td><td>
 Creates <code>prometheus_model:</code>LabelPair'()' from {Name, Value} tuple.</td></tr><tr><td valign="top"><a href="#label_pairs-1">label_pairs/1</a></td><td>Equivalent to
-<a href="#label_pair-1"><code>lists:map(fun label_pair/1, Labels)</code></a>.</td></tr><tr><td valign="top"><a href="#summary_metric-1">summary_metric/1</a></td><td>
+<a href="#label_pair-1"><code>lists:map(fun label_pair/1, Labels)</code></a>.</td></tr><tr><td valign="top"><a href="#metric_name-1">metric_name/1</a></td><td>
+If <code>Name</code> is a list, looks for atoms and converts them to binaries.</td></tr><tr><td valign="top"><a href="#summary_metric-1">summary_metric/1</a></td><td>
 Equivalent to
 <a href="#summary_metric-3"><tt>summary_metric(Labels, Count, Sum)</tt></a>.</td></tr><tr><td valign="top"><a href="#summary_metric-2">summary_metric/2</a></td><td>Equivalent to <a href="#summary_metric-3"><tt>summary_metric([], Count, Sum)</tt></a>.</td></tr><tr><td valign="top"><a href="#summary_metric-3">summary_metric/3</a></td><td>
 Creates summary metric with <code>Labels</code>, <code>Count</code> and <code>Sum</code>.</td></tr><tr><td valign="top"><a href="#summary_metrics-1">summary_metrics/1</a></td><td>Equivalent to
@@ -400,6 +401,19 @@ Creates `prometheus_model:`LabelPair'()' from {Name, Value} tuple.
 
 Equivalent to
 [`lists:map(fun label_pair/1, Labels)`](#label_pair-1).
+
+<a name="metric_name-1"></a>
+
+### metric_name/1 ###
+
+<pre><code>
+metric_name(Name) -&gt; iolist()
+</code></pre>
+
+<ul class="definitions"><li><code>Name = atom() | binary() | [char() | iolist() | binary() | atom()]</code></li></ul>
+
+If `Name` is a list, looks for atoms and converts them to binaries.
+Why iolists do not support atoms?
 
 <a name="summary_metric-1"></a>
 

@@ -13,11 +13,13 @@
   {description, "Prometheus monitoring system and time series database client in Erlang."},
   {maintainers, ["Ilya Khaprov"]},
   {licenses, ["MIT"]},
-  {links, [{"Github", "https://github.com/deadtrickster/prometheus.erl"},
-           {"Prometheus.ex", "https://hex.pm/packages/prometheus_ex"},
-           {"Inets HTTPD Exporter", "https://hex.pm/packages/prometheus_httpd"},
+  {links, [
+           {"Cowboy exporter/instrumenter", "https://hex.pm/packages/prometheus_cowboy"},
            {"Ecto Instrumenter", "https://hex.pm/packages/prometheus_ecto"},
+           {"Github", "https://github.com/deadtrickster/prometheus.erl"},
+           {"Inets HTTPD Exporter", "https://hex.pm/packages/prometheus_httpd"},
            {"Phoenix Instrumenter", "https://hex.pm/packages/prometheus_phoenix"},
            {"Plugs Instrumenter/Exporter", "https://hex.pm/packages/prometheus_plugs"},
-           {"Process info Collector", "https://hex.pm/packages/prometheus_process_collector"}]}
+           {"Process info Collector", "https://hex.pm/packages/prometheus_process_collector"},
+           {"Prometheus.ex", "https://hex.pm/packages/prometheus_ex"}]}
  ]}.

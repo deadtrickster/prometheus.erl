@@ -95,8 +95,9 @@
 %%====================================================================
 
 -define(TABLE, ?PROMETHEUS_HISTOGRAM_TABLE).
--define(BUCKETS_POS, 2).
--define(BUCKETS_START, 3).
+-define(BOUNDS_POS, 2).
+-define(SUM_POS, 3).
+-define(BUCKETS_START, 4).
 -define(WIDTH, 16).
 
 %%====================================================================
@@ -222,10 +223,9 @@ observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   Key = key(Registry, Name, LabelValues),
   case ets:lookup(?TABLE, Key) of
     [Metric] ->
-      {BucketPosition, SumPosition} =
-        calculate_histogram_update_positions(Metric, Value),
+      BucketPosition = calculate_histogram_bucket_position(Metric, Value),
       ets:update_counter(?TABLE, Key,
-                         [{BucketPosition, 1}, {SumPosition, Value}]);
+                         [{?SUM_POS, Value}, {BucketPosition, 1}]);
     [] ->
       insert_metric(Registry, Name, LabelValues, Value, fun observe/4)
   end,
@@ -339,11 +339,11 @@ reset(Name, LabelValues) ->
 reset(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   Buckets = prometheus_metric:mf_data(MF),
-  UpdateSpec = generate_update_spec(?BUCKETS_START, length(Buckets)),
+  UpdateSpec = generate_update_spec(Buckets),
 
   case lists:usort([ets:update_element(?TABLE,
                                        {Registry, Name, LabelValues, Scheduler},
-                                       UpdateSpec)
+                                       [{?SUM_POS, 0}] ++ UpdateSpec)
                     || Scheduler <- schedulers_seq()]) of
     [_, _] -> true;
     [true] -> true;
@@ -416,12 +416,7 @@ collect_mf(Registry, Callback) ->
 %% @private
 collect_metrics(Name, {Labels, Registry, DU, MFBuckets}) ->
   BoundPlaceholders = gen_query_bound_placeholders(MFBuckets),
-  SumPlaceholder = gen_query_placeholder(sum_position(MFBuckets)),
-  QuerySpec =
-    [{Registry, Name, '$1', '_'}, '_']
-    ++ BoundPlaceholders
-    ++ [SumPlaceholder],
-
+  QuerySpec = [{Registry, Name, '$1', '_'}, '_', '$3'] ++ BoundPlaceholders,
 
   Fun = fun (Bucket) ->
             prometheus_time:maybe_convert_to_native(DU, Bucket)
@@ -528,12 +523,10 @@ validate_histogram_bound(Bound) ->
 dobserve_impl(Registry, Name, LabelValues, Value) ->
   case ets:lookup(?TABLE, key(Registry, Name, LabelValues)) of
     [Metric] ->
-      {BucketPosition, SumPosition} =
-        calculate_histogram_update_positions(Metric, Value),
+      BucketPos = calculate_histogram_bucket_position(Metric, Value),
       ets:update_element(?TABLE, key(Registry, Name, LabelValues),
-                         {SumPosition, sum(Metric) + Value}),
-      ets:update_counter(?TABLE, key(Registry, Name, LabelValues),
-                         {BucketPosition, 1});
+                         [{?SUM_POS, sum(Metric) + Value},
+                          {BucketPos, element(BucketPos, Metric) + 1}]);
     [] ->
       insert_metric(Registry, Name, LabelValues, Value, fun dobserve_impl/4)
   end.
@@ -551,29 +544,28 @@ insert_placeholders(Registry, Name, LabelValues) ->
         end,
   BoundCounters = lists:duplicate(length(MFBuckets), 0),
   MetricSpec =
-    [key(Registry, Name, LabelValues), lists:map(Fun, MFBuckets)]
-    ++ BoundCounters
-    ++ [0],
+    [key(Registry, Name, LabelValues), lists:map(Fun, MFBuckets), 0]
+    ++ BoundCounters,
   ets:insert_new(?TABLE, list_to_tuple(MetricSpec)).
 
-calculate_histogram_update_positions(Metric, Value) ->
+calculate_histogram_bucket_position(Metric, Value) ->
   Buckets = metric_buckets(Metric),
-  BucketPosition = ?BUCKETS_POS + position(Buckets, fun(Bound) ->
-                                                        Value =< Bound
-                                                    end),
-  SumPosition = sum_position(Metric),
-  {BucketPosition, SumPosition}.
+  BucketPosition = position(Buckets, fun(Bound) ->
+                                         Value =< Bound
+                                     end),
+  ?BUCKETS_START + BucketPosition.
 
-generate_update_spec(BucketsStart, BucketsCount) ->
-  [{Index, 0} ||
-    Index <- lists:seq(BucketsStart, ?BUCKETS_START + BucketsCount)].
+buckets_seq(Buckets) ->
+  lists:seq(?BUCKETS_START, ?BUCKETS_START + length(Buckets) - 1).
+
+generate_update_spec(Buckets) ->
+  [{Index, 0} || Index <- buckets_seq(Buckets)].
 
 gen_query_placeholder(Index) ->
   list_to_atom("$" ++ integer_to_list(Index)).
 
 gen_query_bound_placeholders(Buckets) ->
-  [gen_query_placeholder(Index) ||
-    Index <- lists:seq(?BUCKETS_START, ?BUCKETS_POS + length(Buckets))].
+  [gen_query_placeholder(Index) || Index <- buckets_seq(Buckets)].
 
 augment_counters([Start | Counters]) ->
   augment_counters(Counters, [Start], Start).
@@ -584,7 +576,7 @@ augment_counters([Counter | Counters], LAcc, CAcc) ->
   augment_counters(Counters, LAcc ++ [CAcc + Counter], CAcc + Counter).
 
 metric_buckets(Metric) ->
-  element(?BUCKETS_POS, Metric).
+  element(?BOUNDS_POS, Metric).
 
 reduce_buckets_counters(Metrics) ->
   ABuckets =
@@ -597,45 +589,39 @@ transpose([[]|_]) -> [];
 transpose(M) ->
   [lists:map(fun hd/1, M) | transpose(lists:map(fun tl/1, M))].
 
-sum_position(Metric) when is_tuple(Metric) ->
-  ?BUCKETS_START + length(metric_buckets(Metric));
-sum_position(Buckets) when is_list(Buckets) ->
-  ?BUCKETS_START + length(Buckets).
-
 sum(Metric) ->
-  element(sum_position(Metric), Metric).
+  element(?SUM_POS, Metric).
 
 reduce_sum(Metrics) ->
-  lists:sum([element(sum_position(Metric), Metric) || Metric <- Metrics]).
+  lists:sum([element(?SUM_POS, Metric) || Metric <- Metrics]).
 
 reduce_sum(MF, Metrics) ->
   DU = prometheus_metric:mf_duration_unit(MF),
   prometheus_time:maybe_convert_to_du(DU, reduce_sum(Metrics)).
 
-create_histogram_metric(Labels, DU, Buckets, LabelValues, Stat) ->
+create_histogram_metric(Labels, DU, Bounds, LabelValues, [Sum | Buckets]) ->
   Fun = fun(Bound) ->
             prometheus_time:maybe_convert_to_du(DU, Bound)
         end,
-  BoundValues = lists:sublist(Stat, 1, length(Buckets)),
-  BCounters = augment_counters(BoundValues),
-  Buckets1 = lists:zipwith(fun(Bound, BCounter) ->
+  BCounters = augment_counters(Buckets),
+  Bounds1 = lists:zipwith(fun(Bound, BCounter) ->
                                {Bound, BCounter}
                            end,
-                           lists:map(Fun, Buckets), BCounters),
+                           lists:map(Fun, Bounds), BCounters),
   prometheus_model_helpers:histogram_metric(
     lists:zip(Labels, LabelValues),
-    Buckets1,
+    Bounds1,
     lists:last(BCounters),
-    prometheus_time:maybe_convert_to_du(DU, lists:last(Stat))).
+    prometheus_time:maybe_convert_to_du(DU, Sum)).
 
 deregister_select(Registry, Name, Buckets) ->
   BoundCounters = lists:duplicate(length(Buckets), '_'),
-  MetricSpec = [{Registry, Name, '_', '_'}, '_'] ++ BoundCounters ++ ['_'],
+  MetricSpec = [{Registry, Name, '_', '_'}, '_', '_'] ++ BoundCounters,
   [{list_to_tuple(MetricSpec), [], [true]}].
 
 delete_metrics(Registry, Buckets) ->
   BoundCounters = lists:duplicate(length(Buckets), '_'),
-  MetricSpec = [{Registry, '_', '_', '_'}, '_'] ++ BoundCounters ++ ['_'],
+  MetricSpec = [{Registry, '_', '_', '_'}, '_', '_'] ++ BoundCounters,
   ets:match_delete(?TABLE, list_to_tuple(MetricSpec)).
 
 sub_tuple_to_list(Tuple, Pos, Size) when Pos < Size ->
@@ -643,7 +629,7 @@ sub_tuple_to_list(Tuple, Pos, Size) when Pos < Size ->
 sub_tuple_to_list(_Tuple, _Pos, _Size) -> [].
 
 position(List, Pred) ->
-  position(List, Pred, 1).
+  position(List, Pred, 0).
 
 position([], _Pred, _Pos) ->
   0;

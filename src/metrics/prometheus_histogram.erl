@@ -100,6 +100,10 @@
 -define(BUCKETS_START, 4).
 -define(WIDTH, 16).
 
+%% ets row layout
+%% {Key, NBounds, Sum, Bucket1, Bucket2, ...}
+%% NBounds is a list of bounds possibly converted to native units
+
 %%====================================================================
 %% Metric API
 %%====================================================================
@@ -414,19 +418,14 @@ collect_mf(Registry, Callback) ->
   ok.
 
 %% @private
-collect_metrics(Name, {Labels, Registry, DU, MFBuckets}) ->
-  BoundPlaceholders = gen_query_bound_placeholders(MFBuckets),
+collect_metrics(Name, {Labels, Registry, DU, Bounds}) ->
+  BoundPlaceholders = gen_query_bound_placeholders(Bounds),
   QuerySpec = [{Registry, Name, '$1', '_'}, '_', '$3'] ++ BoundPlaceholders,
-
-  Fun = fun (Bucket) ->
-            prometheus_time:maybe_convert_to_native(DU, Bucket)
-        end,
-  Buckets = lists:map(Fun, MFBuckets),
 
   MFValues = ets:match(?TABLE, list_to_tuple(QuerySpec)),
   [begin
      Stat = reduce_label_values(LabelValues, MFValues),
-     create_histogram_metric(Labels, DU, Buckets, LabelValues, Stat)
+     create_histogram_metric(Labels, DU, Bounds, LabelValues, Stat)
    end ||
     LabelValues <- collect_unique_labels(MFValues)].
 
@@ -600,14 +599,12 @@ reduce_sum(MF, Metrics) ->
   prometheus_time:maybe_convert_to_du(DU, reduce_sum(Metrics)).
 
 create_histogram_metric(Labels, DU, Bounds, LabelValues, [Sum | Buckets]) ->
-  Fun = fun(Bound) ->
-            prometheus_time:maybe_convert_to_du(DU, Bound)
-        end,
   BCounters = augment_counters(Buckets),
-  Bounds1 = lists:zipwith(fun(Bound, BCounter) ->
-                               {Bound, BCounter}
-                           end,
-                           lists:map(Fun, Bounds), BCounters),
+  Bounds1 = lists:zipwith(fun(Bound, Bucket) ->
+                              {Bound, Bucket}
+                          end,
+                          Bounds, BCounters),
+
   prometheus_model_helpers:histogram_metric(
     lists:zip(Labels, LabelValues),
     Bounds1,

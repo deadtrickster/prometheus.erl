@@ -36,9 +36,7 @@
 
 %%% metric
 -export([new/1,
-         new/2,
          declare/1,
-         declare/2,
          deregister/1,
          deregister/2,
          set_default/2,
@@ -123,13 +121,6 @@ new(Spec) ->
   Spec1 = validate_histogram_spec(Spec),
   prometheus_metric:insert_new_mf(?TABLE, ?MODULE, Spec1).
 
-%% @deprecated Please use {@link new/1} with registry
-%% key instead.
-new(Spec, Registry) ->
-  ?DEPRECATED("prometheus_histogram:new/2", "prometheus_histogram:new/1"
-              " with registry key"),
-  new([{registry, Registry} | Spec]).
-
 %% @doc Creates a histogram using `Spec'.
 %% If a histogram with the same `Spec' exists returns `false'.
 %%
@@ -156,13 +147,6 @@ new(Spec, Registry) ->
 declare(Spec) ->
   Spec1 = validate_histogram_spec(Spec),
   prometheus_metric:insert_mf(?TABLE, ?MODULE, Spec1).
-
-%% @deprecated Please use {@link declare/1} with registry
-%% key instead.
-declare(Spec, Registry) ->
-  ?DEPRECATED("prometheus_histogram:declare/2", "prometheus_histogram:declare/1"
-              " with registry key"),
-  declare([{registry, Registry} | Spec]).
 
 %% @equiv deregister(default, Name)
 deregister(Name) ->

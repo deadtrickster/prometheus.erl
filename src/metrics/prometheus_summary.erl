@@ -28,9 +28,7 @@
 
 %%% metric
 -export([new/1,
-         new/2,
          declare/1,
-         declare/2,
          deregister/1,
          deregister/2,
          set_default/2,
@@ -97,13 +95,6 @@ new(Spec) ->
   validate_summary_spec(Spec),
   prometheus_metric:insert_new_mf(?TABLE, ?MODULE, Spec).
 
-%% @deprecated Please use {@link new/1} with registry
-%% key instead.
-new(Spec, Registry) ->
-  ?DEPRECATED("prometheus_summary:new/2", "prometheus_summary:new/1"
-              " with registry key"),
-  new([{registry, Registry} | Spec]).
-
 %% @doc Creates a summary using `Spec'.
 %% If a summary with the same `Spec' exists returns `false'.
 %%
@@ -123,13 +114,6 @@ new(Spec, Registry) ->
 declare(Spec) ->
   Spec1 = validate_summary_spec(Spec),
   prometheus_metric:insert_mf(?TABLE, ?MODULE, Spec1).
-
-%% @deprecated Please use {@link declare/1} with registry
-%% key instead.
-declare(Spec, Registry) ->
-  ?DEPRECATED("prometheus_summary:declare/2", "prometheus_summary:declare/1"
-              " with registry key"),
-  declare([{registry, Registry} | Spec]).
 
 %% @equiv deregister(default, Name)
 deregister(Name) ->

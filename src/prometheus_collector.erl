@@ -65,10 +65,6 @@
 -module(prometheus_collector).
 
 -export([enabled_collectors/0,
-         register/1,
-         register/2,
-         deregister/1,
-         deregister/2,
          collect_mf/3]).
 
 -ifdef(TEST).
@@ -135,32 +131,6 @@ enabled_collectors() ->
       undefined -> all_known_collectors();
       {ok, Collectors} -> catch_default_collectors(Collectors)
     end).
-
-%% @equiv register(Collector, default)
-%% @deprecated Please use {@link prometheus_registry:register_collector/1}
-register(Collector) -> register(Collector, default).
-
--spec register(Collector, Registry) -> ok when
-    Collector :: collector(),
-    Registry  :: prometheus_registry:registry().
-%% @deprecated Please use {@link prometheus_registry:register_collector/2}
-register(Collector, Registry) ->
-  ?DEPRECATED("prometheus_collector:register/2",
-              "prometheus_register:register_collector/2"),
-  ok = prometheus_registry:register_collector(Registry, Collector).
-
-%% @equiv deregister(Collector, default)
-%% @deprecated Please use {@link prometheus_registry:deregister_collector/1}
-deregister(Collector) -> deregister(Collector, default).
-
--spec deregister(Collector, Registry) -> ok when
-    Collector :: collector(),
-    Registry  :: prometheus_registry:registry().
-%% @deprecated Please use {@link prometheus_registry:deregister_collector/2}
-deregister(Collector, Registry) ->
-  ?DEPRECATED("prometheus_collector:deregister/2",
-              "prometheus_register:deregister_collector/2"),
-  prometheus_registry:deregister_collector(Registry, Collector).
 
 %% @doc Calls `Callback' for each MetricFamily of this collector.
 -spec collect_mf(Registry, Collector, Callback) -> ok when

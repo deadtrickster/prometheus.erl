@@ -19,14 +19,10 @@ test_registration(_)->
   SpecWithRegistry = [{name, Name},
                       {help, ""},
                       {registry, qwe}],
-  SpecWithoutRegistry = [{name, Name},
-                         {help, ""}],
   [?_assertEqual(true,
                  prometheus_counter:declare(SpecWithRegistry)),
-   ?_assertEqual(false,
-                 prometheus_counter:declare(SpecWithoutRegistry, qwe)),
    ?_assertError({mf_already_exists, {qwe, Name}, "Consider using declare instead."},
-                 prometheus_counter:new(SpecWithoutRegistry, qwe))].
+                 prometheus_counter:new(SpecWithRegistry))].
 
 test_errors(_) ->
   prometheus_counter:new([{name, db_query_duration}, {labels, [repo]}, {help, ""}]),

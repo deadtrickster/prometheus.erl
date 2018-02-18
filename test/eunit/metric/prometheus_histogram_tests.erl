@@ -25,15 +25,10 @@ test_registration(_)->
                       {buckets, [100, 300, 500, 750, 1000]},
                       {help, ""},
                       {registry, qwe}],
-  SpecWithoutRegistry = [{name, Name},
-                         {buckets, [100, 300, 500, 750, 1000]},
-                         {help, ""}],
   [?_assertEqual(true,
                  prometheus_histogram:declare(SpecWithRegistry)),
-   ?_assertEqual(false,
-                 prometheus_histogram:declare(SpecWithoutRegistry, qwe)),
    ?_assertError({mf_already_exists, {qwe, Name}, "Consider using declare instead."},
-                 prometheus_histogram:new(SpecWithoutRegistry, qwe))].
+                 prometheus_histogram:new(SpecWithRegistry))].
 
 test_errors(_) ->
   prometheus_histogram:new([{name, request_duration},

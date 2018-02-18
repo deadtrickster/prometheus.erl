@@ -7,7 +7,7 @@
 
 Gauge metric, to report instantaneous values.
 
-__Behaviours:__ [`gen_server`](gen_server.md), [`prometheus_collector`](prometheus_collector.md), [`prometheus_metric`](prometheus_metric.md).
+__Behaviours:__ [`prometheus_collector`](prometheus_collector.md), [`prometheus_metric`](prometheus_metric.md).
 
 <a name="description"></a>
 
@@ -55,23 +55,16 @@ Example:
 ## Function Index ##
 
 
-<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#ddec-1">ddec/1</a></td><td>Equivalent to <a href="#dinc-4"><tt>dinc(default, Name, [], -1)</tt></a>.</td></tr><tr><td valign="top"><a href="#ddec-2">ddec/2</a></td><td>If the second argument is a list, equivalent to
-<a href="#dinc-4"><tt>dinc(default, Name, LabelValues, -1)</tt></a>
-otherwise equivalent to
-<a href="#dinc-4"><tt>dinc(default, Name, [], -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#ddec-3">ddec/3</a></td><td>Equivalent to <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#ddec-4">ddec/4</a></td><td>Equivalent to <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dec-1">dec/1</a></td><td>Equivalent to <a href="#inc-4"><tt>inc(default, Name, [], -1)</tt></a>.</td></tr><tr><td valign="top"><a href="#dec-2">dec/2</a></td><td>If the second argument is a list, equivalent to
+<table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#dec-1">dec/1</a></td><td>Equivalent to <a href="#inc-4"><tt>inc(default, Name, [], -1)</tt></a>.</td></tr><tr><td valign="top"><a href="#dec-2">dec/2</a></td><td>If the second argument is a list, equivalent to
 <a href="#inc-4"><tt>inc(default, Name, LabelValues, -1)</tt></a>
 otherwise equivalent to
-<a href="#inc-4"><tt>inc(default, Name, [], -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dec-3">dec/3</a></td><td>Equivalent to <a href="#inc-4"><tt>inc(default, Name, LabelValues, -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dec-4">dec/4</a></td><td>Equivalent to <a href="#inc-4"><tt>inc(Registry, Name, LabelValues, -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#declare-1">declare/1</a></td><td>Creates a gauge using <code>Spec</code>.</td></tr><tr><td valign="top"><a href="#declare-2">declare/2</a></td><td>(<em>Deprecated</em>.) </td></tr><tr><td valign="top"><a href="#deregister-1">deregister/1</a></td><td>Equivalent to <a href="#deregister-2"><tt>deregister(default, Name)</tt></a>.</td></tr><tr><td valign="top"><a href="#deregister-2">deregister/2</a></td><td>
+<a href="#inc-4"><tt>inc(default, Name, [], -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dec-3">dec/3</a></td><td>Equivalent to <a href="#inc-4"><tt>inc(default, Name, LabelValues, -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dec-4">dec/4</a></td><td>Equivalent to <a href="#inc-4"><tt>inc(Registry, Name, LabelValues, -1 * Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#declare-1">declare/1</a></td><td>Creates a gauge using <code>Spec</code>.</td></tr><tr><td valign="top"><a href="#deregister-1">deregister/1</a></td><td>Equivalent to <a href="#deregister-2"><tt>deregister(default, Name)</tt></a>.</td></tr><tr><td valign="top"><a href="#deregister-2">deregister/2</a></td><td>
 Removes all gauge series with name <code>Name</code> and
-removes Metric Family from <code>Registry</code>.</td></tr><tr><td valign="top"><a href="#dinc-1">dinc/1</a></td><td>Equivalent to <a href="#dinc-4"><tt>dinc(default, Name, [], 1)</tt></a>.</td></tr><tr><td valign="top"><a href="#dinc-2">dinc/2</a></td><td>If the second argument is a list, equivalent to
-<a href="#dinc-4"><tt>dinc(default, Name, LabelValues, 1)</tt></a>
-otherwise equivalent to
-<a href="#dinc-4"><tt>dinc(default, Name, [], Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dinc-3">dinc/3</a></td><td>Equivalent to <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#dinc-4">dinc/4</a></td><td>Increments the gauge identified by <code>Registry</code>, <code>Name</code>
-and <code>LabelValues</code> by <code>Value</code>.</td></tr><tr><td valign="top"><a href="#inc-1">inc/1</a></td><td>Equivalent to <a href="#inc-4"><tt>inc(default, Name, [], 1)</tt></a>.</td></tr><tr><td valign="top"><a href="#inc-2">inc/2</a></td><td>If the second argument is a list, equivalent to
+removes Metric Family from <code>Registry</code>.</td></tr><tr><td valign="top"><a href="#inc-1">inc/1</a></td><td>Equivalent to <a href="#inc-4"><tt>inc(default, Name, [], 1)</tt></a>.</td></tr><tr><td valign="top"><a href="#inc-2">inc/2</a></td><td>If the second argument is a list, equivalent to
 <a href="#inc-4"><tt>inc(default, Name, LabelValues, 1)</tt></a>
 otherwise equivalent to
 <a href="#inc-4"><tt>inc(default, Name, [], Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#inc-3">inc/3</a></td><td>Equivalent to <a href="#inc-4"><tt>inc(default, Name, LabelValues, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#inc-4">inc/4</a></td><td>Increments the gauge identified by <code>Registry</code>, <code>Name</code>
-and <code>LabelValues</code> by <code>Value</code>.</td></tr><tr><td valign="top"><a href="#new-1">new/1</a></td><td>Creates a gauge using <code>Spec</code>.</td></tr><tr><td valign="top"><a href="#new-2">new/2</a></td><td>(<em>Deprecated</em>.) </td></tr><tr><td valign="top"><a href="#remove-1">remove/1</a></td><td>Equivalent to <a href="#remove-3"><tt>remove(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#remove-2">remove/2</a></td><td>Equivalent to <a href="#remove-3"><tt>remove(default, Name, LabelValues)</tt></a>.</td></tr><tr><td valign="top"><a href="#remove-3">remove/3</a></td><td>Removes gauge series identified by <code>Registry</code>, <code>Name</code>
+and <code>LabelValues</code> by <code>Value</code>.</td></tr><tr><td valign="top"><a href="#new-1">new/1</a></td><td>Creates a gauge using <code>Spec</code>.</td></tr><tr><td valign="top"><a href="#remove-1">remove/1</a></td><td>Equivalent to <a href="#remove-3"><tt>remove(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#remove-2">remove/2</a></td><td>Equivalent to <a href="#remove-3"><tt>remove(default, Name, LabelValues)</tt></a>.</td></tr><tr><td valign="top"><a href="#remove-3">remove/3</a></td><td>Removes gauge series identified by <code>Registry</code>, <code>Name</code>
 and <code>LabelValues</code>.</td></tr><tr><td valign="top"><a href="#reset-1">reset/1</a></td><td>Equivalent to <a href="#reset-3"><tt>reset(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#reset-2">reset/2</a></td><td>Equivalent to <a href="#reset-3"><tt>reset(default, Name, LabelValues)</tt></a>.</td></tr><tr><td valign="top"><a href="#reset-3">reset/3</a></td><td>Resets the value of the gauge identified by <code>Registry</code>, <code>Name</code>
 and <code>LabelValues</code>.</td></tr><tr><td valign="top"><a href="#set-2">set/2</a></td><td>Equivalent to <a href="#set-4"><tt>set(default, Name, [], Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#set-3">set/3</a></td><td>Equivalent to <a href="#set-4"><tt>set(default, Name, LabelValues, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#set-4">set/4</a></td><td>Sets the gauge identified by <code>Registry</code>, <code>Name</code>
 and <code>LabelValues</code> to <code>Value</code>.</td></tr><tr><td valign="top"><a href="#set_duration-2">set_duration/2</a></td><td>Equivalent to <a href="#set_duration-4"><tt>set_duration(default, Name, [], Fun)</tt></a>.</td></tr><tr><td valign="top"><a href="#set_duration-3">set_duration/3</a></td><td>Equivalent to <a href="#set_duration-4"><tt>set_duration(default, Name, LabelValues, Fun)</tt></a>.</td></tr><tr><td valign="top"><a href="#set_duration-4">set_duration/4</a></td><td>Sets the gauge identified by <code>Registry</code>, <code>Name</code>
@@ -84,41 +77,6 @@ and <code>LabelValues</code>.</td></tr></table>
 <a name="functions"></a>
 
 ## Function Details ##
-
-<a name="ddec-1"></a>
-
-### ddec/1 ###
-
-`ddec(Name) -> any()`
-
-Equivalent to [`dinc(default, Name, [], -1)`](#dinc-4).
-
-<a name="ddec-2"></a>
-
-### ddec/2 ###
-
-`ddec(Name, LabelValues) -> any()`
-
-If the second argument is a list, equivalent to
-[`dinc(default, Name, LabelValues, -1)`](#dinc-4)
-otherwise equivalent to
-[`dinc(default, Name, [], -1 * Value)`](#dinc-4).
-
-<a name="ddec-3"></a>
-
-### ddec/3 ###
-
-`ddec(Name, LabelValues, Value) -> any()`
-
-Equivalent to [`dinc(default, Name, LabelValues, -1 * Value)`](#dinc-4).
-
-<a name="ddec-4"></a>
-
-### ddec/4 ###
-
-`ddec(Registry, Name, LabelValues, Value) -> any()`
-
-Equivalent to [`dinc(default, Name, LabelValues, -1 * Value)`](#dinc-4).
 
 <a name="dec-1"></a>
 
@@ -177,15 +135,6 @@ label name.<br />
 Raises `{invalid_value_error, Value, MessagE}` error if `duration_unit` is
 unknown or doesn't match metric name.<br />
 
-<a name="declare-2"></a>
-
-### declare/2 ###
-
-`declare(Spec, Registry) -> any()`
-
-__This function is deprecated:__ Please use [`declare/1`](#declare-1) with registry
-key instead.
-
 <a name="deregister-1"></a>
 
 ### deregister/1 ###
@@ -207,51 +156,6 @@ After this call new/1 for `Name` and `Registry` will succeed.
 
 Returns `{true, _}` if `Name` was a registered gauge.
 Otherwise returns `{false, _}`.
-
-<a name="dinc-1"></a>
-
-### dinc/1 ###
-
-`dinc(Name) -> any()`
-
-Equivalent to [`dinc(default, Name, [], 1)`](#dinc-4).
-
-<a name="dinc-2"></a>
-
-### dinc/2 ###
-
-`dinc(Name, LabelValues) -> any()`
-
-If the second argument is a list, equivalent to
-[`dinc(default, Name, LabelValues, 1)`](#dinc-4)
-otherwise equivalent to
-[`dinc(default, Name, [], Value)`](#dinc-4).
-
-<a name="dinc-3"></a>
-
-### dinc/3 ###
-
-`dinc(Name, LabelValues, Value) -> any()`
-
-Equivalent to [`dinc(default, Name, LabelValues, Value)`](#dinc-4).
-
-<a name="dinc-4"></a>
-
-### dinc/4 ###
-
-`dinc(Registry, Name, LabelValues, Value) -> any()`
-
-Increments the gauge identified by `Registry`, `Name`
-and `LabelValues` by `Value`.
-If `Value` happened to be a float number even one time(!) you
-shouldn't use [`inc/4`](#inc-4) after dinc.
-
-Raises `{invalid_value, Value, Message}` if `Value`
-isn't a number.<br />
-Raises `{unknown_metric, Registry, Name}` error if gauge with named `Name`
-can't be found in `Registry`.<br />
-Raises `{invalid_metric_arity, Present, Expected}` error if labels count
-mismatch.
 
 <a name="inc-1"></a>
 
@@ -318,15 +222,6 @@ Raises `{invalid_value_error, Value, Message}` error if `duration_unit` is
 unknown or doesn't match metric name.<br />
 Raises `{mf_already_exists, {Registry, Name}, Message}` error if a gauge
 with the same `Spec` already exists.
-
-<a name="new-2"></a>
-
-### new/2 ###
-
-`new(Spec, Registry) -> any()`
-
-__This function is deprecated:__ Please use [`new/1`](#new-1) with registry
-key instead.
 
 <a name="remove-1"></a>
 

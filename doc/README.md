@@ -4,7 +4,7 @@
 
 Copyright (c) 2016,2017 Ilya Khaprov <<i.khaprov@gmail.com>>.
 
-__Version:__ 3.4.6
+__Version:__ 4.0.0
 
 [![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)](https://hex.pm/packages/prometheus)
 [![Hex.pm](https://img.shields.io/hexpm/dt/prometheus.svg?maxAge=2592000)](https://hex.pm/packages/prometheus)
@@ -277,7 +277,6 @@ MIT
 <tr><td><a href="prometheus_counter.md" class="module">prometheus_counter</a></td></tr>
 <tr><td><a href="prometheus_format.md" class="module">prometheus_format</a></td></tr>
 <tr><td><a href="prometheus_gauge.md" class="module">prometheus_gauge</a></td></tr>
-<tr><td><a href="prometheus_histogram.md" class="module">prometheus_histogram</a></td></tr>
 <tr><td><a href="prometheus_http.md" class="module">prometheus_http</a></td></tr>
 <tr><td><a href="prometheus_mnesia.md" class="module">prometheus_mnesia</a></td></tr>
 <tr><td><a href="prometheus_mnesia_collector.md" class="module">prometheus_mnesia_collector</a></td></tr>

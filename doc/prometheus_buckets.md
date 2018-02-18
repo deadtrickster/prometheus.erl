@@ -40,7 +40,8 @@ Creates <code>Count</code> buckets, where the lowest bucket has an
 upper bound of <code>Start</code> and each following bucket's upper bound is <code>Factor</code>
 times the previous bucket's upper bound.</td></tr><tr><td valign="top"><a href="#linear-3">linear/3</a></td><td>
 Creates <code>Count</code> buckets, each <code>Width</code> wide, where the lowest
-bucket has an upper bound of <code>Start</code>.</td></tr></table>
+bucket has an upper bound of <code>Start</code>.</td></tr><tr><td valign="top"><a href="#new-0">new/0</a></td><td></td></tr><tr><td valign="top"><a href="#new-1">new/1</a></td><td>
+Histogram buckets constructor.</td></tr><tr><td valign="top"><a href="#position-2">position/2</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -113,4 +114,24 @@ used for the `buckets` key of histogram constructors options.
 
 The function raises `{invalid_value, Value, Message}` error if `Count`
 is zero or negative.
+
+<a name="new-0"></a>
+
+### new/0 ###
+
+`new() -> any()`
+
+<a name="new-1"></a>
+
+### new/1 ###
+
+`new(RawBuckets) -> any()`
+
+Histogram buckets constructor
+
+<a name="position-2"></a>
+
+### position/2 ###
+
+`position(Buckets, Value) -> any()`
 

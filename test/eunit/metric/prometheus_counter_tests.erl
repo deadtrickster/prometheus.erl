@@ -40,15 +40,13 @@ test_errors(_) ->
                  prometheus_counter:new([{name, "qwe"}, {help, 12}])),
 
    %% counter specific errors
-   ?_assertError({invalid_value, -1, "inc accepts only non-negative integers"},
+   ?_assertError({invalid_value, -1, "inc accepts only non-negative numbers"},
                  prometheus_counter:inc(http_requests_total, -1)),
-   ?_assertError({invalid_value, 1.5, "inc accepts only non-negative integers"},
-                 prometheus_counter:inc(http_requests_total, 1.5)),
-   ?_assertError({invalid_value, "qwe", "inc accepts only non-negative integers"},
+   ?_assertError({invalid_value, "qwe", "inc accepts only non-negative numbers"},
                  prometheus_counter:inc(http_requests_total, [], "qwe")),
-   ?_assertError({invalid_value, -1, "dinc accepts only non-negative numbers"},
+   ?_assertError({invalid_value, -1, "inc accepts only non-negative numbers"},
                  prometheus_counter:dinc(http_requests_total, -1)),
-   ?_assertError({invalid_value, "qwe", "dinc accepts only non-negative numbers"},
+   ?_assertError({invalid_value, "qwe", "inc accepts only non-negative numbers"},
                  prometheus_counter:dinc(http_requests_total, [], "qwe")),
 
    %% mf/arity errors

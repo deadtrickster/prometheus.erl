@@ -98,7 +98,8 @@
 %%====================================================================
 
 -define(TABLE, ?PROMETHEUS_GAUGE_TABLE).
--define(GAUGE_POS, 2).
+-define(IGAUGE_POS, 2).
+-define(FGAUGE_POS, 3).
 
 %%====================================================================
 %% Metric API
@@ -163,7 +164,7 @@ deregister(Registry, Name) ->
 
 %% @private
 set_default(Registry, Name) ->
-  ets:insert_new(?TABLE, {{Registry, Name, []}, 0}).
+  ets:insert_new(?TABLE, {{Registry, Name, []}, 0, 0}).
 
 %% @equiv set(default, Name, [], Value)
 set(Name, Value) ->
@@ -183,18 +184,23 @@ set(Name, LabelValues, Value) ->
 %% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
 %% mismatch.
 %% @end
-set(Registry, Name, LabelValues, Value) when is_number(Value) orelse
-                                             Value == undefined ->
+set(Registry, Name, LabelValues, Value) ->
+  Update =
+    case Value of
+      _ when is_number(Value) ->
+        [{?IGAUGE_POS, 0}, {?FGAUGE_POS, Value}];
+      undefined ->
+        [{?IGAUGE_POS, undefined}, {?FGAUGE_POS, undefined}];
+      _ -> erlang:error({invalid_value, Value, "set accepts only numbers and 'undefined'"})
+    end,
+
   case ets:update_element(?TABLE, {Registry, Name, LabelValues},
-                          {?GAUGE_POS, Value}) of
+                          Update) of
     false ->
       insert_metric(Registry, Name, LabelValues, Value, fun set/4);
     true ->
       ok
-  end,
-  ok;
-set(_Registry, _Name, _LabelValues, Value) ->
-  erlang:error({invalid_value, Value, "set accepts only numbers"}).
+  end.
 
 %% @equiv inc(default, Name, [], 1)
 inc(Name) ->
@@ -226,58 +232,47 @@ inc(Name, LabelValues, Value) ->
 inc(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   try
     ets:update_counter(?TABLE, {Registry, Name, LabelValues},
-                       {?GAUGE_POS, Value})
+                       {?IGAUGE_POS, Value})
   catch error:badarg ->
-      insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
+      try value(Registry, Name, LabelValues) of
+          undefined ->
+          %% TODO: test
+          erlang:error({invalid_operation, 'inc/dec', "Can't inc/dec undefined"})
+      catch error:_ ->
+          insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
+      end
   end,
   ok;
-inc(_Registry, _Name, _LabelValues, Value) ->
-  erlang:error({invalid_value, Value,
-                "inc accepts only integers"}).
-
-%% @equiv dinc(default, Name, [], 1)
-dinc(Name) ->
-  dinc(default, Name, [], 1).
-
-%% @doc If the second argument is a list, equivalent to
-%% <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, 1)</tt></a>
-%% otherwise equivalent to
-%% <a href="#dinc-4"><tt>dinc(default, Name, [], Value)</tt></a>.
-dinc(Name, LabelValues) when is_list(LabelValues)->
-  dinc(default, Name, LabelValues, 1);
-dinc(Name, Value) when is_number(Value) ->
-  dinc(default, Name, [], Value).
-
-%% @equiv dinc(default, Name, LabelValues, Value)
-dinc(Name, LabelValues, Value) ->
-  dinc(default, Name, LabelValues, Value).
-
-%% @doc Increments the gauge identified by `Registry', `Name'
-%% and `LabelValues' by `Value'.
-%% If `Value' happened to be a float number even one time(!) you
-%% shouldn't use {@link inc/4} after dinc.
-%%
-%% Raises `{invalid_value, Value, Message}' if `Value'
-%% isn't a number.<br/>
-%% Raises `{unknown_metric, Registry, Name}' error if gauge with named `Name'
-%% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
-%% @end
-dinc(Registry, Name, LabelValues, Value) when is_number(Value) ->
+inc(Registry, Name, LabelValues, Value) when is_number(Value) ->
   Key = key(Registry, Name, LabelValues),
   case ets:select_replace(?TABLE,
-                          [{{Key, '$1'},
+                          [{{Key, '$1', '$2'},
                             [],
-                            [{{{Key}, {'+', '$1', Value}}}]}]) of
+                            [{{{Key}, '$1', {'+', '$2', Value}}}]}]) of
     0 ->
-      insert_metric(Registry, Name, LabelValues, Value, fun dinc/4);
+      insert_metric(Registry, Name, LabelValues, Value, fun inc/4);
     1 ->
       ok
   end;
-dinc(_Registry, _Name, _LabelValues, Value) ->
+inc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
-                "dinc accepts only numbers"}).
+                "inc accepts only numbers"}).
+
+%% @deprecated
+dinc(Name) ->
+  inc(default, Name, [], 1).
+
+%% @deprecated
+dinc(Name, Arg) ->
+  inc(Name, Arg).
+
+%% @deprecated
+dinc(Name, LabelValues, Value) ->
+  inc(default, Name, LabelValues, Value).
+
+%% @deprecated
+dinc(Registry, Name, LabelValues, Value) ->
+  inc(Registry, Name, LabelValues, Value).
 
 %% @equiv inc(default, Name, [], -1)
 dec(Name) ->
@@ -289,57 +284,42 @@ dec(Name) ->
 %% <a href="#inc-4"><tt>inc(default, Name, [], -1 * Value)</tt></a>.
 dec(Name, LabelValues) when is_list(LabelValues)->
   inc(default, Name, LabelValues, -1);
-dec(Name, Value)  when is_integer(Value) ->
+dec(Name, Value)  when is_number(Value) ->
   inc(default, Name, [], -1*Value);
 dec(_Name, Value) ->
   erlang:error({invalid_value, Value,
-                "dec accepts only integers"}).
+                "dec accepts only numbers"}).
 
 %% @equiv inc(default, Name, LabelValues, -1 * Value)
-dec(Name, LabelValues, Value) when is_integer(Value) ->
+dec(Name, LabelValues, Value) when is_number(Value) ->
   inc(default, Name, LabelValues, -1*Value);
 dec(_Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
-                "dec accepts only integers"}).
+                "dec accepts only numbers"}).
 
 
 %% @equiv inc(Registry, Name, LabelValues, -1 * Value)
-dec(Registry, Name, LabelValues, Value) when is_integer(Value) ->
+dec(Registry, Name, LabelValues, Value) when is_number(Value) ->
   inc(Registry, Name, LabelValues, -1*Value);
 dec(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
-                "dec accepts only integers"}).
+                "dec accepts only numbers"}).
 
-%% @equiv dinc(default, Name, [], -1)
+%% @deprecated
 ddec(Name) ->
-  dinc(default, Name, [], -1).
+  inc(default, Name, [], -1).
 
-%% @doc If the second argument is a list, equivalent to
-%% <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, -1)</tt></a>
-%% otherwise equivalent to
-%% <a href="#dinc-4"><tt>dinc(default, Name, [], -1 * Value)</tt></a>.
-ddec(Name, LabelValues) when is_list(LabelValues)->
-  dinc(default, Name, LabelValues, -1);
-ddec(Name, Value)  when is_number(Value) ->
-  dinc(default, Name, [], -1*Value);
-ddec(_Name, Value) ->
-  erlang:error({invalid_value, Value,
-                "ddec accepts only numbers"}).
+%% @deprecated
+ddec(Name, Arg) ->
+  dec(Name, Arg).
 
-%% @equiv dinc(default, Name, LabelValues, -1 * Value)
-ddec(Name, LabelValues, Value) when is_number(Value) ->
-  dinc(default, Name, LabelValues, -1*Value);
-ddec(_Name, _LabelValues, Value) ->
-  erlang:error({invalid_value, Value,
-                "ddec accepts only numbers"}).
+%% @deprecated
+ddec(Name, LabelValues, Value) ->
+  dec(Name, LabelValues, Value).
 
-
-%% @equiv dinc(default, Name, LabelValues, -1 * Value)
-ddec(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  dinc(Registry, Name, LabelValues, -1*Value);
-ddec(_Registry, _Name, _LabelValues, Value) ->
-  erlang:error({invalid_value, Value,
-                "ddec accepts only numbers"}).
+%% @deprecated
+ddec(Registry, Name, LabelValues, Value) ->
+  dec(Registry, Name, LabelValues, Value).
 
 %% @equiv set_to_current_time(default, Name, [])
 set_to_current_time(Name) ->
@@ -453,7 +433,7 @@ reset(Name, LabelValues) ->
 %% @end
 reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  ets:update_element(?TABLE, {Registry, Name, LabelValues}, {?GAUGE_POS, 0}).
+  ets:update_element(?TABLE, {Registry, Name, LabelValues}, [{?IGAUGE_POS, 0}, {?FGAUGE_POS, 0}]).
 
 %% @equiv value(default, Name, [])
 value(Name) ->
@@ -479,7 +459,7 @@ value(Registry, Name, LabelValues) ->
   MF =  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   DU = prometheus_metric:mf_duration_unit(MF),
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
-    [{_Key, Value}] -> prometheus_time:maybe_convert_to_du(DU, Value);
+    [{_Key, IValue, FValue}] -> prometheus_time:maybe_convert_to_du(DU, sum(IValue, FValue));
     [] -> undefined
   end.
 
@@ -490,22 +470,22 @@ value(Registry, Name, LabelValues) ->
 %% @private
 deregister_cleanup(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry),
-  true = ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_'}),
+  true = ets:match_delete(?TABLE, {{Registry, '_', '_'}, '_', '_'}),
   ok.
 
 %% @private
 collect_mf(Registry, Callback) ->
   [Callback(create_gauge(Name, Help, {CLabels, Labels, Registry, DU})) ||
     [Name, {Labels, Help}, CLabels, DU, _] <- prometheus_metric:metrics(?TABLE,
-                                                                  Registry)],
+                                                                        Registry)],
   ok.
 
 %% @private
 collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
   [prometheus_model_helpers:gauge_metric(
      CLabels ++ lists:zip(Labels, LabelValues),
-     prometheus_time:maybe_convert_to_du(DU, Value)) ||
-    [LabelValues, Value] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'})].
+     prometheus_time:maybe_convert_to_du(DU, sum(IValue, FValue))) ||
+    [LabelValues, IValue, FValue] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2', '$3'})].
 
 %%====================================================================
 %% Private Parts
@@ -515,16 +495,21 @@ key(Registry, Name, LabelValues) ->
   {Registry, Name, LabelValues}.
 
 deregister_select(Registry, Name) ->
-  [{{{Registry, Name, '_'}, '_'}, [], [true]}].
+  [{{{Registry, Name, '_'}, '_', '_'}, [], [true]}].
 
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  case ets:insert_new(?TABLE, {{Registry, Name, LabelValues}, Value}) of
+  case ets:insert_new(?TABLE, {{Registry, Name, LabelValues}, 0, Value}) of
     false -> %% some sneaky process already inserted
       ConflictCB(Registry, Name, LabelValues, Value);
     true ->
       ok
   end.
+
+sum(_IValue, undefined) ->
+  undefined;
+sum(IValue, FValue) ->
+  IValue + FValue.
 
 create_gauge(Name, Help, Data) ->
   prometheus_model_helpers:create_mf(Name, Help, gauge, ?MODULE, Data).

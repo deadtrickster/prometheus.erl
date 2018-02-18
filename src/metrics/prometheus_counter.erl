@@ -91,7 +91,8 @@
 %%====================================================================
 
 -define(TABLE, ?PROMETHEUS_COUNTER_TABLE).
--define(SUM_POS, 2).
+-define(ISUM_POS, 2).
+-define(FSUM_POS, 3).
 -define(WIDTH, 16).
 
 %%====================================================================
@@ -153,7 +154,7 @@ deregister(Registry, Name) ->
 
 %% @private
 set_default(Registry, Name) ->
-  ets:insert_new(?TABLE, {key(Registry, Name, []), 0}).
+  ets:insert_new(?TABLE, {key(Registry, Name, []), 0, 0}).
 
 %% @equiv inc(default, Name, [], 1)
 inc(Name) ->
@@ -176,7 +177,7 @@ inc(Name, LabelValues, Value) ->
 %% and `LabelValues' by `Value'.
 %%
 %% Raises `{invalid_value, Value, Message}' if `Value'
-%% isn't a positive integer.<br/>
+%% isn't a positive number.<br/>
 %% Raises `{unknown_metric, Registry, Name}' error if counter with named `Name'
 %% can't be found in `Registry'.<br/>
 %% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
@@ -186,58 +187,41 @@ inc(Registry, Name, LabelValues, Value) when is_integer(Value), Value >= 0 ->
   try
     ets:update_counter(?TABLE,
                        key(Registry, Name, LabelValues),
-                       {?SUM_POS, Value})
+                       {?ISUM_POS, Value})
   catch error:badarg ->
       insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
   end,
   ok;
-inc(_Registry, _Name, _LabelValues, Value) ->
-  erlang:error({invalid_value, Value,
-                "inc accepts only non-negative integers"}).
-
-%% @equiv dinc(default, Name, [], 1)
-dinc(Name) ->
-  dinc(default, Name, [], 1).
-
-%% @doc If the second argument is a list, equivalent to
-%% <a href="#dinc-4"><tt>dinc(default, Name, LabelValues, 1)</tt></a>
-%% otherwise equivalent to
-%% <a href="#dinc-4"><tt>dinc(default, Name, [], Value)</tt></a>.
-dinc(Name, LabelValues) when is_list(LabelValues)->
-  dinc(default, Name, LabelValues, 1);
-dinc(Name, Value) when is_number(Value) ->
-  dinc(default, Name, [], Value).
-
-%% @equiv dinc(default, Name, LabelValues, Value)
-dinc(Name, LabelValues, Value) ->
-  dinc(default, Name, LabelValues, Value).
-
-%% @doc Increments the counter identified by `Registry', `Name'
-%% and `LabelValues' by `Value'.
-%% If `Value' happened to be a float number even one time(!) you
-%% shouldn't use {@link inc/4} after dinc.
-%%
-%% Raises `{invalid_value, Value, Message}' if `Value'
-%% isn't a number.<br/>
-%% Raises `{unknown_metric, Registry, Name}' error if counter with named `Name'
-%% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
-%% @end
-dinc(Registry, Name, LabelValues, Value) when is_number(Value), Value >= 0 ->
+inc(Registry, Name, LabelValues, Value) when is_number(Value), Value >= 0 ->
   Key = key(Registry, Name, LabelValues),
   case ets:select_replace(?TABLE,
-                          [{{Key, '$1'},
+                          [{{Key, '$1', '$2'},
                             [],
-                            [{{{Key}, {'+', '$1', Value}}}]}]) of
+                            [{{{Key}, '$1', {'+', '$2', Value}}}]}]) of
     0 ->
-      insert_metric(Registry, Name, LabelValues, Value, fun dinc/4);
+      insert_metric(Registry, Name, LabelValues, Value, fun inc/4);
     1 ->
       ok
   end;
-dinc(_Registry, _Name, _LabelValues, Value) ->
+inc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
-                "dinc accepts only non-negative numbers"}).
+                "inc accepts only non-negative numbers"}).
+
+%% @deprecated
+dinc(Name) ->
+  inc(default, Name, [], 1).
+
+%% @deprecated
+dinc(Name, Arg) ->
+  inc(Name, Arg).
+
+%% @deprecated
+dinc(Name, LabelValues, Value) ->
+  inc(default, Name, LabelValues, Value).
+
+%% @deprecated
+dinc(Registry, Name, LabelValues, Value) ->
+  inc(Registry, Name, LabelValues, Value).
 
 %% @equiv remove(default, Name, [])
 remove(Name) ->
@@ -284,7 +268,7 @@ reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   case lists:usort([ets:update_element(?TABLE,
                                        {Registry, Name, LabelValues, Scheduler},
-                                       {?SUM_POS, 0})
+                                       [{?ISUM_POS, 0}, {?FSUM_POS, 0}])
                     || Scheduler <- schedulers_seq()]) of
     [_, _] -> true;
     [true] -> true;
@@ -310,9 +294,9 @@ value(Name, LabelValues) ->
 %% @end
 value(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  case ets:select(?TABLE, [{{{Registry, Name, LabelValues, '_'}, '$1'},
+  case ets:select(?TABLE, [{{{Registry, Name, LabelValues, '_'}, '$1', '$2'},
                             [],
-                            ['$1']}]) of
+                            [{'+', '$1', '$2'}]}]) of
     [] -> undefined;
     List -> lists:sum(List)
   end.
@@ -324,7 +308,7 @@ value(Registry, Name, LabelValues) ->
 %% @private
 deregister_cleanup(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry),
-  true = ets:match_delete(?TABLE, {{Registry, '_', '_', '_'}, '_'}),
+  true = ets:match_delete(?TABLE, {{Registry, '_', '_', '_'}, '_', '_'}),
   ok.
 
 %% @private
@@ -336,7 +320,7 @@ collect_mf(Registry, Callback) ->
 
 %% @private
 collect_metrics(Name, {CLabels, Labels, Registry}) ->
-  MFValues = ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2'}),
+  MFValues = ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2', '$3'}),
   [begin
      Value = reduce_label_values(LabelValues, MFValues),
      prometheus_model_helpers:counter_metric(
@@ -349,11 +333,17 @@ collect_metrics(Name, {CLabels, Labels, Registry}) ->
 %%====================================================================
 
 deregister_select(Registry, Name) ->
-  [{{{Registry, Name, '_', '_'}, '_'}, [], [true]}].
+  [{{{Registry, Name, '_', '_'}, '_', '_'}, [], [true]}].
 
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  case ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), Value}) of
+  Counter = case Value of
+              _ when is_integer(Value) ->
+                {key(Registry, Name, LabelValues), Value, 0};
+              _ ->
+                {key(Registry, Name, LabelValues), 0, Value}
+            end,
+  case ets:insert_new(?TABLE, Counter) of
     false -> %% some sneaky process already inserted
       ConflictCB(Registry, Name, LabelValues, Value);
     true ->
@@ -369,10 +359,10 @@ key(Registry, Name, LabelValues) ->
   {Registry, Name, LabelValues, Rnd}.
 
 collect_unique_labels(MFValues) ->
-  lists:usort([L || [L, _] <- MFValues]).
+  lists:usort([L || [L, _, _] <- MFValues]).
 
 reduce_label_values(Labels, MFValues) ->
-  lists:sum([Y || [L, Y] <- MFValues, L == Labels]).
+  lists:sum([I + F || [L, I, F] <- MFValues, L == Labels]).
 
 create_counter(Name, Help, Data) ->
   prometheus_model_helpers:create_mf(Name, Help, counter, ?MODULE, Data).

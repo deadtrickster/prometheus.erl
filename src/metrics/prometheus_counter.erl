@@ -337,12 +337,7 @@ deregister_select(Registry, Name) ->
 
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  Counter = case Value of
-              _ when is_integer(Value) ->
-                {key(Registry, Name, LabelValues), Value, 0};
-              _ ->
-                {key(Registry, Name, LabelValues), 0, Value}
-            end,
+  Counter = {key(Registry, Name, LabelValues), 0, Value},
   case ets:insert_new(?TABLE, Counter) of
     false -> %% some sneaky process already inserted
       ConflictCB(Registry, Name, LabelValues, Value);

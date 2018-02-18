@@ -237,7 +237,12 @@ inc(Registry, Name, LabelValues, Value) when is_integer(Value) ->
       try value(Registry, Name, LabelValues) of
           undefined ->
           %% TODO: test
-          erlang:error({invalid_operation, 'inc/dec', "Can't inc/dec undefined"})
+          case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
+            [{_Key, undefined, undefined}] -> 
+              erlang:error({invalid_operation, 'inc/dec', "Can't inc/dec undefined"});
+            _ ->
+              insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
+          end
       catch error:_ ->
           insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
       end

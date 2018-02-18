@@ -69,7 +69,7 @@ constant_labels_test() ->
   ?assertEqual([{qwe, qwa}], prometheus_metric_spec:constant_labels([{constant_labels, #{qwe => qwa}}])),
 
   ?assertError({invalid_value, invalid, "constant labels is not a map"},
-               prometheus_metric_spec:constant_labels([{constant_labels, invalid}])), 
+               prometheus_metric_spec:constant_labels([{constant_labels, invalid}])),
 
   ?assertError({invalid_metric_label_name, [], "metric label doesn't match regex ^[a-zA-Z_][a-zA-Z0-9_]*$"},
                prometheus_metric_spec:constant_labels([{constant_labels, #{[] => qwe}}])).

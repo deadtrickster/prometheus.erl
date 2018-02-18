@@ -226,18 +226,7 @@ inc(Registry, Name, LabelValues, Value) when is_integer(Value) ->
     ets:update_counter(?TABLE, {Registry, Name, LabelValues},
                        {?IGAUGE_POS, Value})
   catch error:badarg ->
-      try value(Registry, Name, LabelValues) of
-          undefined ->
-          %% TODO: test
-          case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
-            [{_Key, undefined, undefined}] ->
-              erlang:error({invalid_operation, 'inc/dec', "Can't inc/dec undefined"});
-            _ ->
-              insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
-          end
-      catch error:_ ->
-          insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
-      end
+      maybe_insert_metric_for_inc(Registry, Name, LabelValues, Value)
   end,
   ok;
 inc(Registry, Name, LabelValues, Value) when is_number(Value) ->
@@ -458,6 +447,14 @@ collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
 
 key(Registry, Name, LabelValues) ->
   {Registry, Name, LabelValues}.
+
+maybe_insert_metric_for_inc(Registry, Name, LabelValues, Value) ->
+  case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
+    [{_Key, undefined, undefined}] ->
+      erlang:error({invalid_operation, 'inc/dec', "Can't inc/dec undefined"});
+    _ ->
+      insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
+  end.
 
 deregister_select(Registry, Name) ->
   [{{{Registry, Name, '_'}, '_', '_'}, [], [true]}].

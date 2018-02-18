@@ -62,10 +62,6 @@
          inc/2,
          inc/3,
          inc/4,
-         dinc/1,
-         dinc/2,
-         dinc/3,
-         dinc/4,
          remove/1,
          remove/2,
          remove/3,
@@ -206,22 +202,6 @@ inc(Registry, Name, LabelValues, Value) when is_number(Value), Value >= 0 ->
 inc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
                 "inc accepts only non-negative numbers"}).
-
-%% @deprecated
-dinc(Name) ->
-  inc(default, Name, [], 1).
-
-%% @deprecated
-dinc(Name, Arg) ->
-  inc(Name, Arg).
-
-%% @deprecated
-dinc(Name, LabelValues, Value) ->
-  inc(default, Name, LabelValues, Value).
-
-%% @deprecated
-dinc(Registry, Name, LabelValues, Value) ->
-  inc(Registry, Name, LabelValues, Value).
 
 %% @equiv remove(default, Name, [])
 remove(Name) ->

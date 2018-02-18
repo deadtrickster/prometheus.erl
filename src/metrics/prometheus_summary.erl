@@ -35,9 +35,6 @@
          observe/2,
          observe/3,
          observe/4,
-         dobserve/2,
-         dobserve/3,
-         dobserve/4,
          observe_duration/2,
          observe_duration/3,
          observe_duration/4,
@@ -177,18 +174,6 @@ observe(Registry, Name, LabelValues, Value) when is_number(Value) ->
   end;
 observe(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "observe accepts only numbers"}).
-
-%% @deprecated
-dobserve(Name, Value) ->
-  observe(default, Name, [], Value).
-
-%% @deprecated
-dobserve(Name, LabelValues, Value) ->
-  observe(default, Name, LabelValues, Value).
-
-%% @deprecated
-dobserve(Registry, Name, LabelValues, Value) ->
-  observe(Registry, Name, LabelValues, Value).
 
 %% @equiv observe_duration(default, Name, [], Fun)
 observe_duration(Name, Fun) ->

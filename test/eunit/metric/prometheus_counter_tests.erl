@@ -11,7 +11,6 @@ prometheus_format_test_() ->
    [fun test_registration/1,
     fun test_errors/1,
     fun test_inc/1,
-    fun test_dinc/1,
     fun test_deregister/1,
     fun test_remove/1,
     fun test_default_value/1,
@@ -44,20 +43,12 @@ test_errors(_) ->
                  prometheus_counter:inc(http_requests_total, -1)),
    ?_assertError({invalid_value, "qwe", "inc accepts only non-negative numbers"},
                  prometheus_counter:inc(http_requests_total, [], "qwe")),
-   ?_assertError({invalid_value, -1, "inc accepts only non-negative numbers"},
-                 prometheus_counter:dinc(http_requests_total, -1)),
-   ?_assertError({invalid_value, "qwe", "inc accepts only non-negative numbers"},
-                 prometheus_counter:dinc(http_requests_total, [], "qwe")),
 
    %% mf/arity errors
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_counter:inc(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_counter:inc(db_query_duration, [repo, db])),
-   ?_assertError({unknown_metric, default, unknown_metric},
-                 prometheus_counter:dinc(unknown_metric)),
-   ?_assertError({invalid_metric_arity, 2, 1},
-                 prometheus_counter:dinc(db_query_duration, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_counter:reset(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1},
@@ -78,22 +69,11 @@ test_inc(_) ->
                           {help, "Http request count"}]),
   prometheus_counter:inc(http_requests_total, [get]),
   prometheus_counter:inc(http_requests_total, [get], 3),
+  prometheus_counter:inc(http_requests_total, [get], 3.5),
   Value = prometheus_counter:value(http_requests_total, [get]),
   prometheus_counter:reset(http_requests_total, [get]),
   RValue = prometheus_counter:value(http_requests_total, [get]),
-  [?_assertEqual(4, Value),
-   ?_assertEqual(0, RValue)].
-
-test_dinc(_) ->
-  prometheus_counter:new([{name, http_requests_total},
-                          {help, "Http request count"}]),
-  prometheus_counter:dinc(http_requests_total),
-  prometheus_counter:dinc(http_requests_total, 3.5),
-
-  Value = prometheus_counter:value(http_requests_total),
-  prometheus_counter:reset(http_requests_total),
-  RValue = prometheus_counter:value(http_requests_total),
-  [?_assertEqual(4.5, Value),
+  [?_assertMatch(_ when Value > 7.4 andalso Value < 7.6, Value),
    ?_assertEqual(0, RValue)].
 
 test_deregister(_) ->

@@ -11,7 +11,6 @@ prometheus_format_test_() ->
    [fun test_registration/1,
     fun test_errors/1,
     fun test_observe/1,
-    fun test_dobserve/1,
     fun test_observe_duration_seconds/1,
     fun test_observe_duration_milliseconds/1,
     fun test_deregister/1,
@@ -50,10 +49,6 @@ test_errors(_) ->
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_summary:observe(db_query_duration, [repo, db], 1)),
    ?_assertError({unknown_metric, default, unknown_metric},
-                 prometheus_summary:dobserve(unknown_metric, 1)),
-   ?_assertError({invalid_metric_arity, 2, 1},
-                 prometheus_summary:dobserve(db_query_duration, [repo, db], 1)),
-   ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_summary:observe_duration(unknown_metric,
                                                      fun() -> 1 end)),
    ?_assertError({invalid_metric_arity, 2, 1},
@@ -75,8 +70,6 @@ test_errors(_) ->
    %% summary specific errors
    ?_assertError({invalid_value, "qwe", "observe accepts only numbers"},
                  prometheus_summary:observe(orders_summary, "qwe")),
-   ?_assertError({invalid_value, "qwe", "observe accepts only numbers"},
-                 prometheus_summary:dobserve(orders_summary, "qwe")),
    ?_assertError({invalid_value, "qwe", "observe_duration accepts only functions"},
                  prometheus_summary:observe_duration(pool_size, "qwe"))
   ].
@@ -87,24 +80,13 @@ test_observe(_) ->
                           {help, "Track orders count/total sum"}]),
   prometheus_summary:observe(orders_summary, [electronics], 10),
   prometheus_summary:observe(orders_summary, [electronics], 15),
-  Value = prometheus_summary:value(orders_summary, [electronics]),
-  prometheus_summary:reset(orders_summary, [electronics]),
-  RValue = prometheus_summary:value(orders_summary, [electronics]),
-  [?_assertEqual({2, 25}, Value),
-   ?_assertEqual({0, 0}, RValue)].
-
-
-test_dobserve(_) ->
-  prometheus_summary:new([{name, orders_summary},
-                          {labels, [department]},
-                          {help, "Track orders count/total sum"}]),
-  prometheus_summary:dobserve(orders_summary, [electronics], 1.5),
-  prometheus_summary:dobserve(orders_summary, [electronics], 2.7),
+  prometheus_summary:observe(orders_summary, [electronics], 1.5),
+  prometheus_summary:observe(orders_summary, [electronics], 2.7),
 
   Value = prometheus_summary:value(orders_summary, [electronics]),
   prometheus_summary:reset(orders_summary, [electronics]),
   RValue = prometheus_summary:value(orders_summary, [electronics]),
-  [?_assertEqual({2, 4.2}, Value),
+  [?_assertMatch({4, Sum} when Sum > 29.1 andalso Sum < 29.3, Value),
    ?_assertEqual({0, 0}, RValue)].
 
 test_observe_duration_seconds(_) ->
@@ -219,8 +201,8 @@ test_default_value(_) ->
 
 test_collector1(_) ->
   prometheus_summary:new([{name, simple_summary},
-                        {labels, ["label"]},
-                        {help, ""}]),
+                          {labels, ["label"]},
+                          {help, ""}]),
   prometheus_summary:observe(simple_summary, [label_value], 4),
   [?_assertMatch([#'MetricFamily'{metric=
                                     [#'Metric'{label=[#'LabelPair'{name= "label",
@@ -232,9 +214,9 @@ test_collector1(_) ->
 
 test_collector2(_) ->
   prometheus_summary:new([{name, simple_summary},
-                        {labels, ["label"]},
-                        {constant_labels, #{qwe => qwa}},
-                        {help, ""}]),
+                          {labels, ["label"]},
+                          {constant_labels, #{qwe => qwa}},
+                          {help, ""}]),
   prometheus_summary:observe(simple_summary, [label_value], 5),
   [?_assertMatch([#'MetricFamily'{metric=
                                     [#'Metric'{label=[#'LabelPair'{name= <<"qwe">>,

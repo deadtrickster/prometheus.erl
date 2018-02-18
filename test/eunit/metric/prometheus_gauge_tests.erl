@@ -12,9 +12,7 @@ prometheus_format_test_() ->
     fun test_errors/1,
     fun test_set/1,
     fun test_inc/1,
-    fun test_dinc/1,
     fun test_dec/1,
-    fun test_ddec/1,
     fun test_set_to_current_time/1,
     fun test_track_inprogress/1,
     fun test_set_duration_seconds/1,
@@ -50,15 +48,9 @@ test_errors(_) ->
    ?_assertError({invalid_value, "qwe", "set accepts only numbers and 'undefined'"},
                  prometheus_gauge:set(pool_size, "qwe")),
    ?_assertError({invalid_value, "qwe", "inc accepts only numbers"},
-                 prometheus_gauge:dinc(pool_size, [], "qwe")),
+                 prometheus_gauge:inc(pool_size, [], "qwe")),
    ?_assertError({invalid_value, "qwe", "dec accepts only numbers"},
                  prometheus_gauge:dec(pool_size, [], "qwe")),
-   ?_assertError({invalid_value, qwe, "dec accepts only numbers"},
-                 prometheus_gauge:ddec(pool_size, qwe)),
-   ?_assertError({invalid_value, "qwe", "dec accepts only numbers"},
-                 prometheus_gauge:ddec(pool_size, [], "qwe")),
-   ?_assertError({invalid_value, "qwe", "dec accepts only numbers"},
-                 prometheus_gauge:ddec(default, pool_size, [], "qwe")),
    ?_assertError({invalid_value, "qwe", "track_inprogress accepts only functions"},
                  prometheus_gauge:track_inprogress(pool_size, "qwe")),
    ?_assertError({invalid_value, "qwe", "set_duration accepts only functions"},
@@ -116,26 +108,19 @@ test_inc(_) ->
   prometheus_gauge:new([{name, temperature}, {help, ""}]),
   prometheus_gauge:inc(pool_size, [mongodb]),
   prometheus_gauge:inc(pool_size, [mongodb], 3),
+  prometheus_gauge:inc(pool_size, [mongodb], 3.5),
   prometheus_gauge:inc(temperature),
   prometheus_gauge:inc(temperature, 3),
+  prometheus_gauge:inc(temperature, 3.5),
 
   PSValue = prometheus_gauge:value(pool_size, [mongodb]),
   TValue = prometheus_gauge:value(temperature),
-  [?_assertEqual(4, PSValue),
-   ?_assertEqual(4, TValue)].
 
-test_dinc(_) ->
-  prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),
-  prometheus_gauge:new([{name, temperature}, {help, ""}]),
-  prometheus_gauge:dinc(pool_size, [mongodb]),
-  prometheus_gauge:dinc(pool_size, [mongodb], 3.5),
-  prometheus_gauge:dinc(temperature),
-  prometheus_gauge:dinc(temperature, 3.5),
-
-  PSValue = prometheus_gauge:value(pool_size, [mongodb]),
-  TValue = prometheus_gauge:value(temperature),
-  [?_assertEqual(4.5, PSValue),
-   ?_assertEqual(4.5, TValue)].
+  prometheus_gauge:reset(pool_size, [mongodb]),
+  RValue = prometheus_gauge:value(pool_size, [mongodb]),
+  [?_assertEqual(7.5, PSValue),
+   ?_assertEqual(7.5, TValue),
+   ?_assertEqual(0, RValue)].
 
 test_dec(_) ->
   prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),
@@ -144,29 +129,21 @@ test_dec(_) ->
   prometheus_gauge:inc(pool_size, [mongodb], 10),
   prometheus_gauge:dec(pool_size, [mongodb]),
   prometheus_gauge:dec(pool_size, [mongodb], 6),
+  prometheus_gauge:dec(pool_size, [mongodb], 0.5),
   prometheus_gauge:inc(temperature),
   prometheus_gauge:inc(temperature, 10),
   prometheus_gauge:dec(temperature),
   prometheus_gauge:dec(temperature, 6),
+  prometheus_gauge:dec(temperature, 2.7),
 
   PSValue = prometheus_gauge:value(pool_size, [mongodb]),
   TValue = prometheus_gauge:value(temperature),
-  [?_assertEqual(4, PSValue),
-   ?_assertEqual(4, TValue)].
 
-test_ddec(_) ->
-  prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),
-  prometheus_gauge:new([{name, temperature}, {help, ""}]),
-  prometheus_gauge:ddec(pool_size, [mongodb]),
-  prometheus_gauge:ddec(pool_size, [mongodb], 6.5),
-  prometheus_gauge:ddec(temperature),
-  prometheus_gauge:ddec(temperature, 6.5),
-  prometheus_gauge:ddec(default, temperature, [], 6.5),
-
-  PSValue = prometheus_gauge:value(pool_size, [mongodb]),
-  TValue = prometheus_gauge:value(temperature),
-  [?_assertEqual(-7.5, PSValue),
-   ?_assertEqual(-14.0, TValue)].
+  prometheus_gauge:reset(pool_size, [mongodb]),
+  RValue = prometheus_gauge:value(pool_size, [mongodb]),
+  [?_assertMatch(_ when PSValue > 3.4 andalso PSValue < 3.6, PSValue),
+   ?_assertMatch(_ when TValue > 1.2 andalso TValue < 1.4, TValue),
+   ?_assertEqual(0, RValue)].
 
 test_set_to_current_time(_) ->
   prometheus_gauge:new([{name, cur_time}, {labels, []}, {help, ""}]),

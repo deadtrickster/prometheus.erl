@@ -12,7 +12,6 @@ prometheus_format_test_() ->
     fun test_errors/1,
     fun test_buckets/1,
     fun test_observe/1,
-    fun test_dobserve/1,
     fun test_observe_duration_seconds/1,
     fun test_observe_duration_milliseconds/1,
     fun test_deregister/1,
@@ -58,10 +57,6 @@ test_errors(_) ->
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_histogram:observe(db_query_duration, [repo, db], 1)),
    ?_assertError({unknown_metric, default, unknown_metric},
-                 prometheus_histogram:dobserve(unknown_metric, 1)),
-   ?_assertError({invalid_metric_arity, 2, 1},
-                 prometheus_histogram:dobserve(db_query_duration, [repo, db], 1)),
-   ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_histogram:observe_duration(unknown_metric, fun() -> 1 end)),
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_histogram:observe_duration(db_query_duration,
@@ -103,8 +98,6 @@ test_errors(_) ->
                                            {buckets, [1, 3, 2]}])),
    ?_assertError({invalid_value, "qwe", "observe accepts only numbers"},
                  prometheus_histogram:observe(request_duration, "qwe")),
-   ?_assertError({invalid_value, "qwe", "observe accepts only numbers"},
-                 prometheus_histogram:dobserve(request_duration, "qwe")),
    ?_assertError({invalid_value, "qwe", "observe_duration accepts only functions"},
                  prometheus_histogram:observe_duration(pool_size, "qwe"))
   ].
@@ -159,29 +152,17 @@ test_observe(_) ->
   prometheus_histogram:observe(http_request_duration_milliseconds, [get], 350),
   prometheus_histogram:observe(http_request_duration_milliseconds, [get], 550),
   prometheus_histogram:observe(http_request_duration_milliseconds, [get], 950),
+  prometheus_histogram:observe(http_request_duration_milliseconds, [get], 500.2),
+  prometheus_histogram:observe(http_request_duration_milliseconds, [get], 150.4),
+  prometheus_histogram:observe(http_request_duration_milliseconds, [get], 450.5),
+  prometheus_histogram:observe(http_request_duration_milliseconds, [get], 850.3),
+  prometheus_histogram:observe(http_request_duration_milliseconds, [get], 750.9),
+  prometheus_histogram:observe(http_request_duration_milliseconds, [get], 1650.23),
   Value = prometheus_histogram:value(http_request_duration_milliseconds, [get]),
   prometheus_histogram:reset(http_request_duration_milliseconds, [get]),
   RValue = prometheus_histogram:value(http_request_duration_milliseconds, [get]),
-  [?_assertEqual({[3, 3, 1, 1, 1, 0], 2622}, Value),
-   ?_assertEqual({[0, 0, 0, 0, 0, 0], 0}, RValue)].
-
-test_dobserve(_) ->
-  prometheus_histogram:new([{name, http_request_duration_milliseconds},
-                            {labels, [method]},
-                            {buckets, [100, 300, 500, 750, 1000]},
-                            {help, "Http Request execution time"},
-                            {duration_unit, false}]),
-  prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 500.2),
-  prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 150.4),
-  prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 450.5),
-  prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 850.3),
-  prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 750.9),
-  prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 1650.23),
-
-  Value = prometheus_histogram:value(http_request_duration_milliseconds, [post]),
-  prometheus_histogram:reset(http_request_duration_milliseconds, [post]),
-  RValue = prometheus_histogram:value(http_request_duration_milliseconds, [post]),
-  [?_assertEqual({[0, 1, 1, 1, 2, 1], 4352.53}, Value),
+  [?_assertMatch({[3, 4, 2, 2, 3, 1], Sum}
+                 when Sum > 6974.5 andalso Sum < 6974.55, Value),
    ?_assertEqual({[0, 0, 0, 0, 0, 0], 0}, RValue)].
 
 test_observe_duration_seconds(_) ->

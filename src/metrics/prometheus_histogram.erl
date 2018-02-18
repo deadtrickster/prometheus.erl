@@ -10,7 +10,6 @@
 %%
 %% Histogram expects `buckets` key in a metric spec. Buckets can be:
 %%   - a list of numbers in increasing order;
-%%  one of the generate specs (shortcuts for `prometheus_buckets' functions)
 %%   - :default;
 %%   - {:linear, start, step, count};
 %%   - {:exponential, start, step, count}
@@ -43,10 +42,7 @@
          observe/2,
          observe/3,
          observe/4,
-         bobserve/6,
-         dobserve/2,
-         dobserve/3,
-         dobserve/4,
+         pobserve/6,
          observe_duration/2,
          observe_duration/3,
          observe_duration/4,
@@ -185,33 +181,6 @@ observe(Name, Value) ->
 observe(Name, LabelValues, Value) ->
   observe(default, Name, LabelValues, Value).
 
-%% @private
-bobserve(Registry, Name, LabelValues, Buckets, BucketPos, Value) when is_integer(Value) ->
-  Key = key(Registry, Name, LabelValues),
-  try
-    ets:update_counter(?TABLE, Key,
-                       [{?ISUM_POS, Value}, {?BUCKETS_START + BucketPos, 1}])
-  catch error:badarg ->
-      insert_metric(Registry, Name, LabelValues, Value,
-                    fun(_, _, _, _) ->
-                        bobserve(Registry, Name, LabelValues, Buckets,
-                                 ?BUCKETS_START + BucketPos, Value)
-                    end)
-  end,
-  ok;
-bobserve(Registry, Name, LabelValues, Buckets, BucketPos, Value) when is_number(Value) ->
-  Key = key(Registry, Name, LabelValues),
-  case
-    dbobserve_impl(Key, Buckets, BucketPos, Value) of
-    0 ->
-      insert_metric(Registry, Name, LabelValues, Value,
-                    fun(_, _, _, _) ->
-                        dbobserve_impl(Key, Buckets, BucketPos, Value)
-                    end);
-    1 ->
-      ok
-  end.
-
 %% @doc Observes the given `Value'.
 %%
 %% Raises `{invalid_value, Value, Message}' if `Value'
@@ -237,7 +206,7 @@ observe(Registry, Name, LabelValues, Value) when is_number(Value) ->
   Key = key(Registry, Name, LabelValues),
   case ets:lookup(?TABLE, Key) of
     [Metric] ->
-      dbobserve_impl(Key, Metric, Value);
+      fobserve_impl(Key, Metric, Value);
     [] ->
       insert_metric(Registry, Name, LabelValues, Value,
                     fun(_, _, _, _) ->
@@ -247,25 +216,35 @@ observe(Registry, Name, LabelValues, Value) when is_number(Value) ->
 observe(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "observe accepts only numbers"}).
 
-%% @equiv dobserve(default, Name, [], Value)
-dobserve(Name, Value) ->
-  observe(default, Name, [], Value).
+%% @private
+pobserve(Registry, Name, LabelValues, Buckets, BucketPos, Value) when is_integer(Value) ->
+  Key = key(Registry, Name, LabelValues),
+  try
+    ets:update_counter(?TABLE, Key,
+                       [{?ISUM_POS, Value}, {?BUCKETS_START + BucketPos, 1}])
+  catch error:badarg ->
+      insert_metric(Registry, Name, LabelValues, Value,
+                    fun(_, _, _, _) ->
+                        pobserve(Registry, Name, LabelValues, Buckets,
+                                 ?BUCKETS_START + BucketPos, Value)
+                    end)
+  end,
+  ok;
+pobserve(Registry, Name, LabelValues, Buckets, BucketPos, Value) when is_number(Value) ->
+  Key = key(Registry, Name, LabelValues),
+  case
+    fobserve_impl(Key, Buckets, BucketPos, Value) of
+    0 ->
+      insert_metric(Registry, Name, LabelValues, Value,
+                    fun(_, _, _, _) ->
+                        fobserve_impl(Key, Buckets, BucketPos, Value)
+                    end);
+    1 ->
+      ok
+  end;
+pobserve(_Registry, _Name, _LabelValues, _Buckets, _Pos,  Value) ->
+  erlang:error({invalid_value, Value, "pobserve accepts only numbers"}).
 
-%% @equiv dobserve(default, Name, LabelValues, [], Value)
-dobserve(Name, LabelValues, Value) ->
-  observe(default, Name, LabelValues, Value).
-
-%% @deprecated
-dobserve(Registry, Name, LabelValues, Value) ->
-  observe(Registry, Name, LabelValues, Value).
-
-dbobserve_impl(Key, Metric, Value) ->
-  Buckets = metric_buckets(Metric),
-  BucketPos = calculate_histogram_bucket_position(Metric, Value),
-  dbobserve_impl(Key, Buckets, BucketPos, Value).
-
-dbobserve_impl(Key, Buckets, BucketPos, Value) ->
-  ets:select_replace(?TABLE, generate_select_replace(Key, Buckets, BucketPos, Value)).
 
 %% @equiv observe_duration(default, Name, [], Fun)
 observe_duration(Name, Fun) ->
@@ -447,6 +426,14 @@ raise_error_if_le_label_found(Label) ->
 insert_metric(Registry, Name, LabelValues, Value, CB) ->
   insert_placeholders(Registry, Name, LabelValues),
   CB(Registry, Name, LabelValues, Value).
+
+fobserve_impl(Key, Metric, Value) ->
+  Buckets = metric_buckets(Metric),
+  BucketPos = calculate_histogram_bucket_position(Metric, Value),
+  fobserve_impl(Key, Buckets, BucketPos, Value).
+
+fobserve_impl(Key, Buckets, BucketPos, Value) ->
+  ets:select_replace(?TABLE, generate_select_replace(Key, Buckets, BucketPos, Value)).
 
 insert_placeholders(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),

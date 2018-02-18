@@ -52,18 +52,10 @@
          inc/2,
          inc/3,
          inc/4,
-         dinc/1,
-         dinc/2,
-         dinc/3,
-         dinc/4,
          dec/1,
          dec/2,
          dec/3,
          dec/4,
-         ddec/1,
-         ddec/2,
-         ddec/3,
-         ddec/4,
          set_to_current_time/1,
          set_to_current_time/2,
          set_to_current_time/3,
@@ -238,7 +230,7 @@ inc(Registry, Name, LabelValues, Value) when is_integer(Value) ->
           undefined ->
           %% TODO: test
           case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of
-            [{_Key, undefined, undefined}] -> 
+            [{_Key, undefined, undefined}] ->
               erlang:error({invalid_operation, 'inc/dec', "Can't inc/dec undefined"});
             _ ->
               insert_metric(Registry, Name, LabelValues, Value, fun inc/4)
@@ -262,22 +254,6 @@ inc(Registry, Name, LabelValues, Value) when is_number(Value) ->
 inc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
                 "inc accepts only numbers"}).
-
-%% @deprecated
-dinc(Name) ->
-  inc(default, Name, [], 1).
-
-%% @deprecated
-dinc(Name, Arg) ->
-  inc(Name, Arg).
-
-%% @deprecated
-dinc(Name, LabelValues, Value) ->
-  inc(default, Name, LabelValues, Value).
-
-%% @deprecated
-dinc(Registry, Name, LabelValues, Value) ->
-  inc(Registry, Name, LabelValues, Value).
 
 %% @equiv inc(default, Name, [], -1)
 dec(Name) ->
@@ -309,22 +285,6 @@ dec(Registry, Name, LabelValues, Value) when is_number(Value) ->
 dec(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
                 "dec accepts only numbers"}).
-
-%% @deprecated
-ddec(Name) ->
-  inc(default, Name, [], -1).
-
-%% @deprecated
-ddec(Name, Arg) ->
-  dec(Name, Arg).
-
-%% @deprecated
-ddec(Name, LabelValues, Value) ->
-  dec(Name, LabelValues, Value).
-
-%% @deprecated
-ddec(Registry, Name, LabelValues, Value) ->
-  dec(Registry, Name, LabelValues, Value).
 
 %% @equiv set_to_current_time(default, Name, [])
 set_to_current_time(Name) ->

@@ -45,9 +45,11 @@
          observe/2,
          observe/3,
          observe/4,
+         bobserve/5,
          dobserve/2,
          dobserve/3,
          dobserve/4,
+         dbobserve/6,
          observe_duration/2,
          observe_duration/3,
          observe_duration/4,
@@ -69,21 +71,6 @@
 -export([deregister_cleanup/1,
          collect_mf/2,
          collect_metrics/2]).
-
-%%% gen_server
--export([init/1,
-         handle_call/3,
-         handle_cast/2,
-         handle_info/2,
-         terminate/2,
-         code_change/3,
-         start_link/0]).
-
--ifdef(TEST).
--export([default_buckets/0,
-         linear_buckets/3,
-         exponential_buckets/3]).
--endif.
 
 -include("prometheus.hrl").
 
@@ -214,6 +201,21 @@ observe(Name, Value) ->
 observe(Name, LabelValues, Value) ->
   observe(default, Name, LabelValues, Value).
 
+%% @private
+bobserve(Registry, Name, LabelValues, BucketPosition, Value) ->
+  Key = key(Registry, Name, LabelValues),
+  try
+    ets:update_counter(?TABLE, Key,
+                       [{?SUM_POS, Value}, {?BUCKETS_START + BucketPosition, 1}])
+  catch error:badarg ->
+      insert_metric(Registry, Name, LabelValues, Value,
+                    fun(_, _, _, _) ->
+                        bobserve(Registry, Name, LabelValues,
+                                 ?BUCKETS_START + BucketPosition, Value)
+                    end)
+  end,
+  ok.
+
 %% @doc Observes the given `Value'.
 %%
 %% Raises `{invalid_value, Value, Message}' if `Value'
@@ -229,7 +231,8 @@ observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
     [Metric] ->
       BucketPosition = calculate_histogram_bucket_position(Metric, Value),
       ets:update_counter(?TABLE, Key,
-                         [{?SUM_POS, Value}, {BucketPosition, 1}]);
+                         [{?SUM_POS, Value},
+                          {?BUCKETS_START + BucketPosition, 1}]);
     [] ->
       insert_metric(Registry, Name, LabelValues, Value, fun observe/4)
   end,
@@ -245,6 +248,28 @@ dobserve(Name, Value) ->
 dobserve(Name, LabelValues, Value) ->
   dobserve(default, Name, LabelValues, Value).
 
+dbobserve_impl(Key, Metric, Value) ->
+  Buckets = metric_buckets(Metric),
+  BucketPos = calculate_histogram_bucket_position(Metric, Value),
+  dbobserve_impl(Key, Buckets, BucketPos, Value).
+
+dbobserve_impl(Key, Buckets, BucketPos, Value) ->
+  ets:select_replace(?TABLE, generate_select_replace(Key, Buckets, BucketPos, Value)).
+
+%% @private
+dbobserve(Registry, Name, LabelValues, Buckets, BucketPos, Value) ->
+  Key = key(Registry, Name, LabelValues),
+  case
+    dbobserve_impl(Key, Buckets, BucketPos, Value) of
+    0 ->
+      insert_metric(Registry, Name, LabelValues, Value,
+                    fun(_, _, _, _) ->
+                        dbobserve_impl(Key, Buckets, BucketPos, Value)
+                    end);
+    1 ->
+      ok
+  end.
+
 %% @doc Observes the given `Value'.
 %% If `Value' happened to be a float number even one time(!) you
 %% shouldn't use {@link observe/4} after dobserve.
@@ -257,18 +282,16 @@ dobserve(Name, LabelValues, Value) ->
 %% mismatch.
 %% @end
 dobserve(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  CallTimeout = prometheus_metric:mf_call_timeout(MF),
-  case prometheus_metric:mf_call_timeout(MF) of
-    false ->
-      gen_server:cast(?MODULE,
-                      {observe, {Registry, Name, LabelValues, Value}});
-    _ ->
-      gen_server:call(?MODULE,
-                      {observe, {Registry, Name, LabelValues, Value}},
-                      CallTimeout)
-  end,
-  ok;
+  Key = key(Registry, Name, LabelValues),
+  case ets:lookup(?TABLE, Key) of
+    [Metric] ->
+      dbobserve_impl(Key, Metric, Value);
+    [] ->
+      insert_metric(Registry, Name, LabelValues, Value,
+                    fun(_, _, _, _) ->
+                        dobserve(Registry, Name, LabelValues, Value)
+                    end)
+  end;
 dobserve(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "dobserve accepts only numbers"}).
 
@@ -430,49 +453,14 @@ collect_metrics(Name, {Labels, Registry, DU, Bounds}) ->
     LabelValues <- collect_unique_labels(MFValues)].
 
 %%====================================================================
-%% Gen_server API
-%%====================================================================
-
-%% @private
-start_link() ->
-  gen_server:start_link({local, prometheus_histogram},
-                        prometheus_histogram, [], []).
-
-%% @private
-init(_Args) ->
-  {ok, []}.
-
-%% @private
-handle_call({observe, {Registry, Name, LabelValues, Value}}, _From, State) ->
-  dobserve_impl(Registry, Name, LabelValues, Value),
-  {reply, ok, State}.
-
-%% @private
-handle_cast({observe, {Registry, Name, LabelValues, Value}}, State) ->
-  dobserve_impl(Registry, Name, LabelValues, Value),
-  {noreply, State}.
-
-%% @private
-handle_info(_Info, State) ->
-  {noreply, State}.
-
-%% @private
-terminate(_Reason, _State) ->
-  ok.
-
-%% @private
-code_change(_OldVsn, State, _Extra) ->
-  {ok, State}.
-
-%%====================================================================
 %% Private Parts
 %%====================================================================
 
 validate_histogram_spec(Spec) ->
   Labels = prometheus_metric_spec:labels(Spec),
   validate_histogram_labels(Labels),
-  RBuckets = prometheus_metric_spec:get_value(buckets, Spec, default_buckets()),
-  Buckets = validate_buckets(RBuckets),
+  RBuckets = prometheus_metric_spec:get_value(buckets, Spec, default),
+  Buckets = prometheus_buckets:new(RBuckets),
   [{data, Buckets}|Spec].
 
 validate_histogram_labels(Labels) ->
@@ -483,52 +471,6 @@ raise_error_if_le_label_found("le") ->
                 "histogram cannot have a label named \"le\""});
 raise_error_if_le_label_found(Label) ->
   Label.
-
-default_buckets () ->
-  prometheus_buckets:default().
-
-linear_buckets(Start, Step, Count) ->
-  prometheus_buckets:linear(Start, Step, Count).
-
-exponential_buckets(Start, Factor, Count) ->
-  prometheus_buckets:exponential(Start, Factor, Count).
-
-validate_buckets([]) ->
-  erlang:error({histogram_no_buckets, []});
-validate_buckets(undefined) ->
-  erlang:error({histogram_no_buckets, undefined});
-validate_buckets(default) ->
-  default_buckets() ++ [infinity];
-validate_buckets({linear, Start, Step, Count}) ->
-  linear_buckets(Start, Step, Count) ++ [infinity];
-validate_buckets({exponential, Start, Factor, Count}) ->
-  exponential_buckets(Start, Factor, Count) ++ [infinity];
-validate_buckets(RawBuckets) when is_list(RawBuckets) ->
-  Buckets = lists:map(fun validate_histogram_bound/1, RawBuckets),
-  case lists:sort(Buckets) of
-    Buckets ->
-      Buckets ++ [infinity];
-    _ ->
-      erlang:error({histogram_invalid_buckets, Buckets, "buckets not sorted"})
-  end;
-validate_buckets(Buckets) ->
-  erlang:error({histogram_invalid_buckets, Buckets, "not a list"}).
-
-validate_histogram_bound(Bound) when is_number(Bound) ->
-  Bound;
-validate_histogram_bound(Bound) ->
-  erlang:error({histogram_invalid_bound, Bound}).
-
-dobserve_impl(Registry, Name, LabelValues, Value) ->
-  case ets:lookup(?TABLE, key(Registry, Name, LabelValues)) of
-    [Metric] ->
-      BucketPos = calculate_histogram_bucket_position(Metric, Value),
-      ets:update_element(?TABLE, key(Registry, Name, LabelValues),
-                         [{?SUM_POS, sum(Metric) + Value},
-                          {BucketPos, element(BucketPos, Metric) + 1}]);
-    [] ->
-      insert_metric(Registry, Name, LabelValues, Value, fun dobserve_impl/4)
-  end.
 
 insert_metric(Registry, Name, LabelValues, Value, CB) ->
   insert_placeholders(Registry, Name, LabelValues),
@@ -549,10 +491,18 @@ insert_placeholders(Registry, Name, LabelValues) ->
 
 calculate_histogram_bucket_position(Metric, Value) ->
   Buckets = metric_buckets(Metric),
-  BucketPosition = position(Buckets, fun(Bound) ->
-                                         Value =< Bound
-                                     end),
-  ?BUCKETS_START + BucketPosition.
+  prometheus_buckets:position(Buckets, Value).
+
+generate_select_replace(Key, Bounds, BucketPos, Value) ->
+  BoundPlaceholders = gen_query_bound_placeholders(Bounds),
+  HistMatch = list_to_tuple([Key, '$2', '$3'] ++ BoundPlaceholders),
+  BucketUpdate = lists:sublist(BoundPlaceholders, BucketPos)
+    ++ [{'+', gen_query_placeholder(?BUCKETS_START + BucketPos), 1}]
+    ++ lists:nthtail(BucketPos + 1, BoundPlaceholders),
+  HistUpdate = list_to_tuple([{Key}, '$2', {'+', '$3', Value}] ++ BucketUpdate),
+  [{HistMatch,
+    [],
+    [{HistUpdate}]}].
 
 buckets_seq(Buckets) ->
   lists:seq(?BUCKETS_START, ?BUCKETS_START + length(Buckets) - 1).
@@ -588,9 +538,6 @@ transpose([[]|_]) -> [];
 transpose(M) ->
   [lists:map(fun hd/1, M) | transpose(lists:map(fun tl/1, M))].
 
-sum(Metric) ->
-  element(?SUM_POS, Metric).
-
 reduce_sum(Metrics) ->
   lists:sum([element(?SUM_POS, Metric) || Metric <- Metrics]).
 
@@ -624,19 +571,6 @@ delete_metrics(Registry, Buckets) ->
 sub_tuple_to_list(Tuple, Pos, Size) when Pos < Size ->
   [element(Pos, Tuple) | sub_tuple_to_list(Tuple, Pos + 1, Size)];
 sub_tuple_to_list(_Tuple, _Pos, _Size) -> [].
-
-position(List, Pred) ->
-  position(List, Pred, 0).
-
-position([], _Pred, _Pos) ->
-  0;
-position([H|L], Pred, Pos) ->
-  case Pred(H) of
-    true ->
-      Pos;
-    false ->
-      position(L, Pred, Pos + 1)
-  end.
 
 schedulers_seq() ->
   lists:seq(0, ?WIDTH-1).

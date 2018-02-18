@@ -83,20 +83,10 @@
          collect_mf/2,
          collect_metrics/2]).
 
-%%% gen_server
--export([init/1,
-         handle_call/3,
-         handle_cast/2,
-         handle_info/2,
-         terminate/2,
-         code_change/3,
-         start_link/0]).
-
 -include("prometheus.hrl").
 
 -behaviour(prometheus_metric).
 -behaviour(prometheus_collector).
--behaviour(gen_server).
 
 %%====================================================================
 %% Macros
@@ -251,17 +241,16 @@ dinc(Name, LabelValues, Value) ->
 %% mismatch.
 %% @end
 dinc(Registry, Name, LabelValues, Value) when is_number(Value), Value >= 0 ->
-  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  CallTimeout = prometheus_metric:mf_call_timeout(MF),
-  case CallTimeout of
-    false ->
-      gen_server:cast(?MODULE,
-                      {inc, {Registry, Name, LabelValues, Value}});
-    _ -> gen_server:call(?MODULE,
-                         {inc, {Registry, Name, LabelValues, Value}},
-                         CallTimeout)
-  end,
-  ok;
+  Key = key(Registry, Name, LabelValues),
+  case ets:select_replace(?TABLE,
+                          [{{Key, '$1'},
+                            [],
+                            [{{{Key}, {'+', '$1', Value}}}]}]) of
+    0 ->
+      insert_metric(Registry, Name, LabelValues, Value, fun dinc/4);
+    1 ->
+      ok
+  end;
 dinc(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value,
                 "dinc accepts only non-negative numbers"}).
@@ -372,55 +361,11 @@ collect_metrics(Name, {Labels, Registry}) ->
     LabelValues <- collect_unique_labels(MFValues)].
 
 %%====================================================================
-%% Gen_server API
-%%====================================================================
-
-%% @private
-init(_Args) ->
-  {ok, []}.
-
-%% @private
-handle_call({inc, {Registry, Name, LabelValues, Value}}, _From, State) ->
-  dinc_impl(Registry, Name, LabelValues, Value),
-  {reply, ok, State}.
-
-%% @private
-handle_cast({inc, {Registry, Name, LabelValues, Value}}, State) ->
-  dinc_impl(Registry, Name, LabelValues, Value),
-  {noreply, State}.
-
-%% @private
-handle_info(_Info, State) ->
-  {noreply, State}.
-
-%% @private
-terminate(_Reason, _State) ->
-  ok.
-
-%% @private
-code_change(_OldVsn, State, _Extra) ->
-  {ok, State}.
-
-%% @private
-start_link() ->
-  gen_server:start_link({local, prometheus_counter},
-                        prometheus_counter, [], []).
-
-%%====================================================================
 %% Private Parts
 %%====================================================================
 
 deregister_select(Registry, Name) ->
   [{{{Registry, Name, '_', '_'}, '_'}, [], [true]}].
-
-dinc_impl(Registry, Name, LabelValues, Value) ->
-  case ets:lookup(?TABLE, key(Registry, Name, LabelValues)) of
-    [{_Key, OldValue}] ->
-      ets:update_element(?TABLE, key(Registry, Name, LabelValues),
-                         {?SUM_POS, Value + OldValue});
-    [] ->
-      insert_metric(Registry, Name, LabelValues, Value, fun dinc_impl/4)
-  end.
 
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),

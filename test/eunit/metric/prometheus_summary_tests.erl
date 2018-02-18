@@ -114,34 +114,6 @@ test_dobserve(_) ->
   [?_assertEqual({2, 4.2}, Value),
    ?_assertEqual({0, 0}, RValue)].
 
-call_cast_test() ->
-  prometheus_summary:declare([{name, cast}, {help, ""}]),
-  prometheus_summary:declare([{name, call}, {help, ""}, {call_timeout, 1000}]),
-  prometheus_summary:dobserve(cast, 1),
-  prometheus_summary:dobserve(call, 1),
-
-  ?assertEqual({1, 1}, prometheus_summary:value(cast)),
-  ?assertEqual({1, 1}, prometheus_summary:value(call)),
-
-  try
-    sys:suspend(prometheus_summary),
-
-    prometheus_summary:dobserve(cast, 1),
-    ?assertException(exit, {timeout, _}, prometheus_summary:dobserve(call, 1)),
-
-    ?assertEqual({1, 1}, prometheus_summary:value(cast)),
-    ?assertEqual({1, 1}, prometheus_summary:value(call))
-
-  after
-    sys:resume(prometheus_summary)
-  end,
-
-  %% wait for genserver
-  timer:sleep(10),
-
-  ?assertEqual({2, 2}, prometheus_summary:value(cast)),
-  ?assertEqual({2, 2}, prometheus_summary:value(call)).
-
 test_observe_duration_seconds(_) ->
   prometheus_summary:new([{name, <<"fun_duration_seconds">>},
                           {help, ""},

@@ -101,34 +101,6 @@ test_dinc(_) ->
   [?_assertEqual(4.5, Value),
    ?_assertEqual(0, RValue)].
 
-call_cast_test() ->
-  prometheus_counter:declare([{name, cast}, {help, ""}]),
-  prometheus_counter:declare([{name, call}, {help, ""}, {call_timeout, 1000}]),
-  prometheus_counter:dinc(cast),
-  prometheus_counter:dinc(call),
-
-  ?assertEqual(1, prometheus_counter:value(cast)),
-  ?assertEqual(1, prometheus_counter:value(call)),
-
-  try
-    sys:suspend(prometheus_counter),
-
-    prometheus_counter:dinc(cast),
-    ?assertException(exit, {timeout, _}, prometheus_counter:dinc(call)),
-
-    ?assertEqual(1, prometheus_counter:value(cast)),
-    ?assertEqual(1, prometheus_counter:value(call))
-
-  after
-    sys:resume(prometheus_counter)
-  end,
-
-  %% wait for genserver
-  timer:sleep(10),
-
-  ?assertEqual(2, prometheus_counter:value(cast)),
-  ?assertEqual(2, prometheus_counter:value(call)).
-
 test_deregister(_) ->
   prometheus_counter:new([{name, http_requests_total},
                           {labels, [method]},

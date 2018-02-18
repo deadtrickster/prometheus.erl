@@ -42,9 +42,9 @@ test_registry() ->
   prometheus_registry:clear(custom_registry),
 
   %% remove just this one collector from custom_registry1
-  ok = prometheus_collector:register(prometheus_registry_tests, custom_registry1),
+  ok = prometheus_registry:register_collector(custom_registry1, prometheus_registry_tests),
   Collectors1 = prometheus_registry:collectors(custom_registry1),
-  prometheus_collector:deregister(prometheus_registry_tests, custom_registry1),
+  prometheus_registry:deregister_collector(custom_registry1, prometheus_registry_tests),
 
   DefaultCollectors = prometheus_eunit_common:start(),
 

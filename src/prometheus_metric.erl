@@ -7,7 +7,7 @@
          deregister_mf/3,
          check_mf_exists/3,
          check_mf_exists/4,
-         mf_call_timeout/1,
+         mf_constant_labels/1,
          mf_duration_unit/1,
          mf_data/1,
          metrics/2,
@@ -158,15 +158,15 @@ check_mf_exists(Table, Registry, Name) ->
       MF
   end.
 
-%% @private
-mf_data(MF) ->
-  element(5, MF).
-
-mf_call_timeout(MF) ->
+mf_constant_labels(MF) ->
   element(3, MF).
 
 mf_duration_unit(MF) ->
   element(4, MF).
+
+%% @private
+mf_data(MF) ->
+  element(5, MF).
 
 %% @private
 metrics(Table, Registry) ->

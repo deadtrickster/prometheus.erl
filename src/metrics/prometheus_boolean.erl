@@ -269,15 +269,15 @@ deregister_cleanup(Registry) ->
 
 %% @private
 collect_mf(Registry, Callback) ->
-  [Callback(create_boolean(Name, Help, {Labels, Registry})) ||
-    [Name, {Labels, Help}, _, _, _] <- prometheus_metric:metrics(?TABLE,
+  [Callback(create_boolean(Name, Help, {CLabels, Labels, Registry})) ||
+    [Name, {Labels, Help}, CLabels, _, _] <- prometheus_metric:metrics(?TABLE,
                                                                   Registry)],
   ok.
 
 %% @private
-collect_metrics(Name, {Labels, Registry}) ->
+collect_metrics(Name, {CLabels, Labels, Registry}) ->
   [prometheus_model_helpers:boolean_metric(
-     lists:zip(Labels, LabelValues), Value) ||
+     CLabels ++ lists:zip(Labels, LabelValues), Value) ||
     [LabelValues, Value] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'})].
 
 %%====================================================================

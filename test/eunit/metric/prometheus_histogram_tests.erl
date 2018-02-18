@@ -12,12 +12,13 @@ prometheus_format_test_() ->
     fun test_errors/1,
     fun test_buckets/1,
     fun test_observe/1,
-    fun test_dobserve/1,
     fun test_observe_duration_seconds/1,
     fun test_observe_duration_milliseconds/1,
     fun test_deregister/1,
     fun test_remove/1,
-    fun test_default_value/1]}.
+    fun test_default_value/1,
+    fun test_collector1/1,
+    fun test_collector2/1]}.
 
 test_registration(_)->
   Name = request_duration,
@@ -25,15 +26,10 @@ test_registration(_)->
                       {buckets, [100, 300, 500, 750, 1000]},
                       {help, ""},
                       {registry, qwe}],
-  SpecWithoutRegistry = [{name, Name},
-                         {buckets, [100, 300, 500, 750, 1000]},
-                         {help, ""}],
   [?_assertEqual(true,
                  prometheus_histogram:declare(SpecWithRegistry)),
-   ?_assertEqual(false,
-                 prometheus_histogram:declare(SpecWithoutRegistry, qwe)),
    ?_assertError({mf_already_exists, {qwe, Name}, "Consider using declare instead."},
-                 prometheus_histogram:new(SpecWithoutRegistry, qwe))].
+                 prometheus_histogram:new(SpecWithRegistry))].
 
 test_errors(_) ->
   prometheus_histogram:new([{name, request_duration},
@@ -61,10 +57,6 @@ test_errors(_) ->
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_histogram:observe(db_query_duration, [repo, db], 1)),
    ?_assertError({unknown_metric, default, unknown_metric},
-                 prometheus_histogram:dobserve(unknown_metric, 1)),
-   ?_assertError({invalid_metric_arity, 2, 1},
-                 prometheus_histogram:dobserve(db_query_duration, [repo, db], 1)),
-   ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_histogram:observe_duration(unknown_metric, fun() -> 1 end)),
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_histogram:observe_duration(db_query_duration,
@@ -88,28 +80,24 @@ test_errors(_) ->
                  prometheus_histogram:remove(db_query_duration, [repo, db])),
 
    %% histogram specific errors
-   ?_assertError({histogram_no_buckets, []},
+   ?_assertError({no_buckets, []},
                  prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, []}])),
-   ?_assertError({histogram_no_buckets, undefined},
+   ?_assertError({no_buckets, undefined},
                  prometheus_histogram:new([{name, "qwe"},
                                            {help, ""},
                                            {buckets, undefined}])),
-   ?_assertError({histogram_invalid_buckets, 1, "not a list"},
+   ?_assertError({invalid_buckets, 1, "not a list"},
                  prometheus_histogram:new([{name, "qwe"}, {help, ""}, {buckets, 1}])),
-   ?_assertError({histogram_invalid_bound, "qwe"},
+   ?_assertError({invalid_bound, "qwe"},
                  prometheus_histogram:new([{name, "qwe"},
                                            {help, ""},
                                            {buckets, ["qwe"]}])),
-   ?_assertError({histogram_invalid_buckets, [1, 3, 2], "buckets not sorted"},
+   ?_assertError({invalid_buckets, [1, 3, 2], "buckets not sorted"},
                  prometheus_histogram:new([{name, "qwe"},
                                            {help, ""},
                                            {buckets, [1, 3, 2]}])),
-   ?_assertError({invalid_value, 1.5, "observe accepts only integers"},
-                 prometheus_histogram:observe(request_duration, 1.5)),
-   ?_assertError({invalid_value, "qwe", "observe accepts only integers"},
+   ?_assertError({invalid_value, "qwe", "observe accepts only numbers"},
                  prometheus_histogram:observe(request_duration, "qwe")),
-   ?_assertError({invalid_value, "qwe", "dobserve accepts only numbers"},
-                 prometheus_histogram:dobserve(request_duration, "qwe")),
    ?_assertError({invalid_value, "qwe", "observe_duration accepts only functions"},
                  prometheus_histogram:observe_duration(pool_size, "qwe"))
   ].
@@ -141,15 +129,11 @@ test_buckets(_) ->
 
   CustomBuckets = prometheus_histogram:buckets(http_request_duration_milliseconds,
                                                [method]),
-  [?_assertEqual(prometheus_histogram:default_buckets() ++ [infinity],
+  [?_assertEqual(prometheus_buckets:default() ++ [infinity],
                  DefaultBuckets),
-   ?_assertEqual(prometheus_histogram:default_buckets() ++ [infinity],
+   ?_assertEqual(prometheus_buckets:default() ++ [infinity],
                  ExplicitDefaultBuckets),
    ?_assertEqual([100, 300, 500, 750, 1000, infinity], CustomBuckets),
-   ?_assertEqual([-15, -10, -5, 0, 5, 10],
-                 prometheus_histogram:linear_buckets(-15, 5, 6)),
-   ?_assertEqual([100, 120, 144],
-                 prometheus_histogram:exponential_buckets(100, 1.2, 3)),
    ?_assertEqual([-15, -10, -5, 0, 5, 10, infinity], LinearBuckets),
    ?_assertEqual([100, 120, 144, infinity], ExpBuckets)].
 
@@ -168,66 +152,18 @@ test_observe(_) ->
   prometheus_histogram:observe(http_request_duration_milliseconds, [get], 350),
   prometheus_histogram:observe(http_request_duration_milliseconds, [get], 550),
   prometheus_histogram:observe(http_request_duration_milliseconds, [get], 950),
+  prometheus_histogram:observe(http_request_duration_milliseconds, [get], 500.2),
+  prometheus_histogram:observe(http_request_duration_milliseconds, [get], 150.4),
+  prometheus_histogram:observe(http_request_duration_milliseconds, [get], 450.5),
+  prometheus_histogram:observe(http_request_duration_milliseconds, [get], 850.3),
+  prometheus_histogram:observe(http_request_duration_milliseconds, [get], 750.9),
+  prometheus_histogram:observe(http_request_duration_milliseconds, [get], 1650.23),
   Value = prometheus_histogram:value(http_request_duration_milliseconds, [get]),
   prometheus_histogram:reset(http_request_duration_milliseconds, [get]),
   RValue = prometheus_histogram:value(http_request_duration_milliseconds, [get]),
-  [?_assertEqual({[3, 3, 1, 1, 1, 0], 2622}, Value),
+  [?_assertMatch({[3, 4, 2, 2, 3, 1], Sum}
+                 when Sum > 6974.5 andalso Sum < 6974.55, Value),
    ?_assertEqual({[0, 0, 0, 0, 0, 0], 0}, RValue)].
-
-test_dobserve(_) ->
-  prometheus_histogram:new([{name, http_request_duration_milliseconds},
-                            {labels, [method]},
-                            {buckets, [100, 300, 500, 750, 1000]},
-                            {help, "Http Request execution time"},
-                            {duration_unit, false}]),
-  prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 500.2),
-  prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 150.4),
-  prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 450.5),
-  prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 850.3),
-  prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 750.9),
-  prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 1650.23),
-
-  %% dobserve is async so lets make sure gen_server processed our increment request
-  timer:sleep(10),
-
-  Value = prometheus_histogram:value(http_request_duration_milliseconds, [post]),
-  prometheus_histogram:reset(http_request_duration_milliseconds, [post]),
-  RValue = prometheus_histogram:value(http_request_duration_milliseconds, [post]),
-  [?_assertEqual({[0, 1, 1, 1, 2, 1], 4352.53}, Value),
-   ?_assertEqual({[0, 0, 0, 0, 0, 0], 0}, RValue)].
-
-call_cast_test() ->
-  prometheus_histogram:declare([{name, cast},
-                                {help, ""},
-                                {buckets, [2]}]),
-  prometheus_histogram:declare([{name, call},
-                                {help, ""},
-                                {buckets, [2]},
-                                {call_timeout, 1000}]),
-  prometheus_histogram:dobserve(cast, 1),
-  prometheus_histogram:dobserve(call, 1),
-
-  ?assertEqual({[1, 0], 1}, prometheus_histogram:value(cast)),
-  ?assertEqual({[1, 0], 1}, prometheus_histogram:value(call)),
-
-  try
-    sys:suspend(prometheus_histogram),
-
-    prometheus_histogram:dobserve(cast, 1),
-    ?assertException(exit, {timeout, _}, prometheus_histogram:dobserve(call, 1)),
-
-    ?assertEqual({[1, 0], 1}, prometheus_histogram:value(cast)),
-    ?assertEqual({[1, 0], 1}, prometheus_histogram:value(call))
-
-  after
-    sys:resume(prometheus_histogram)
-  end,
-
-  %% wait for genserver
-  timer:sleep(10),
-
-  ?assertEqual({[2, 0], 2}, prometheus_histogram:value(cast)),
-  ?assertEqual({[2, 0], 2}, prometheus_histogram:value(call)).
 
 test_observe_duration_seconds(_) ->
   prometheus_histogram:new([{name, fun_duration_seconds},
@@ -363,3 +299,46 @@ test_default_value(_) ->
 
   [?_assertEqual(undefined, UndefinedValue),
    ?_assertEqual({[0, 0, 0], 0}, SomethingValue)].
+
+
+test_collector1(_) ->
+  prometheus_histogram:new([{name, simple_histogram},
+                            {labels, ["label"]},
+                            {buckets, [5, 10]},
+                            {help, ""}]),
+  prometheus_histogram:observe(simple_histogram, [label_value], 4),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               histogram=#'Histogram'{sample_count=1,
+                                                                      sample_sum=4,
+                                                                      bucket=[#'Bucket'{cumulative_count=1,
+                                                                                        upper_bound=5},
+                                                                              #'Bucket'{cumulative_count=1,
+                                                                                        upper_bound=10},
+                                                                              #'Bucket'{cumulative_count=1,
+                                                                                        upper_bound=infinity}]}}]}],
+                 prometheus_collector:collect_mf_to_list(prometheus_histogram))].
+
+
+test_collector2(_) ->
+  prometheus_histogram:new([{name, simple_histogram},
+                            {labels, ["label"]},
+                            {constant_labels, #{qwe => qwa}},
+                            {buckets, [5, 10]},
+                            {help, ""}]),
+  prometheus_histogram:observe(simple_histogram, [label_value], 7),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= <<"qwe">>,
+                                                                   value= <<"qwa">>},
+                                                      #'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               histogram=#'Histogram'{sample_count=1,
+                                                                      sample_sum=7,
+                                                                      bucket=[#'Bucket'{cumulative_count=0,
+                                                                                        upper_bound=5},
+                                                                              #'Bucket'{cumulative_count=1,
+                                                                                        upper_bound=10},
+                                                                              #'Bucket'{cumulative_count=1,
+                                                                                        upper_bound=infinity}]}}]}],
+                 prometheus_collector:collect_mf_to_list(prometheus_histogram))].

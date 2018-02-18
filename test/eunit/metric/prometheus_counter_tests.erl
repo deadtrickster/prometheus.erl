@@ -2,6 +2,8 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-include("prometheus_model.hrl").
+
 prometheus_format_test_() ->
   {foreach,
    fun prometheus_eunit_common:start/0,
@@ -9,24 +11,21 @@ prometheus_format_test_() ->
    [fun test_registration/1,
     fun test_errors/1,
     fun test_inc/1,
-    fun test_dinc/1,
     fun test_deregister/1,
     fun test_remove/1,
-    fun test_default_value/1]}.
+    fun test_default_value/1,
+    fun test_collector1/1,
+    fun test_collector2/1]}.
 
 test_registration(_)->
   Name = http_requests_total,
   SpecWithRegistry = [{name, Name},
                       {help, ""},
                       {registry, qwe}],
-  SpecWithoutRegistry = [{name, Name},
-                         {help, ""}],
   [?_assertEqual(true,
                  prometheus_counter:declare(SpecWithRegistry)),
-   ?_assertEqual(false,
-                 prometheus_counter:declare(SpecWithoutRegistry, qwe)),
    ?_assertError({mf_already_exists, {qwe, Name}, "Consider using declare instead."},
-                 prometheus_counter:new(SpecWithoutRegistry, qwe))].
+                 prometheus_counter:new(SpecWithRegistry))].
 
 test_errors(_) ->
   prometheus_counter:new([{name, db_query_duration}, {labels, [repo]}, {help, ""}]),
@@ -40,26 +39,16 @@ test_errors(_) ->
                  prometheus_counter:new([{name, "qwe"}, {help, 12}])),
 
    %% counter specific errors
-   ?_assertError({invalid_value, -1, "inc accepts only non-negative integers"},
+   ?_assertError({invalid_value, -1, "inc accepts only non-negative numbers"},
                  prometheus_counter:inc(http_requests_total, -1)),
-   ?_assertError({invalid_value, 1.5, "inc accepts only non-negative integers"},
-                 prometheus_counter:inc(http_requests_total, 1.5)),
-   ?_assertError({invalid_value, "qwe", "inc accepts only non-negative integers"},
+   ?_assertError({invalid_value, "qwe", "inc accepts only non-negative numbers"},
                  prometheus_counter:inc(http_requests_total, [], "qwe")),
-   ?_assertError({invalid_value, -1, "dinc accepts only non-negative numbers"},
-                 prometheus_counter:dinc(http_requests_total, -1)),
-   ?_assertError({invalid_value, "qwe", "dinc accepts only non-negative numbers"},
-                 prometheus_counter:dinc(http_requests_total, [], "qwe")),
 
    %% mf/arity errors
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_counter:inc(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_counter:inc(db_query_duration, [repo, db])),
-   ?_assertError({unknown_metric, default, unknown_metric},
-                 prometheus_counter:dinc(unknown_metric)),
-   ?_assertError({invalid_metric_arity, 2, 1},
-                 prometheus_counter:dinc(db_query_duration, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_counter:reset(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1},
@@ -80,54 +69,12 @@ test_inc(_) ->
                           {help, "Http request count"}]),
   prometheus_counter:inc(http_requests_total, [get]),
   prometheus_counter:inc(http_requests_total, [get], 3),
+  prometheus_counter:inc(http_requests_total, [get], 3.5),
   Value = prometheus_counter:value(http_requests_total, [get]),
   prometheus_counter:reset(http_requests_total, [get]),
   RValue = prometheus_counter:value(http_requests_total, [get]),
-  [?_assertEqual(4, Value),
+  [?_assertMatch(_ when Value > 7.4 andalso Value < 7.6, Value),
    ?_assertEqual(0, RValue)].
-
-test_dinc(_) ->
-  prometheus_counter:new([{name, http_requests_total},
-                          {help, "Http request count"}]),
-  prometheus_counter:dinc(http_requests_total),
-  prometheus_counter:dinc(http_requests_total, 3.5),
-
-  %% dinc is async so lets make sure gen_server processed our increment request
-  timer:sleep(10),
-
-  Value = prometheus_counter:value(http_requests_total),
-  prometheus_counter:reset(http_requests_total),
-  RValue = prometheus_counter:value(http_requests_total),
-  [?_assertEqual(4.5, Value),
-   ?_assertEqual(0, RValue)].
-
-call_cast_test() ->
-  prometheus_counter:declare([{name, cast}, {help, ""}]),
-  prometheus_counter:declare([{name, call}, {help, ""}, {call_timeout, 1000}]),
-  prometheus_counter:dinc(cast),
-  prometheus_counter:dinc(call),
-
-  ?assertEqual(1, prometheus_counter:value(cast)),
-  ?assertEqual(1, prometheus_counter:value(call)),
-
-  try
-    sys:suspend(prometheus_counter),
-
-    prometheus_counter:dinc(cast),
-    ?assertException(exit, {timeout, _}, prometheus_counter:dinc(call)),
-
-    ?assertEqual(1, prometheus_counter:value(cast)),
-    ?assertEqual(1, prometheus_counter:value(call))
-
-  after
-    sys:resume(prometheus_counter)
-  end,
-
-  %% wait for genserver
-  timer:sleep(10),
-
-  ?assertEqual(2, prometheus_counter:value(cast)),
-  ?assertEqual(2, prometheus_counter:value(call)).
 
 test_deregister(_) ->
   prometheus_counter:new([{name, http_requests_total},
@@ -187,3 +134,29 @@ test_default_value(_) ->
 
   [?_assertEqual(undefined, UndefinedValue),
    ?_assertEqual(0, SomethingValue)].
+
+test_collector1(_) ->
+  prometheus_counter:new([{name, simple_counter},
+                          {labels, ["label"]},
+                          {help, ""}]),
+  prometheus_counter:inc(simple_counter, [label_value], 1),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               counter=#'Counter'{value=1}}]}],
+                 prometheus_collector:collect_mf_to_list(prometheus_counter))].
+
+
+test_collector2(_) ->
+  prometheus_counter:new([{name, simple_counter},
+                          {labels, ["label"]},
+                          {constant_labels, #{qwe => qwa}},
+                          {help, ""}]),
+  prometheus_counter:inc(simple_counter, [label_value], 1),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= <<"qwe">>,
+                                                                   value= <<"qwa">>},
+                                                      #'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               counter=#'Counter'{value=1}}]}],
+                 prometheus_collector:collect_mf_to_list(prometheus_counter))].

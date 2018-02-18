@@ -28,18 +28,13 @@
 
 %%% metric
 -export([new/1,
-         new/2,
          declare/1,
-         declare/2,
          deregister/1,
          deregister/2,
          set_default/2,
          observe/2,
          observe/3,
          observe/4,
-         dobserve/2,
-         dobserve/3,
-         dobserve/4,
          observe_duration/2,
          observe_duration/3,
          observe_duration/4,
@@ -58,27 +53,18 @@
          collect_mf/2,
          collect_metrics/2]).
 
-%%% gen_server
--export([init/1,
-         handle_call/3,
-         handle_cast/2,
-         handle_info/2,
-         terminate/2,
-         code_change/3,
-         start_link/0]).
-
 -include("prometheus.hrl").
 
 -behaviour(prometheus_metric).
 -behaviour(prometheus_collector).
--behaviour(gen_server).
 
 %%====================================================================
 %% Macros
 %%====================================================================
 
 -define(TABLE, ?PROMETHEUS_SUMMARY_TABLE).
--define(SUM_POS, 3).
+-define(ISUM_POS, 3).
+-define(FSUM_POS, 4).
 -define(COUNTER_POS, 2).
 -define(WIDTH, 16).
 
@@ -107,13 +93,6 @@ new(Spec) ->
   validate_summary_spec(Spec),
   prometheus_metric:insert_new_mf(?TABLE, ?MODULE, Spec).
 
-%% @deprecated Please use {@link new/1} with registry
-%% key instead.
-new(Spec, Registry) ->
-  ?DEPRECATED("prometheus_summary:new/2", "prometheus_summary:new/1"
-              " with registry key"),
-  new([{registry, Registry} | Spec]).
-
 %% @doc Creates a summary using `Spec'.
 %% If a summary with the same `Spec' exists returns `false'.
 %%
@@ -133,13 +112,6 @@ new(Spec, Registry) ->
 declare(Spec) ->
   Spec1 = validate_summary_spec(Spec),
   prometheus_metric:insert_mf(?TABLE, ?MODULE, Spec1).
-
-%% @deprecated Please use {@link declare/1} with registry
-%% key instead.
-declare(Spec, Registry) ->
-  ?DEPRECATED("prometheus_summary:declare/2", "prometheus_summary:declare/1"
-              " with registry key"),
-  declare([{registry, Registry} | Spec]).
 
 %% @equiv deregister(default, Name)
 deregister(Name) ->
@@ -161,7 +133,7 @@ deregister(Registry, Name) ->
 
 %% @private
 set_default(Registry, Name) ->
-  ets:insert_new(?TABLE, {key(Registry, Name, []), 0, 0}).
+  ets:insert_new(?TABLE, {key(Registry, Name, []), 0, 0, 0}).
 
 %% @equiv observe(default, Name, [], Value)
 observe(Name, Value) ->
@@ -183,48 +155,25 @@ observe(Name, LabelValues, Value) ->
 observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   try
     ets:update_counter(?TABLE, key(Registry, Name, LabelValues),
-                       [{?COUNTER_POS, 1}, {?SUM_POS, Value}])
+                       [{?COUNTER_POS, 1}, {?ISUM_POS, Value}])
   catch error:badarg ->
       insert_metric(Registry, Name, LabelValues, Value, fun observe/4)
   end,
   ok;
+observe(Registry, Name, LabelValues, Value) when is_number(Value) ->
+  Key = key(Registry, Name, LabelValues),
+  case
+    ets:select_replace(?TABLE,
+                       [{{Key, '$1', '$2', '$3'},
+                         [],
+                         [{{{Key}, {'+', '$1', 1}, '$2', {'+', '$3', Value}}}]}]) of
+    0 ->
+      insert_metric(Registry, Name, LabelValues, Value, fun observe/4);
+    1 ->
+      ok
+  end;
 observe(_Registry, _Name, _LabelValues, Value) ->
-  erlang:error({invalid_value, Value, "observe accepts only integers"}).
-
-%% @equiv dobserve(default, Name, [], Value)
-dobserve(Name, Value) ->
-  dobserve(default, Name, [], Value).
-
-%% @equiv dobserve(default, Name, LabelValues, Value)
-dobserve(Name, LabelValues, Value) ->
-  dobserve(default, Name, LabelValues, Value).
-
-%% @doc Observes the given `Value'.
-%% If `Value' happened to be a float number even one time(!) you
-%% shouldn't use {@link observe/4} after dobserve.
-%%
-%% Raises `{invalid_value, Value, Message}' if `Value'
-%% isn't a number.<br/>
-%% Raises `{unknown_metric, Registry, Name}' error if summary with named `Name'
-%% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
-%% @end
-dobserve(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  CallTimeout = prometheus_metric:mf_call_timeout(MF),
-  case CallTimeout of
-    false ->
-      gen_server:cast(?MODULE,
-                      {observe, {Registry, Name, LabelValues, Value}});
-    _ ->
-      gen_server:call(?MODULE,
-                      {observe, {Registry, Name, LabelValues, Value}},
-                      CallTimeout)
-  end,
-  ok;
-dobserve(_Registry, _Name, _LabelValues, Value) ->
-  erlang:error({invalid_value, Value, "dobserve accepts only numbers"}).
+  erlang:error({invalid_value, Value, "observe accepts only numbers"}).
 
 %% @equiv observe_duration(default, Name, [], Fun)
 observe_duration(Name, Fun) ->
@@ -298,7 +247,7 @@ reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   case lists:usort([ets:update_element(?TABLE,
                                        {Registry, Name, LabelValues, Scheduler},
-                                       [{?COUNTER_POS, 0}, {?SUM_POS, 0}])
+                                       [{?COUNTER_POS, 0}, {?ISUM_POS, 0}, {?FSUM_POS, 0}])
                     || Scheduler <- schedulers_seq()]) of
     [_, _] -> true;
     [true] -> true;
@@ -329,7 +278,7 @@ value(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   DU = prometheus_metric:mf_duration_unit(MF),
 
-  case ets:select(?TABLE, [{{{Registry, Name, LabelValues, '_'}, '$1', '$2'},
+  case ets:select(?TABLE, [{{{Registry, Name, LabelValues, '_'}, '$1', '$2', '$3'},
                             [],
                             ['$$']}]) of
     [] -> undefined;
@@ -344,69 +293,33 @@ value(Registry, Name, LabelValues) ->
 %% @private
 deregister_cleanup(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry),
-  true = ets:match_delete(?TABLE, {{Registry, '_', '_', '_'}, '_', '_'}),
+  true = ets:match_delete(?TABLE, {{Registry, '_', '_', '_'}, '_', '_', '_'}),
   ok.
 
 %% @private
 collect_mf(Registry, Callback) ->
-  [Callback(create_summary(Name, Help, {Labels, Registry, DU})) ||
-    [Name, {Labels, Help}, _, DU, _] <- prometheus_metric:metrics(?TABLE,
-                                                                  Registry)],
+  [Callback(create_summary(Name, Help, {CLabels, Labels, Registry, DU})) ||
+    [Name, {Labels, Help}, CLabels, DU, _] <- prometheus_metric:metrics(?TABLE,
+                                                                        Registry)],
   ok.
 
 %% @private
-collect_metrics(Name, {Labels, Registry, DU}) ->
-  MFValues = ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2', '$3'}),
+collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
+  MFValues = ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2', '$3', '$4'}),
   [begin
      {Count, Sum} = reduce_label_values(LabelValues, MFValues),
      prometheus_model_helpers:summary_metric(
-       lists:zip(Labels, LabelValues), Count,
+       CLabels ++ lists:zip(Labels, LabelValues), Count,
        prometheus_time:maybe_convert_to_du(DU, Sum))
    end ||
     LabelValues <- collect_unique_labels(MFValues)].
-
-%%====================================================================
-%% Gen_server API
-%%====================================================================
-
-%% @private
-init(_Args) ->
-  {ok, []}.
-
-%% @private
-
-handle_call({observe, {Registry, Name, LabelValues, Value}}, _From, State) ->
-  dobserve_impl(Registry, Name, LabelValues, Value),
-  {reply, ok, State}.
-
-%% @private
-handle_cast({observe, {Registry, Name, LabelValues, Value}}, State) ->
-  dobserve_impl(Registry, Name, LabelValues, Value),
-  {noreply, State}.
-
-%% @private
-handle_info(_Info, State) ->
-  {noreply, State}.
-
-%% @private
-terminate(_Reason, _State) ->
-  ok.
-
-%% @private
-code_change(_OldVsn, State, _Extra) ->
-  {ok, State}.
-
-%% @private
-start_link() ->
-  gen_server:start_link({local, prometheus_summary},
-                        prometheus_summary, [], []).
 
 %%====================================================================
 %% Private Parts
 %%====================================================================
 
 deregister_select(Registry, Name) ->
-  [{{{Registry, Name, '_', '_'}, '_', '_'}, [], [true]}].
+  [{{{Registry, Name, '_', '_'}, '_', '_', '_'}, [], [true]}].
 
 validate_summary_spec(Spec) ->
   Labels = prometheus_metric_spec:labels(Spec),
@@ -422,28 +335,14 @@ raise_error_if_quantile_label_found("quantile") ->
 raise_error_if_quantile_label_found(Label) ->
   Label.
 
-dobserve_impl(Registry, Name, LabelValues, Value) ->
-  case ets:lookup(?TABLE, key(Registry, Name, LabelValues)) of
-    [Metric] ->
-      ets:update_element(?TABLE, key(Registry, Name, LabelValues),
-                         {?SUM_POS, sum(Metric) + Value}),
-      ets:update_counter(?TABLE, key(Registry, Name, LabelValues),
-                         {?COUNTER_POS, 1});
-    [] ->
-      insert_metric(Registry, Name, LabelValues, Value, fun dobserve_impl/4)
-  end.
-
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  case ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), 1, Value}) of
+  case ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), 1, 0, Value}) of
     false -> %% some sneaky process already inserted
       ConflictCB(Registry, Name, LabelValues, Value);
     true ->
       ok
   end.
-
-sum(Metric) ->
-  element(?SUM_POS, Metric).
 
 schedulers_seq() ->
   lists:seq(0, ?WIDTH-1).
@@ -454,15 +353,15 @@ key(Registry, Name, LabelValues) ->
   {Registry, Name, LabelValues, Rnd}.
 
 collect_unique_labels(MFValues) ->
-  lists:usort([L || [L, _, _] <- MFValues]).
+  lists:usort([L || [L, _, _, _] <- MFValues]).
 
 reduce_label_values(Labels, MFValues) ->
-  {lists:sum([C || [L, C, _] <- MFValues, L == Labels]),
-   lists:sum([S || [L, _, S] <- MFValues, L == Labels])}.
+  {lists:sum([C || [L, C, _, _] <- MFValues, L == Labels]),
+   lists:sum([IS + FS || [L, _, IS, FS] <- MFValues, L == Labels])}.
 
 reduce_values(Values) ->
-  {lists:sum([C || [C, _] <- Values]),
-   lists:sum([S || [_, S] <- Values])}.
+  {lists:sum([C || [C, _, _] <- Values]),
+   lists:sum([IS + FS || [_, IS, FS] <- Values])}.
 
 create_summary(Name, Help, Data) ->
   prometheus_model_helpers:create_mf(Name, Help, summary, ?MODULE, Data).

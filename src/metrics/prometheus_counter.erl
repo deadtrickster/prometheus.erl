@@ -329,18 +329,18 @@ deregister_cleanup(Registry) ->
 
 %% @private
 collect_mf(Registry, Callback) ->
-  [Callback(create_counter(Name, Help, {Labels, Registry})) ||
-    [Name, {Labels, Help}, _, _, _] <- prometheus_metric:metrics(?TABLE,
-                                                                 Registry)],
+  [Callback(create_counter(Name, Help, {CLabels, Labels, Registry})) ||
+    [Name, {Labels, Help}, CLabels, _, _] <- prometheus_metric:metrics(?TABLE,
+                                                                       Registry)],
   ok.
 
 %% @private
-collect_metrics(Name, {Labels, Registry}) ->
+collect_metrics(Name, {CLabels, Labels, Registry}) ->
   MFValues = ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2'}),
   [begin
      Value = reduce_label_values(LabelValues, MFValues),
      prometheus_model_helpers:counter_metric(
-       lists:zip(Labels, LabelValues), Value)
+       CLabels ++ lists:zip(Labels, LabelValues), Value)
    end ||
     LabelValues <- collect_unique_labels(MFValues)].
 

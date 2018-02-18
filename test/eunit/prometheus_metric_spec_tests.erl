@@ -65,17 +65,14 @@ validate_metric_help_test() ->
   ?assertEqual("qwe_:qwe", prometheus_metric_spec:validate_metric_help("qwe_:qwe")),
   ?assertEqual("qwe_:qwe", prometheus_metric_spec:validate_metric_help(<<"qwe_:qwe">>)).
 
-call_timeout_test() ->
-  ?assertEqual(5000, prometheus_metric_spec:call_timeout([{call_timeout, true}])),
-  ?assertEqual(1000, prometheus_metric_spec:call_timeout([{call_timeout, 1000}])),
-  ?assertEqual(infinity, prometheus_metric_spec:call_timeout([{call_timeout, infinity}])),
-  ?assertEqual(false, prometheus_metric_spec:call_timeout([])),
-  ?assertEqual(false, prometheus_metric_spec:call_timeout([{call_timeout, false}])),
+constant_labels_test() ->
+  ?assertEqual([{qwe, qwa}], prometheus_metric_spec:constant_labels([{constant_labels, #{qwe => qwa}}])),
 
-  ?assertError({invalid_value, invalid,
-                "call timeout must be 'false', 'true', 'infinity' "
-                "or a positive integer"},
-               prometheus_metric_spec:call_timeout([{call_timeout, invalid}])).
+  ?assertError({invalid_value, invalid, "constant labels is not a map"},
+               prometheus_metric_spec:constant_labels([{constant_labels, invalid}])), 
+
+  ?assertError({invalid_metric_label_name, [], "metric label doesn't match regex ^[a-zA-Z_][a-zA-Z0-9_]*$"},
+               prometheus_metric_spec:constant_labels([{constant_labels, #{[] => qwe}}])).
 
 duration_unit_test() ->
   ?assertEqual(undefined, prometheus_metric_spec:duration_unit([{name, "qwe"}])),
@@ -108,12 +105,13 @@ extract_common_params_test() ->
                                                              {labels, ["qwe"]},
                                                              {help, 12}])),
 
-  ?assertEqual({default, "qwe", [], "qwe", false, undefined, undefined},
+  ?assertEqual({default, "qwe", [], "qwe", [], undefined, undefined},
                prometheus_metric_spec:extract_common_params([{name, "qwe"},
                                                              {help, "qwe"}])),
-  ?assertEqual({qwe, "qwe", ["qwe"], "qwe", false, undefined, data},
+  ?assertEqual({qwe, "qwe", ["qwe"], "qwe", [{qwe, qwa}], undefined, data},
                prometheus_metric_spec:extract_common_params([{name, "qwe"},
                                                              {labels, ["qwe"]},
+                                                             {constant_labels, #{qwe => qwa}},
                                                              {help, "qwe"},
                                                              {registry, qwe},
                                                              {data, data}])).

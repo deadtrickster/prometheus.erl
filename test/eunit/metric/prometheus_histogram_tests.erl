@@ -17,7 +17,9 @@ prometheus_format_test_() ->
     fun test_observe_duration_milliseconds/1,
     fun test_deregister/1,
     fun test_remove/1,
-    fun test_default_value/1]}.
+    fun test_default_value/1,
+    fun test_collector1/1,
+    fun test_collector2/1]}.
 
 test_registration(_)->
   Name = request_duration,
@@ -321,3 +323,46 @@ test_default_value(_) ->
 
   [?_assertEqual(undefined, UndefinedValue),
    ?_assertEqual({[0, 0, 0], 0}, SomethingValue)].
+
+
+test_collector1(_) ->
+  prometheus_histogram:new([{name, simple_histogram},
+                            {labels, ["label"]},
+                            {buckets, [5, 10]},
+                            {help, ""}]),
+  prometheus_histogram:observe(simple_histogram, [label_value], 4),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               histogram=#'Histogram'{sample_count=1,
+                                                                      sample_sum=4,
+                                                                      bucket=[#'Bucket'{cumulative_count=1,
+                                                                                        upper_bound=5},
+                                                                              #'Bucket'{cumulative_count=1,
+                                                                                        upper_bound=10},
+                                                                              #'Bucket'{cumulative_count=1,
+                                                                                        upper_bound=infinity}]}}]}],
+                 prometheus_collector:collect_mf_to_list(prometheus_histogram))].
+
+
+test_collector2(_) ->
+  prometheus_histogram:new([{name, simple_histogram},
+                            {labels, ["label"]},
+                            {constant_labels, #{qwe => qwa}},
+                            {buckets, [5, 10]},
+                            {help, ""}]),
+  prometheus_histogram:observe(simple_histogram, [label_value], 7),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= <<"qwe">>,
+                                                                   value= <<"qwa">>},
+                                                      #'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               histogram=#'Histogram'{sample_count=1,
+                                                                      sample_sum=7,
+                                                                      bucket=[#'Bucket'{cumulative_count=0,
+                                                                                        upper_bound=5},
+                                                                              #'Bucket'{cumulative_count=1,
+                                                                                        upper_bound=10},
+                                                                              #'Bucket'{cumulative_count=1,
+                                                                                        upper_bound=infinity}]}}]}],
+                 prometheus_collector:collect_mf_to_list(prometheus_histogram))].

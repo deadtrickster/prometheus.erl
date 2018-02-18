@@ -2,6 +2,8 @@
 
 -include_lib("eunit/include/eunit.hrl").
 
+-include("prometheus_model.hrl").
+
 prometheus_format_test_() ->
   {foreach,
    fun prometheus_eunit_common:start/0,
@@ -12,7 +14,9 @@ prometheus_format_test_() ->
     fun test_dinc/1,
     fun test_deregister/1,
     fun test_remove/1,
-    fun test_default_value/1]}.
+    fun test_default_value/1,
+    fun test_collector1/1,
+    fun test_collector2/1]}.
 
 test_registration(_)->
   Name = http_requests_total,
@@ -155,3 +159,29 @@ test_default_value(_) ->
 
   [?_assertEqual(undefined, UndefinedValue),
    ?_assertEqual(0, SomethingValue)].
+
+test_collector1(_) ->
+  prometheus_counter:new([{name, simple_counter},
+                          {labels, ["label"]},
+                          {help, ""}]),
+  prometheus_counter:inc(simple_counter, [label_value], 1),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               counter=#'Counter'{value=1}}]}],
+                 prometheus_collector:collect_mf_to_list(prometheus_counter))].
+
+
+test_collector2(_) ->
+  prometheus_counter:new([{name, simple_counter},
+                          {labels, ["label"]},
+                          {constant_labels, #{qwe => qwa}},
+                          {help, ""}]),
+  prometheus_counter:inc(simple_counter, [label_value], 1),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= <<"qwe">>,
+                                                                   value= <<"qwa">>},
+                                                      #'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               counter=#'Counter'{value=1}}]}],
+                 prometheus_collector:collect_mf_to_list(prometheus_counter))].

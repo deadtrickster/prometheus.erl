@@ -8,7 +8,7 @@
          name/1,
          labels/1,
          help/1,
-         call_timeout/1,
+         constant_labels/1,
          duration_unit/1,
          extract_common_params/1]).
 
@@ -54,17 +54,13 @@ data(Spec) ->
   get_value(data, Spec).
 
 %% @private
-call_timeout(Spec) ->
-  case get_value(call_timeout, Spec, false) of
-    false -> false;
-    true -> 5000;
-    infinity -> infinity;
-    Timeout when is_integer(Timeout) andalso Timeout > 0
-                 -> Timeout;
-    Something ->
-      erlang:error({invalid_value, Something,
-                    "call timeout must be 'false', 'true', 'infinity' "
-                    "or a positive integer"})
+constant_labels(Spec) ->
+  case get_value(constant_labels, Spec, #{}) of
+    CL when is_map(CL) ->
+      validate_metric_label_names(maps:keys(CL)),
+      maps:to_list(CL);
+    CL ->
+      erlang:error({invalid_value, CL, "constant labels is not a map"})
   end.
 
 %% @private
@@ -100,7 +96,7 @@ extract_common_params(Spec) ->
 
   Data = data(Spec),
 
-  CallTimeout = call_timeout(Spec),
+  CallTimeout = constant_labels(Spec),
 
   DurationUnit = duration_unit(Spec),
 

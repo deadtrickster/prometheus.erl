@@ -322,18 +322,18 @@ deregister_cleanup(Registry) ->
 
 %% @private
 collect_mf(Registry, Callback) ->
-  [Callback(create_summary(Name, Help, {Labels, Registry, DU})) ||
-    [Name, {Labels, Help}, _, DU, _] <- prometheus_metric:metrics(?TABLE,
+  [Callback(create_summary(Name, Help, {CLabels, Labels, Registry, DU})) ||
+    [Name, {Labels, Help}, CLabels, DU, _] <- prometheus_metric:metrics(?TABLE,
                                                                   Registry)],
   ok.
 
 %% @private
-collect_metrics(Name, {Labels, Registry, DU}) ->
+collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
   MFValues = ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2', '$3'}),
   [begin
      {Count, Sum} = reduce_label_values(LabelValues, MFValues),
      prometheus_model_helpers:summary_metric(
-       lists:zip(Labels, LabelValues), Count,
+       CLabels ++ lists:zip(Labels, LabelValues), Count,
        prometheus_time:maybe_convert_to_du(DU, Sum))
    end ||
     LabelValues <- collect_unique_labels(MFValues)].

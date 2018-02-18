@@ -21,7 +21,9 @@ prometheus_format_test_() ->
     fun test_set_duration_milliseconds/1,
     fun test_deregister/1,
     fun test_remove/1,
-    fun test_default_value/1]}.
+    fun test_default_value/1,
+    fun test_collector1/1,
+    fun test_collector2/1]}.
 
 test_registration(_)->
   Name = pool_size,
@@ -310,3 +312,29 @@ test_default_value(_) ->
 
   [?_assertEqual(undefined, UndefinedValue),
    ?_assertEqual(0, SomethingValue)].
+
+test_collector1(_) ->
+  prometheus_gauge:new([{name, simple_gauge},
+                        {labels, ["label"]},
+                        {help, ""}]),
+  prometheus_gauge:set(simple_gauge, [label_value], 1),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               gauge=#'Gauge'{value=1}}]}],
+                 prometheus_collector:collect_mf_to_list(prometheus_gauge))].
+
+
+test_collector2(_) ->
+  prometheus_gauge:new([{name, simple_gauge},
+                        {labels, ["label"]},
+                        {constant_labels, #{qwe => qwa}},
+                        {help, ""}]),
+  prometheus_gauge:set(simple_gauge, [label_value], 1),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= <<"qwe">>,
+                                                                   value= <<"qwa">>},
+                                                      #'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               gauge=#'Gauge'{value=1}}]}],
+                 prometheus_collector:collect_mf_to_list(prometheus_gauge))].

@@ -16,7 +16,9 @@ prometheus_format_test_() ->
     fun test_observe_duration_milliseconds/1,
     fun test_deregister/1,
     fun test_remove/1,
-    fun test_default_value/1]}.
+    fun test_default_value/1,
+    fun test_collector1/1,
+    fun test_collector2/1]}.
 
 test_registration(_)->
   Name = orders_summary,
@@ -219,3 +221,31 @@ test_default_value(_) ->
   SomethingValue = prometheus_summary:value(something_summary),
   [?_assertEqual(undefined, UndefinedValue),
    ?_assertEqual({0, 0}, SomethingValue)].
+
+test_collector1(_) ->
+  prometheus_summary:new([{name, simple_summary},
+                        {labels, ["label"]},
+                        {help, ""}]),
+  prometheus_summary:observe(simple_summary, [label_value], 4),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               summary=#'Summary'{sample_count=1,
+                                                                  sample_sum=4}}]}],
+                 prometheus_collector:collect_mf_to_list(prometheus_summary))].
+
+
+test_collector2(_) ->
+  prometheus_summary:new([{name, simple_summary},
+                        {labels, ["label"]},
+                        {constant_labels, #{qwe => qwa}},
+                        {help, ""}]),
+  prometheus_summary:observe(simple_summary, [label_value], 5),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= <<"qwe">>,
+                                                                   value= <<"qwa">>},
+                                                      #'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               summary=#'Summary'{sample_count=1,
+                                                                  sample_sum=5}}]}],
+                 prometheus_collector:collect_mf_to_list(prometheus_summary))].

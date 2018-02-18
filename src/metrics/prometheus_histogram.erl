@@ -419,20 +419,20 @@ deregister_cleanup(Registry) ->
 
 %% @private
 collect_mf(Registry, Callback) ->
-  [Callback(create_histogram(Name, Help, {Labels, Registry, DU, Buckets})) ||
-    [Name, {Labels, Help}, _, DU, Buckets]
+  [Callback(create_histogram(Name, Help, {CLabels, Labels, Registry, DU, Buckets})) ||
+    [Name, {Labels, Help}, CLabels, DU, Buckets]
       <- prometheus_metric:metrics(?TABLE, Registry)],
   ok.
 
 %% @private
-collect_metrics(Name, {Labels, Registry, DU, Bounds}) ->
+collect_metrics(Name, {CLabels, Labels, Registry, DU, Bounds}) ->
   BoundPlaceholders = gen_query_bound_placeholders(Bounds),
   QuerySpec = [{Registry, Name, '$1', '_'}, '_', '$3'] ++ BoundPlaceholders,
 
   MFValues = ets:match(?TABLE, list_to_tuple(QuerySpec)),
   [begin
      Stat = reduce_label_values(LabelValues, MFValues),
-     create_histogram_metric(Labels, DU, Bounds, LabelValues, Stat)
+     create_histogram_metric(CLabels, Labels, DU, Bounds, LabelValues, Stat)
    end ||
     LabelValues <- collect_unique_labels(MFValues)].
 
@@ -529,7 +529,7 @@ reduce_sum(MF, Metrics) ->
   DU = prometheus_metric:mf_duration_unit(MF),
   prometheus_time:maybe_convert_to_du(DU, reduce_sum(Metrics)).
 
-create_histogram_metric(Labels, DU, Bounds, LabelValues, [Sum | Buckets]) ->
+create_histogram_metric(CLabels, Labels, DU, Bounds, LabelValues, [Sum | Buckets]) ->
   BCounters = augment_counters(Buckets),
   Bounds1 = lists:zipwith(fun(Bound, Bucket) ->
                               {Bound, Bucket}
@@ -537,7 +537,7 @@ create_histogram_metric(Labels, DU, Bounds, LabelValues, [Sum | Buckets]) ->
                           Bounds, BCounters),
 
   prometheus_model_helpers:histogram_metric(
-    lists:zip(Labels, LabelValues),
+    CLabels ++ lists:zip(Labels, LabelValues),
     Bounds1,
     lists:last(BCounters),
     prometheus_time:maybe_convert_to_du(DU, Sum)).

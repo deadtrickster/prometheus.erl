@@ -495,15 +495,15 @@ deregister_cleanup(Registry) ->
 
 %% @private
 collect_mf(Registry, Callback) ->
-  [Callback(create_gauge(Name, Help, {Labels, Registry, DU})) ||
-    [Name, {Labels, Help}, _, DU, _] <- prometheus_metric:metrics(?TABLE,
+  [Callback(create_gauge(Name, Help, {CLabels, Labels, Registry, DU})) ||
+    [Name, {Labels, Help}, CLabels, DU, _] <- prometheus_metric:metrics(?TABLE,
                                                                   Registry)],
   ok.
 
 %% @private
-collect_metrics(Name, {Labels, Registry, DU}) ->
+collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
   [prometheus_model_helpers:gauge_metric(
-     lists:zip(Labels, LabelValues),
+     CLabels ++ lists:zip(Labels, LabelValues),
      prometheus_time:maybe_convert_to_du(DU, Value)) ||
     [LabelValues, Value] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'})].
 

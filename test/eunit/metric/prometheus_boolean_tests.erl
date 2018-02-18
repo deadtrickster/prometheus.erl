@@ -14,7 +14,9 @@ prometheus_format_test_() ->
     fun test_toggle/1,
     fun test_deregister/1,
     fun test_remove/1,
-    fun test_default_value/1]}.
+    fun test_default_value/1,
+    fun test_collector1/1,
+    fun test_collector2/1]}.
 
 test_registration(_)->
   Name = fuse_state,
@@ -154,3 +156,30 @@ test_default_value(_) ->
 
   [?_assertEqual(undefined, UndefinedValue),
    ?_assertEqual(undefined, SomethingValue)].
+
+
+test_collector1(_) ->
+  prometheus_boolean:new([{name, simple_boolean},
+                          {labels, ["label"]},
+                          {help, ""}]),
+  prometheus_boolean:set(simple_boolean, [label_value], true),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               untyped=#'Untyped'{value=1}}]}],
+                 prometheus_collector:collect_mf_to_list(prometheus_boolean))].
+
+
+test_collector2(_) ->
+  prometheus_boolean:new([{name, simple_boolean},
+                          {labels, ["label"]},
+                          {constant_labels, #{qwe => qwa}},
+                          {help, ""}]),
+  prometheus_boolean:set(simple_boolean, [label_value], false),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= <<"qwe">>,
+                                                                   value= <<"qwa">>},
+                                                      #'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               untyped=#'Untyped'{value=0}}]}],
+                 prometheus_collector:collect_mf_to_list(prometheus_boolean))].

@@ -2,14 +2,17 @@
 
 -export([new/0,
          new/1,
-         default/0,
-         exponential/3,
-         linear/3,
 
          position/2]).
 
 -export_type([bucket_bound/0,
               buckets/0]).
+
+-ifdef(TEST).
+-export([default/0,
+         exponential/3,
+         linear/3]).
+-endif.
 
 %%====================================================================
 %% Types
@@ -27,12 +30,11 @@ new() ->
 
 %% @doc
 %% Histogram buckets constructor
-%% TODO: remove histogram_ from errors for v4?
 %% @end
 new([]) ->
-  erlang:error({histogram_no_buckets, []});
+  erlang:error({no_buckets, []});
 new(undefined) ->
-  erlang:error({histogram_no_buckets, undefined});
+  erlang:error({no_buckets, undefined});
 new(default) ->
   default() ++ [infinity];
 new({linear, Start, Step, Count}) ->
@@ -48,17 +50,17 @@ new(RawBuckets) when is_list(RawBuckets) ->
         _ -> Buckets ++ [infinity]
       end;
     _ ->
-      erlang:error({histogram_invalid_buckets, Buckets, "buckets not sorted"})
+      erlang:error({invalid_buckets, Buckets, "buckets not sorted"})
   end;
 new(Buckets) ->
-  erlang:error({histogram_invalid_buckets, Buckets, "not a list"}).
+  erlang:error({invalid_buckets, Buckets, "not a list"}).
 
 validate_bound(Bound) when is_number(Bound) ->
   Bound;
 validate_bound(infinity) ->
   infinity;
 validate_bound(Bound) ->
-  erlang:error({histogram_invalid_bound, Bound}).
+  erlang:error({invalid_bound, Bound}).
 
 %% @doc
 %% Default histogram buckets.

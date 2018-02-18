@@ -27,15 +27,15 @@ default_test() ->
                prometheus_buckets:default()).
 
 constructor_errors_test() ->
-  ?assertError({histogram_no_buckets, []},
+  ?assertError({no_buckets, []},
                prometheus_buckets:new([])),
-  ?assertError({histogram_no_buckets, undefined},
+  ?assertError({no_buckets, undefined},
                prometheus_buckets:new(undefined)),
-  ?assertError({histogram_invalid_buckets, 1, "not a list"},
+  ?assertError({invalid_buckets, 1, "not a list"},
                prometheus_buckets:new(1)),
-  ?assertError({histogram_invalid_bound, "qwe"},
+  ?assertError({invalid_bound, "qwe"},
                prometheus_buckets:new(["qwe"])),
-  ?assertError({histogram_invalid_buckets, [1, 3, 2], "buckets not sorted"},
+  ?assertError({invalid_buckets, [1, 3, 2], "buckets not sorted"},
                prometheus_buckets:new([1, 3, 2])).
 
 constructor_test() ->

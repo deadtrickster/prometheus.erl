@@ -132,9 +132,6 @@ test_dinc(_) ->
   prometheus_gauge:dinc(temperature),
   prometheus_gauge:dinc(temperature, 3.5),
 
-  %% dinc is async so lets make sure gen_server processed our increment request
-  timer:sleep(10),
-
   PSValue = prometheus_gauge:value(pool_size, [mongodb]),
   TValue = prometheus_gauge:value(temperature),
   [?_assertEqual(4.5, PSValue),
@@ -165,9 +162,6 @@ test_ddec(_) ->
   prometheus_gauge:ddec(temperature),
   prometheus_gauge:ddec(temperature, 6.5),
   prometheus_gauge:ddec(default, temperature, [], 6.5),
-
-  %% ddec is async so lets make sure gen_server processed our increment request
-  timer:sleep(10),
 
   PSValue = prometheus_gauge:value(pool_size, [mongodb]),
   TValue = prometheus_gauge:value(temperature),
@@ -241,7 +235,6 @@ test_set_duration_milliseconds(_) ->
   catch _:_ -> ok
   end,
 
-  timer:sleep(10),
   ValueE = prometheus_gauge:value(gauge),
 
   [?_assertMatch(1, ValueF),
@@ -251,7 +244,7 @@ test_set_duration_milliseconds(_) ->
 test_deregister(_) ->
   prometheus_gauge:new([{name, pool_size},
                         {labels, [pool]},
-                        {help, "Http request count"}]),
+                        {help, "Http request pool size"}]),
   prometheus_gauge:new([{name, simple_gauge}, {help, ""}]),
 
   prometheus_gauge:inc(pool_size, [mongodb]),
@@ -266,7 +259,7 @@ test_deregister(_) ->
 test_remove(_) ->
   prometheus_gauge:new([{name, pool_size},
                         {labels, [pool]},
-                        {help, "Http request count"}]),
+                        {help, "Http request pool size"}]),
   prometheus_gauge:new([{name, simple_gauge}, {help, ""}]),
 
   prometheus_gauge:inc(pool_size, [mongodb]),

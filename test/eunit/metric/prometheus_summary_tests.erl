@@ -101,9 +101,6 @@ test_dobserve(_) ->
   prometheus_summary:dobserve(orders_summary, [electronics], 1.5),
   prometheus_summary:dobserve(orders_summary, [electronics], 2.7),
 
-  %% dobserve is async so lets make sure gen_server processed our increment request
-  timer:sleep(10),
-
   Value = prometheus_summary:value(orders_summary, [electronics]),
   prometheus_summary:reset(orders_summary, [electronics]),
   RValue = prometheus_summary:value(orders_summary, [electronics]),

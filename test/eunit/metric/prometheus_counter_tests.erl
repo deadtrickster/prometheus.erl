@@ -90,9 +90,6 @@ test_dinc(_) ->
   prometheus_counter:dinc(http_requests_total),
   prometheus_counter:dinc(http_requests_total, 3.5),
 
-  %% dinc is async so lets make sure gen_server processed our increment request
-  timer:sleep(10),
-
   Value = prometheus_counter:value(http_requests_total),
   prometheus_counter:reset(http_requests_total),
   RValue = prometheus_counter:value(http_requests_total),

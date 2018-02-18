@@ -178,9 +178,6 @@ test_dobserve(_) ->
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 750.9),
   prometheus_histogram:dobserve(http_request_duration_milliseconds, [post], 1650.23),
 
-  %% dobserve is async so lets make sure gen_server processed our increment request
-  timer:sleep(10),
-
   Value = prometheus_histogram:value(http_request_duration_milliseconds, [post]),
   prometheus_histogram:reset(http_request_duration_milliseconds, [post]),
   RValue = prometheus_histogram:value(http_request_duration_milliseconds, [post]),

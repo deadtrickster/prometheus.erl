@@ -8,7 +8,7 @@
 %%   <li>Request size</li>
 %% </ul>
 %%
-%% Histogram expects `buckets` key in a metric spec. Buckets can be:
+%% Histogram expects `buckets' key in a metric spec. Buckets can be:
 %%   - a list of numbers in increasing order;
 %%   - :default;
 %%   - {:linear, start, step, count};

@@ -277,6 +277,7 @@ MIT
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_counter.md" class="module">prometheus_counter</a></td></tr>
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_format.md" class="module">prometheus_format</a></td></tr>
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_gauge.md" class="module">prometheus_gauge</a></td></tr>
+<tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_histogram.md" class="module">prometheus_histogram</a></td></tr>
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_http.md" class="module">prometheus_http</a></td></tr>
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_mnesia.md" class="module">prometheus_mnesia</a></td></tr>
 <tr><td><a href="https://github.com/deadtrickster/prometheus.erl/blob/master/doc/prometheus_mnesia_collector.md" class="module">prometheus_mnesia_collector</a></td></tr>

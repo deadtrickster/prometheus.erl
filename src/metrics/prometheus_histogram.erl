@@ -43,11 +43,10 @@
          observe/2,
          observe/3,
          observe/4,
-         bobserve/5,
+         bobserve/6,
          dobserve/2,
          dobserve/3,
          dobserve/4,
-         dbobserve/6,
          observe_duration/2,
          observe_duration/3,
          observe_duration/4,
@@ -81,8 +80,9 @@
 
 -define(TABLE, ?PROMETHEUS_HISTOGRAM_TABLE).
 -define(BOUNDS_POS, 2).
--define(SUM_POS, 3).
--define(BUCKETS_START, 4).
+-define(ISUM_POS, 3).
+-define(FSUM_POS, 4).
+-define(BUCKETS_START, 5).
 -define(WIDTH, 16).
 
 %% ets row layout
@@ -186,19 +186,31 @@ observe(Name, LabelValues, Value) ->
   observe(default, Name, LabelValues, Value).
 
 %% @private
-bobserve(Registry, Name, LabelValues, BucketPosition, Value) ->
+bobserve(Registry, Name, LabelValues, Buckets, BucketPos, Value) when is_integer(Value) ->
   Key = key(Registry, Name, LabelValues),
   try
     ets:update_counter(?TABLE, Key,
-                       [{?SUM_POS, Value}, {?BUCKETS_START + BucketPosition, 1}])
+                       [{?ISUM_POS, Value}, {?BUCKETS_START + BucketPos, 1}])
   catch error:badarg ->
       insert_metric(Registry, Name, LabelValues, Value,
                     fun(_, _, _, _) ->
-                        bobserve(Registry, Name, LabelValues,
-                                 ?BUCKETS_START + BucketPosition, Value)
+                        bobserve(Registry, Name, LabelValues, Buckets,
+                                 ?BUCKETS_START + BucketPos, Value)
                     end)
   end,
-  ok.
+  ok;
+bobserve(Registry, Name, LabelValues, Buckets, BucketPos, Value) when is_number(Value) ->
+  Key = key(Registry, Name, LabelValues),
+  case
+    dbobserve_impl(Key, Buckets, BucketPos, Value) of
+    0 ->
+      insert_metric(Registry, Name, LabelValues, Value,
+                    fun(_, _, _, _) ->
+                        dbobserve_impl(Key, Buckets, BucketPos, Value)
+                    end);
+    1 ->
+      ok
+  end.
 
 %% @doc Observes the given `Value'.
 %%
@@ -215,22 +227,37 @@ observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
     [Metric] ->
       BucketPosition = calculate_histogram_bucket_position(Metric, Value),
       ets:update_counter(?TABLE, Key,
-                         [{?SUM_POS, Value},
+                         [{?ISUM_POS, Value},
                           {?BUCKETS_START + BucketPosition, 1}]);
     [] ->
       insert_metric(Registry, Name, LabelValues, Value, fun observe/4)
   end,
   ok;
+observe(Registry, Name, LabelValues, Value) when is_number(Value) ->
+  Key = key(Registry, Name, LabelValues),
+  case ets:lookup(?TABLE, Key) of
+    [Metric] ->
+      dbobserve_impl(Key, Metric, Value);
+    [] ->
+      insert_metric(Registry, Name, LabelValues, Value,
+                    fun(_, _, _, _) ->
+                        observe(Registry, Name, LabelValues, Value)
+                    end)
+  end;
 observe(_Registry, _Name, _LabelValues, Value) ->
-  erlang:error({invalid_value, Value, "observe accepts only integers"}).
+  erlang:error({invalid_value, Value, "observe accepts only numbers"}).
 
 %% @equiv dobserve(default, Name, [], Value)
 dobserve(Name, Value) ->
-  dobserve(default, Name, [], Value).
+  observe(default, Name, [], Value).
 
 %% @equiv dobserve(default, Name, LabelValues, [], Value)
 dobserve(Name, LabelValues, Value) ->
-  dobserve(default, Name, LabelValues, Value).
+  observe(default, Name, LabelValues, Value).
+
+%% @deprecated
+dobserve(Registry, Name, LabelValues, Value) ->
+  observe(Registry, Name, LabelValues, Value).
 
 dbobserve_impl(Key, Metric, Value) ->
   Buckets = metric_buckets(Metric),
@@ -239,45 +266,6 @@ dbobserve_impl(Key, Metric, Value) ->
 
 dbobserve_impl(Key, Buckets, BucketPos, Value) ->
   ets:select_replace(?TABLE, generate_select_replace(Key, Buckets, BucketPos, Value)).
-
-%% @private
-dbobserve(Registry, Name, LabelValues, Buckets, BucketPos, Value) ->
-  Key = key(Registry, Name, LabelValues),
-  case
-    dbobserve_impl(Key, Buckets, BucketPos, Value) of
-    0 ->
-      insert_metric(Registry, Name, LabelValues, Value,
-                    fun(_, _, _, _) ->
-                        dbobserve_impl(Key, Buckets, BucketPos, Value)
-                    end);
-    1 ->
-      ok
-  end.
-
-%% @doc Observes the given `Value'.
-%% If `Value' happened to be a float number even one time(!) you
-%% shouldn't use {@link observe/4} after dobserve.
-%%
-%% Raises `{invalid_value, Value, Message}' if `Value'
-%% isn't a number.<br/>
-%% Raises `{unknown_metric, Registry, Name}' error if histogram with named
-%% `Name' can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
-%% @end
-dobserve(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  Key = key(Registry, Name, LabelValues),
-  case ets:lookup(?TABLE, Key) of
-    [Metric] ->
-      dbobserve_impl(Key, Metric, Value);
-    [] ->
-      insert_metric(Registry, Name, LabelValues, Value,
-                    fun(_, _, _, _) ->
-                        dobserve(Registry, Name, LabelValues, Value)
-                    end)
-  end;
-dobserve(_Registry, _Name, _LabelValues, Value) ->
-  erlang:error({invalid_value, Value, "dobserve accepts only numbers"}).
 
 %% @equiv observe_duration(default, Name, [], Fun)
 observe_duration(Name, Fun) ->
@@ -354,7 +342,7 @@ reset(Registry, Name, LabelValues) ->
 
   case lists:usort([ets:update_element(?TABLE,
                                        {Registry, Name, LabelValues, Scheduler},
-                                       [{?SUM_POS, 0}] ++ UpdateSpec)
+                                       [{?ISUM_POS, 0}, {?FSUM_POS, 0}] ++ UpdateSpec)
                     || Scheduler <- schedulers_seq()]) of
     [_, _] -> true;
     [true] -> true;
@@ -427,7 +415,7 @@ collect_mf(Registry, Callback) ->
 %% @private
 collect_metrics(Name, {CLabels, Labels, Registry, DU, Bounds}) ->
   BoundPlaceholders = gen_query_bound_placeholders(Bounds),
-  QuerySpec = [{Registry, Name, '$1', '_'}, '_', '$3'] ++ BoundPlaceholders,
+  QuerySpec = [{Registry, Name, '$1', '_'}, '_', '$3', '$4'] ++ BoundPlaceholders,
 
   MFValues = ets:match(?TABLE, list_to_tuple(QuerySpec)),
   [begin
@@ -469,7 +457,7 @@ insert_placeholders(Registry, Name, LabelValues) ->
         end,
   BoundCounters = lists:duplicate(length(MFBuckets), 0),
   MetricSpec =
-    [key(Registry, Name, LabelValues), lists:map(Fun, MFBuckets), 0]
+    [key(Registry, Name, LabelValues), lists:map(Fun, MFBuckets), 0, 0]
     ++ BoundCounters,
   ets:insert_new(?TABLE, list_to_tuple(MetricSpec)).
 
@@ -479,11 +467,11 @@ calculate_histogram_bucket_position(Metric, Value) ->
 
 generate_select_replace(Key, Bounds, BucketPos, Value) ->
   BoundPlaceholders = gen_query_bound_placeholders(Bounds),
-  HistMatch = list_to_tuple([Key, '$2', '$3'] ++ BoundPlaceholders),
+  HistMatch = list_to_tuple([Key, '$2', '$3', '$4'] ++ BoundPlaceholders),
   BucketUpdate = lists:sublist(BoundPlaceholders, BucketPos)
     ++ [{'+', gen_query_placeholder(?BUCKETS_START + BucketPos), 1}]
     ++ lists:nthtail(BucketPos + 1, BoundPlaceholders),
-  HistUpdate = list_to_tuple([{Key}, '$2', {'+', '$3', Value}] ++ BucketUpdate),
+  HistUpdate = list_to_tuple([{Key}, '$2', '$3', {'+', '$4', Value}] ++ BucketUpdate),
   [{HistMatch,
     [],
     [{HistUpdate}]}].
@@ -523,13 +511,14 @@ transpose(M) ->
   [lists:map(fun hd/1, M) | transpose(lists:map(fun tl/1, M))].
 
 reduce_sum(Metrics) ->
-  lists:sum([element(?SUM_POS, Metric) || Metric <- Metrics]).
+  lists:sum([element(?ISUM_POS, Metric) + element(?FSUM_POS, Metric)
+             || Metric <- Metrics]).
 
 reduce_sum(MF, Metrics) ->
   DU = prometheus_metric:mf_duration_unit(MF),
   prometheus_time:maybe_convert_to_du(DU, reduce_sum(Metrics)).
 
-create_histogram_metric(CLabels, Labels, DU, Bounds, LabelValues, [Sum | Buckets]) ->
+create_histogram_metric(CLabels, Labels, DU, Bounds, LabelValues, [ISum, FSum | Buckets]) ->
   BCounters = augment_counters(Buckets),
   Bounds1 = lists:zipwith(fun(Bound, Bucket) ->
                               {Bound, Bucket}
@@ -540,16 +529,16 @@ create_histogram_metric(CLabels, Labels, DU, Bounds, LabelValues, [Sum | Buckets
     CLabels ++ lists:zip(Labels, LabelValues),
     Bounds1,
     lists:last(BCounters),
-    prometheus_time:maybe_convert_to_du(DU, Sum)).
+    prometheus_time:maybe_convert_to_du(DU, ISum + FSum)).
 
 deregister_select(Registry, Name, Buckets) ->
   BoundCounters = lists:duplicate(length(Buckets), '_'),
-  MetricSpec = [{Registry, Name, '_', '_'}, '_', '_'] ++ BoundCounters,
+  MetricSpec = [{Registry, Name, '_', '_'}, '_', '_', '_'] ++ BoundCounters,
   [{list_to_tuple(MetricSpec), [], [true]}].
 
 delete_metrics(Registry, Buckets) ->
   BoundCounters = lists:duplicate(length(Buckets), '_'),
-  MetricSpec = [{Registry, '_', '_', '_'}, '_', '_'] ++ BoundCounters,
+  MetricSpec = [{Registry, '_', '_', '_'}, '_', '_', '_'] ++ BoundCounters,
   ets:match_delete(?TABLE, list_to_tuple(MetricSpec)).
 
 sub_tuple_to_list(Tuple, Pos, Size) when Pos < Size ->

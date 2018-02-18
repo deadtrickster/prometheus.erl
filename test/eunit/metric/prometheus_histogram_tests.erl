@@ -101,11 +101,9 @@ test_errors(_) ->
                  prometheus_histogram:new([{name, "qwe"},
                                            {help, ""},
                                            {buckets, [1, 3, 2]}])),
-   ?_assertError({invalid_value, 1.5, "observe accepts only integers"},
-                 prometheus_histogram:observe(request_duration, 1.5)),
-   ?_assertError({invalid_value, "qwe", "observe accepts only integers"},
+   ?_assertError({invalid_value, "qwe", "observe accepts only numbers"},
                  prometheus_histogram:observe(request_duration, "qwe")),
-   ?_assertError({invalid_value, "qwe", "dobserve accepts only numbers"},
+   ?_assertError({invalid_value, "qwe", "observe accepts only numbers"},
                  prometheus_histogram:dobserve(request_duration, "qwe")),
    ?_assertError({invalid_value, "qwe", "observe_duration accepts only functions"},
                  prometheus_histogram:observe_duration(pool_size, "qwe"))

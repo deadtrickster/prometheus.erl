@@ -226,7 +226,7 @@ pobserve(Registry, Name, LabelValues, Buckets, BucketPos, Value) when is_integer
       insert_metric(Registry, Name, LabelValues, Value,
                     fun(_, _, _, _) ->
                         pobserve(Registry, Name, LabelValues, Buckets,
-                                 ?BUCKETS_START + BucketPos, Value)
+                                 BucketPos, Value)
                     end)
   end,
   ok;

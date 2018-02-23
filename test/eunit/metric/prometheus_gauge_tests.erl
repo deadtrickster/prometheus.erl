@@ -20,6 +20,7 @@ prometheus_format_test_() ->
     fun test_deregister/1,
     fun test_remove/1,
     fun test_default_value/1,
+    fun test_values/1,
     fun test_collector1/1,
     fun test_collector2/1]}.
 
@@ -236,7 +237,7 @@ test_deregister(_) ->
 test_remove(_) ->
   prometheus_gauge:new([{name, pool_size},
                         {labels, [pool]},
-                        {help, "Http request pool size"}]),
+                        {help, "pool size"}]),
   prometheus_gauge:new([{name, simple_gauge}, {help, ""}]),
 
   prometheus_gauge:inc(pool_size, [mongodb]),
@@ -276,6 +277,17 @@ test_default_value(_) ->
 
   [?_assertEqual(undefined, UndefinedValue),
    ?_assertEqual(0, SomethingValue)].
+
+test_values(_) ->
+  prometheus_gauge:new([{name, pool_size},
+                        {labels, [pool]},
+                        {help, "pool size"}]),
+  prometheus_gauge:set(pool_size, [mongodb], 10),
+  prometheus_gauge:inc(pool_size, [postgres], 13),
+
+  [?_assertEqual([[[mongodb], 10],
+                  [[postgres], 13]],
+                 lists:sort(prometheus_gauge:values(default, pool_size)))].
 
 test_collector1(_) ->
   prometheus_gauge:new([{name, simple_gauge},

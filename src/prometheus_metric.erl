@@ -7,6 +7,7 @@
          deregister_mf/3,
          check_mf_exists/3,
          check_mf_exists/4,
+         mf_labels/1,
          mf_constant_labels/1,
          mf_duration_unit/1,
          mf_data/1,
@@ -102,12 +103,12 @@ insert_new_mf(Table, Module, Spec) ->
 
 %% @private
 insert_mf(Table, Module, Spec) ->
-  {Registry, Name, Labels, Help, UseCall, DurationUnit, Data} =
+  {Registry, Name, Labels, Help, CLabels, DurationUnit, Data} =
     prometheus_metric_spec:extract_common_params(Spec),
   prometheus_registry:register_collector(Registry, Module),
   case ets:insert_new(Table, {{Registry, mf, Name},
                               {Labels, Help},
-                              UseCall,
+                              CLabels,
                               DurationUnit,
                               Data}) of
     true ->
@@ -157,6 +158,10 @@ check_mf_exists(Table, Registry, Name) ->
     [MF] ->
       MF
   end.
+
+mf_labels(MF) ->
+  {Labels, _} = element(2, MF),
+  Labels.
 
 mf_constant_labels(MF) ->
   element(3, MF).

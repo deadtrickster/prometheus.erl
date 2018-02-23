@@ -70,7 +70,8 @@
          reset/3,
          value/1,
          value/2,
-         value/3]).
+         value/3,
+         values/2]).
 
 %%% collector
 -export([deregister_cleanup/1,
@@ -281,6 +282,19 @@ value(Registry, Name, LabelValues) ->
     List -> lists:sum(List)
   end.
 
+values(Registry, Name) ->
+  case prometheus_metric:check_mf_exists(?TABLE, Registry, Name) of
+    false -> [];
+    MF ->
+      Labels = prometheus_metric:mf_labels(MF),
+      MFValues = load_all_values(Registry, Name),
+      [begin
+         Value = reduce_label_values(LabelValues, MFValues),
+         [lists:zip(Labels, LabelValues), Value]
+       end ||
+        LabelValues <- collect_unique_labels(MFValues)]
+  end.
+
 %%====================================================================
 %% Collector API
 %%====================================================================
@@ -300,7 +314,7 @@ collect_mf(Registry, Callback) ->
 
 %% @private
 collect_metrics(Name, {CLabels, Labels, Registry}) ->
-  MFValues = ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2', '$3'}),
+  MFValues = load_all_values(Registry, Name),
   [begin
      Value = reduce_label_values(LabelValues, MFValues),
      prometheus_model_helpers:counter_metric(
@@ -324,6 +338,9 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
     true ->
       ok
   end.
+
+load_all_values(Registry, Name) ->
+   ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2', '$3'}).
 
 schedulers_seq() ->
   lists:seq(0, ?WIDTH-1).

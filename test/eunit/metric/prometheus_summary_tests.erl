@@ -16,6 +16,7 @@ prometheus_format_test_() ->
     fun test_deregister/1,
     fun test_remove/1,
     fun test_default_value/1,
+    fun test_values/1,
     fun test_collector1/1,
     fun test_collector2/1]}.
 
@@ -198,6 +199,17 @@ test_default_value(_) ->
   SomethingValue = prometheus_summary:value(something_summary),
   [?_assertEqual(undefined, UndefinedValue),
    ?_assertEqual({0, 0}, SomethingValue)].
+
+test_values(_) ->
+  prometheus_summary:new([{name, orders_summary},
+                          {labels, [department]},
+                          {help, "Track orders count/total sum"}]),
+  prometheus_summary:observe(orders_summary, [electronics], 765.5),
+  prometheus_summary:observe(orders_summary, [groceries], 112.3),
+
+  [?_assertEqual([[[{"department", electronics}], 1, 765.5],
+                  [[{"department", groceries}], 1, 112.3]],
+                 lists:sort(prometheus_summary:values(default, orders_summary)))].
 
 test_collector1(_) ->
   prometheus_summary:new([{name, simple_summary},

@@ -47,7 +47,8 @@
          reset/3,
          value/1,
          value/2,
-         value/3]).
+         value/3,
+         values/2]).
 
 %%% collector
 -export([deregister_cleanup/1,
@@ -257,6 +258,12 @@ value(Registry, Name, LabelValues) ->
       undefined
   end.
 
+values(Registry, Name) ->
+  case prometheus_metric:check_mf_exists(?TABLE, Registry, Name) of
+    false -> [];
+    _ -> load_all_values(Registry, Name)
+  end.
+
 %%====================================================================
 %% Collector API
 %%====================================================================
@@ -271,14 +278,14 @@ deregister_cleanup(Registry) ->
 collect_mf(Registry, Callback) ->
   [Callback(create_boolean(Name, Help, {CLabels, Labels, Registry})) ||
     [Name, {Labels, Help}, CLabels, _, _] <- prometheus_metric:metrics(?TABLE,
-                                                                  Registry)],
+                                                                       Registry)],
   ok.
 
 %% @private
 collect_metrics(Name, {CLabels, Labels, Registry}) ->
   [prometheus_model_helpers:boolean_metric(
      CLabels ++ lists:zip(Labels, LabelValues), Value) ||
-    [LabelValues, Value] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'})].
+    [LabelValues, Value] <- load_all_values(Registry, Name)].
 
 %%====================================================================
 %% Private Parts
@@ -314,6 +321,9 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
     true ->
       ok
   end.
+
+load_all_values(Registry, Name) ->
+  ets:match(?TABLE, {{Registry, Name, '$1'}, '$2'}).
 
 create_boolean(Name, Help, Data) ->
   prometheus_model_helpers:create_mf(Name, Help, boolean, ?MODULE, Data).

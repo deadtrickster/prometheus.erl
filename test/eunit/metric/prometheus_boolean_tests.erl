@@ -16,7 +16,8 @@ prometheus_format_test_() ->
     fun test_remove/1,
     fun test_default_value/1,
     fun test_collector1/1,
-    fun test_collector2/1]}.
+    fun test_collector2/1,
+    fun test_values/1]}.
 
 test_registration(_)->
   Name = fuse_state,
@@ -157,6 +158,16 @@ test_default_value(_) ->
   [?_assertEqual(undefined, UndefinedValue),
    ?_assertEqual(undefined, SomethingValue)].
 
+test_values(_) ->
+  prometheus_boolean:new([{name, fuse_state},
+                          {labels, [name]},
+                          {help, ""}]),
+  prometheus_boolean:set(fuse_state, [mysql], true),
+  prometheus_boolean:set(fuse_state, [postgres], false),
+
+  [?_assertEqual([[[mysql], 1],
+                  [[postgres], 0]],
+                 lists:sort(prometheus_boolean:values(default, fuse_state)))].
 
 test_collector1(_) ->
   prometheus_boolean:new([{name, simple_boolean},

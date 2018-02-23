@@ -73,7 +73,8 @@
          reset/3,
          value/1,
          value/2,
-         value/3]).
+         value/3,
+         values/2]).
 
 %%% collector
 -export([deregister_cleanup/1,
@@ -417,6 +418,15 @@ value(Registry, Name, LabelValues) ->
     [] -> undefined
   end.
 
+values(Registry, Name) ->
+  case prometheus_metric:check_mf_exists(?TABLE, Registry, Name) of
+    false -> [];
+    MF ->
+      DU = prometheus_metric:mf_duration_unit(MF),
+      [[LabelValues, prometheus_time:maybe_convert_to_du(DU, sum(IValue, FValue))] ||
+        [LabelValues, IValue, FValue] <- load_all_values(Registry, Name)]
+  end.
+
 %%====================================================================
 %% Collector API
 %%====================================================================
@@ -439,7 +449,7 @@ collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
   [prometheus_model_helpers:gauge_metric(
      CLabels ++ lists:zip(Labels, LabelValues),
      prometheus_time:maybe_convert_to_du(DU, sum(IValue, FValue))) ||
-    [LabelValues, IValue, FValue] <- ets:match(?TABLE, {{Registry, Name, '$1'}, '$2', '$3'})].
+    [LabelValues, IValue, FValue] <- load_all_values(Registry, Name)].
 
 %%====================================================================
 %% Private Parts
@@ -467,6 +477,9 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
     true ->
       ok
   end.
+
+load_all_values(Registry, Name) ->
+  ets:match(?TABLE, {{Registry, Name, '$1'}, '$2', '$3'}).
 
 sum(_IValue, undefined) ->
   undefined;

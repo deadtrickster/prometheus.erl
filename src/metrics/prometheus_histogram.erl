@@ -57,7 +57,8 @@
          value/3,
          buckets/1,
          buckets/2,
-         buckets/3]
+         buckets/3,
+         values/2]
        ).
 
 %%% collector
@@ -358,6 +359,26 @@ value(Registry, Name, LabelValues) ->
     Values -> {reduce_buckets_counters(Values), reduce_sum(MF, Values)}
   end.
 
+values(Registry, Name) ->
+  case prometheus_metric:check_mf_exists(?TABLE, Registry, Name) of
+    false -> [];
+    MF ->
+      DU = prometheus_metric:mf_duration_unit(MF),
+      Labels = prometheus_metric:mf_labels(MF),
+      Bounds = prometheus_metric:mf_data(MF),
+      MFValues = load_all_values(Registry, Name, Bounds),
+      [begin
+         [ISum, FSum | BCounters] = reduce_label_values(LabelValues, MFValues),
+         Bounds1 = lists:zipwith(fun(Bound, Bucket) ->
+                                     {Bound, Bucket}
+                                 end,
+                                 Bounds, BCounters),
+         [lists:zip(Labels, LabelValues),  Bounds1,
+          prometheus_time:maybe_convert_to_du(DU, ISum + FSum)]
+       end ||
+        LabelValues <- collect_unique_labels(MFValues)]
+  end.
+
 %% @equiv buckets(default, Name, [])
 buckets(Name) ->
   buckets(default, Name, []).
@@ -393,10 +414,7 @@ collect_mf(Registry, Callback) ->
 
 %% @private
 collect_metrics(Name, {CLabels, Labels, Registry, DU, Bounds}) ->
-  BoundPlaceholders = gen_query_bound_placeholders(Bounds),
-  QuerySpec = [{Registry, Name, '$1', '_'}, '_', '$3', '$4'] ++ BoundPlaceholders,
-
-  MFValues = ets:match(?TABLE, list_to_tuple(QuerySpec)),
+  MFValues = load_all_values(Registry, Name, Bounds),
   [begin
      Stat = reduce_label_values(LabelValues, MFValues),
      create_histogram_metric(CLabels, Labels, DU, Bounds, LabelValues, Stat)
@@ -473,7 +491,7 @@ gen_query_placeholder(Index) ->
   list_to_atom("$" ++ integer_to_list(Index)).
 
 gen_query_bound_placeholders(Buckets) ->
-  [gen_query_placeholder(Index) || Index <- buckets_seq(Buckets)].
+                  [gen_query_placeholder(Index) || Index <- buckets_seq(Buckets)].
 
 augment_counters([Start | Counters]) ->
   augment_counters(Counters, [Start], Start).
@@ -517,6 +535,12 @@ create_histogram_metric(CLabels, Labels, DU, Bounds, LabelValues, [ISum, FSum | 
     Bounds1,
     lists:last(BCounters),
     prometheus_time:maybe_convert_to_du(DU, ISum + FSum)).
+
+load_all_values(Registry, Name, Bounds) ->
+  BoundPlaceholders = gen_query_bound_placeholders(Bounds),
+  QuerySpec = [{Registry, Name, '$1', '_'}, '_', '$3', '$4'] ++ BoundPlaceholders,
+
+  ets:match(?TABLE, list_to_tuple(QuerySpec)).
 
 deregister_select(Registry, Name, Buckets) ->
   BoundCounters = lists:duplicate(length(Buckets), '_'),

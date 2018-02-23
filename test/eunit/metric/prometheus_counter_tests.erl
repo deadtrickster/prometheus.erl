@@ -14,6 +14,7 @@ prometheus_format_test_() ->
     fun test_deregister/1,
     fun test_remove/1,
     fun test_default_value/1,
+    fun test_values/1,
     fun test_collector1/1,
     fun test_collector2/1]}.
 
@@ -134,6 +135,18 @@ test_default_value(_) ->
 
   [?_assertEqual(undefined, UndefinedValue),
    ?_assertEqual(0, SomethingValue)].
+
+test_values(_) ->
+  prometheus_counter:new([{name, http_requests_total},
+                          {labels, [method]},
+                          {help, "Http request count"}]),
+
+  prometheus_counter:inc(http_requests_total, [get], 4),
+  prometheus_counter:inc(http_requests_total, [post], 56),
+
+  [?_assertEqual([[[{"method", get}], 4],
+                  [[{"method", post}], 56]],
+                 lists:sort(prometheus_counter:values(default, http_requests_total)))].
 
 test_collector1(_) ->
   prometheus_counter:new([{name, simple_counter},

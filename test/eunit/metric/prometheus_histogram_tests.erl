@@ -17,6 +17,7 @@ prometheus_format_test_() ->
     fun test_deregister/1,
     fun test_remove/1,
     fun test_default_value/1,
+    fun test_values/1,
     fun test_collector1/1,
     fun test_collector2/1]}.
 
@@ -286,10 +287,10 @@ test_remove(_) ->
    ?_assertEqual(false, RResult4)].
 
 test_default_value(_) ->
-  prometheus_histogram:new([{name, duraiton_histogram},
+  prometheus_histogram:new([{name, duration_histogram},
                             {labels, [label]},
                             {help, ""}]),
-  UndefinedValue = prometheus_histogram:value(duraiton_histogram, [label]),
+  UndefinedValue = prometheus_histogram:value(duration_histogram, [label]),
 
   prometheus_histogram:new([{name, something_histogram},
                             {labels, []},
@@ -300,6 +301,42 @@ test_default_value(_) ->
   [?_assertEqual(undefined, UndefinedValue),
    ?_assertEqual({[0, 0, 0], 0}, SomethingValue)].
 
+test_values(_) ->
+  prometheus_histogram:new([{name, duration_histogram},
+                            {labels, [label]},
+                            {help, ""}]),
+  prometheus_histogram:observe(duration_histogram, [label1], 12),
+  prometheus_histogram:observe(duration_histogram, [label2], 111),
+
+  [?_assertEqual([[[{"label", label1}],
+                   [{0.005, 0},
+                    {0.01, 0},
+                    {0.025, 0},
+                    {0.05, 0},
+                    {0.1, 0},
+                    {0.25, 0},
+                    {0.5, 0},
+                    {1, 0},
+                    {2.5, 0},
+                    {5, 0},
+                    {10, 0},
+                    {infinity, 1}],
+                   12],
+                  [[{"label", label2}],
+                   [{0.005, 0},
+                    {0.01, 0},
+                    {0.025, 0},
+                    {0.05, 0},
+                    {0.1, 0},
+                    {0.25, 0},
+                    {0.5, 0},
+                    {1, 0},
+                    {2.5, 0},
+                    {5, 0},
+                    {10, 0},
+                    {infinity, 1}],
+                   111]],
+                 lists:sort(prometheus_histogram:values(default, duration_histogram)))].
 
 test_collector1(_) ->
   prometheus_histogram:new([{name, simple_histogram},

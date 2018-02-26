@@ -290,7 +290,7 @@ values(Registry, Name) ->
       MFValues = load_all_values(Registry, Name),
       [begin
          Value = reduce_label_values(LabelValues, MFValues),
-         [lists:zip(Labels, LabelValues), Value]
+         {lists:zip(Labels, LabelValues), Value}
        end ||
         LabelValues <- collect_unique_labels(MFValues)]
   end.

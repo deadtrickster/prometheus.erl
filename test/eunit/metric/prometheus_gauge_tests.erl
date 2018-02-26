@@ -285,8 +285,8 @@ test_values(_) ->
   prometheus_gauge:set(pool_size, [mongodb], 10),
   prometheus_gauge:inc(pool_size, [postgres], 13),
 
-  [?_assertEqual([[[mongodb], 10],
-                  [[postgres], 13]],
+  [?_assertEqual([{[{"pool", mongodb}], 10},
+                  {[{"pool", postgres}], 13}],
                  lists:sort(prometheus_gauge:values(default, pool_size)))].
 
 test_collector1(_) ->

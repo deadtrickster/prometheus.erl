@@ -165,8 +165,8 @@ test_values(_) ->
   prometheus_boolean:set(fuse_state, [mysql], true),
   prometheus_boolean:set(fuse_state, [postgres], false),
 
-  [?_assertEqual([[[mysql], 1],
-                  [[postgres], 0]],
+  [?_assertEqual([{[{"name", mysql}], true},
+                  {[{"name", postgres}], false}],
                  lists:sort(prometheus_boolean:values(default, fuse_state)))].
 
 test_collector1(_) ->

@@ -373,8 +373,8 @@ values(Registry, Name) ->
                                      {Bound, Bucket}
                                  end,
                                  Bounds, BCounters),
-         [lists:zip(Labels, LabelValues),  Bounds1,
-          prometheus_time:maybe_convert_to_du(DU, ISum + FSum)]
+         {lists:zip(Labels, LabelValues),  Bounds1,
+          prometheus_time:maybe_convert_to_du(DU, ISum + FSum)}
        end ||
         LabelValues <- collect_unique_labels(MFValues)]
   end.

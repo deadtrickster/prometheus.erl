@@ -261,7 +261,10 @@ value(Registry, Name, LabelValues) ->
 values(Registry, Name) ->
   case prometheus_metric:check_mf_exists(?TABLE, Registry, Name) of
     false -> [];
-    _ -> load_all_values(Registry, Name)
+    MF ->
+      Labels = prometheus_metric:mf_labels(MF),
+      [{lists:zip(Labels, LabelValues), Value =:= 1} ||
+        [LabelValues, Value] <- load_all_values(Registry, Name)]
   end.
 
 %%====================================================================

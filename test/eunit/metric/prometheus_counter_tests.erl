@@ -144,8 +144,8 @@ test_values(_) ->
   prometheus_counter:inc(http_requests_total, [get], 4),
   prometheus_counter:inc(http_requests_total, [post], 56),
 
-  [?_assertEqual([[[{"method", get}], 4],
-                  [[{"method", post}], 56]],
+  [?_assertEqual([{[{"method", get}], 4},
+                  {[{"method", post}], 56}],
                  lists:sort(prometheus_counter:values(default, http_requests_total)))].
 
 test_collector1(_) ->

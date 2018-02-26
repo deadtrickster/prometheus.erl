@@ -207,8 +207,8 @@ test_values(_) ->
   prometheus_summary:observe(orders_summary, [electronics], 765.5),
   prometheus_summary:observe(orders_summary, [groceries], 112.3),
 
-  [?_assertEqual([[[{"department", electronics}], 1, 765.5],
-                  [[{"department", groceries}], 1, 112.3]],
+  [?_assertEqual([{[{"department", electronics}], 1, 765.5},
+                  {[{"department", groceries}], 1, 112.3}],
                  lists:sort(prometheus_summary:values(default, orders_summary)))].
 
 test_collector1(_) ->

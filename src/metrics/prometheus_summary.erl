@@ -296,8 +296,8 @@ values(Registry, Name) ->
       MFValues = load_all_values(Registry, Name),
       [begin
          {Count, Sum} = reduce_label_values(LabelValues, MFValues),
-         [lists:zip(Labels, LabelValues), Count,
-          prometheus_time:maybe_convert_to_du(DU, Sum)]
+         {lists:zip(Labels, LabelValues), Count,
+          prometheus_time:maybe_convert_to_du(DU, Sum)}
        end ||
         LabelValues <- collect_unique_labels(MFValues)]
   end.

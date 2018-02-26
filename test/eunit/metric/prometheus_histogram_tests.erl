@@ -308,7 +308,7 @@ test_values(_) ->
   prometheus_histogram:observe(duration_histogram, [label1], 12),
   prometheus_histogram:observe(duration_histogram, [label2], 111),
 
-  [?_assertEqual([[[{"label", label1}],
+  [?_assertEqual([{[{"label", label1}],
                    [{0.005, 0},
                     {0.01, 0},
                     {0.025, 0},
@@ -321,8 +321,8 @@ test_values(_) ->
                     {5, 0},
                     {10, 0},
                     {infinity, 1}],
-                   12],
-                  [[{"label", label2}],
+                   12},
+                  {[{"label", label2}],
                    [{0.005, 0},
                     {0.01, 0},
                     {0.025, 0},
@@ -335,7 +335,7 @@ test_values(_) ->
                     {5, 0},
                     {10, 0},
                     {infinity, 1}],
-                   111]],
+                   111}],
                  lists:sort(prometheus_histogram:values(default, duration_histogram)))].
 
 test_collector1(_) ->

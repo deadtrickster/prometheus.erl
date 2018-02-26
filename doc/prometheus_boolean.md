@@ -47,7 +47,7 @@ and <code>LabelValues</code>.</td></tr><tr><td valign="top"><a href="#reset-1">r
 and <code>LabelValues</code>.</td></tr><tr><td valign="top"><a href="#set-2">set/2</a></td><td>Equivalent to <a href="#set-4"><tt>set(default, Name, [], Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#set-3">set/3</a></td><td>Equivalent to <a href="#set-4"><tt>set(default, Name, LabelValues, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#set-4">set/4</a></td><td>Sets the boolean identified by <code>Registry</code>, <code>Name</code>
 and <code>LabelValues</code> to <code>Value</code>.</td></tr><tr><td valign="top"><a href="#toggle-1">toggle/1</a></td><td>Equivalent to <a href="#toggle-3"><tt>toggle(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#toggle-2">toggle/2</a></td><td>Equivalent to <a href="#toggle-4"><tt>toggle(default, Name, LabelValues, Value)</tt></a>.</td></tr><tr><td valign="top"><a href="#toggle-3">toggle/3</a></td><td>Toggles the boolean identified by <code>Registry</code>, <code>Name</code>
 and <code>LabelValues</code>.</td></tr><tr><td valign="top"><a href="#value-1">value/1</a></td><td>Equivalent to <a href="#value-3"><tt>value(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#value-2">value/2</a></td><td>Equivalent to <a href="#value-3"><tt>value(default, Name, LabelValues)</tt></a>.</td></tr><tr><td valign="top"><a href="#value-3">value/3</a></td><td>Returns the value of the boolean identified by <code>Registry</code>, <code>Name</code>
-and <code>LabelValues</code>.</td></tr></table>
+and <code>LabelValues</code>.</td></tr><tr><td valign="top"><a href="#values-2">values/2</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -283,4 +283,10 @@ Raises `{unknown_metric, Registry, Name}` error if boolean named `Name`
 can't be found in `Registry`.<br />
 Raises `{invalid_metric_arity, Present, Expected}` error if labels count
 mismatch.
+
+<a name="values-2"></a>
+
+### values/2 ###
+
+`values(Registry, Name) -> any()`
 

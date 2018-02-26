@@ -71,7 +71,7 @@ and <code>LabelValues</code> to <code>Value</code>.</td></tr><tr><td valign="top
 and <code>LabelValues</code> to the the amount of time spent executing <code>Fun</code>.</td></tr><tr><td valign="top"><a href="#set_to_current_time-1">set_to_current_time/1</a></td><td>Equivalent to <a href="#set_to_current_time-3"><tt>set_to_current_time(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#set_to_current_time-2">set_to_current_time/2</a></td><td>Equivalent to <a href="#set_to_current_time-3"><tt>set_to_current_time(default, Name, LabelValues)</tt></a>.</td></tr><tr><td valign="top"><a href="#set_to_current_time-3">set_to_current_time/3</a></td><td>Sets the gauge identified by <code>Registry</code>, <code>Name</code>
 and <code>LabelValues</code> to the current unixtime.</td></tr><tr><td valign="top"><a href="#track_inprogress-2">track_inprogress/2</a></td><td>Equivalent to <a href="#track_inprogress-4"><tt>track_inprogress(default, Name, [], Fun)</tt></a>.</td></tr><tr><td valign="top"><a href="#track_inprogress-3">track_inprogress/3</a></td><td>Equivalent to <a href="#track_inprogress-4"><tt>track_inprogress(default, Name, LabelValues, Fun)</tt></a>.</td></tr><tr><td valign="top"><a href="#track_inprogress-4">track_inprogress/4</a></td><td>Sets the gauge identified by <code>Registry</code>, <code>Name</code>
 and <code>LabelValues</code> to the number of currently executing <code>Fun</code>s.</td></tr><tr><td valign="top"><a href="#value-1">value/1</a></td><td>Equivalent to <a href="#value-3"><tt>value(default, Name, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#value-2">value/2</a></td><td>Equivalent to <a href="#value-3"><tt>value(default, Name, LabelValues)</tt></a>.</td></tr><tr><td valign="top"><a href="#value-3">value/3</a></td><td>Returns the value of the gauge identified by <code>Registry</code>, <code>Name</code>
-and <code>LabelValues</code>.</td></tr></table>
+and <code>LabelValues</code>.</td></tr><tr><td valign="top"><a href="#values-2">values/2</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -442,4 +442,10 @@ Raises `{unknown_metric, Registry, Name}` error if gauge named `Name`
 can't be found in `Registry`.<br />
 Raises `{invalid_metric_arity, Present, Expected}` error if labels count
 mismatch.
+
+<a name="values-2"></a>
+
+### values/2 ###
+
+`values(Registry, Name) -> any()`
 

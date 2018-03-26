@@ -109,11 +109,11 @@ Raises `{invalid_value_error, Value, MessagE}` error if `duration_unit` is
 unknown or doesn't match metric name.<br />
 
 Histogram-specific errors:<br />
-Raises `{histogram_no_buckets, Buckets}` error if `Buckets` are missing,
+Raises `{no_buckets, Buckets}` error if `Buckets` are missing,
 not a list, empty list or not known buckets spec.<br />
-Raises `{histogram_invalid_buckets, Buckets, Message}` error if `Buckets`
+Raises `{invalid_buckets, Buckets, Message}` error if `Buckets`
 aren't in increasing order.<br />
-Raises `{histogram_invalid_bound, Bound}` error if `Bound` isn't a number.
+Raises `{invalid_bound, Bound}` error if `Bound` isn't a number.
 
 <a name="deregister-1"></a>
 
@@ -161,11 +161,11 @@ Raises `{mf_already_exists, {Registry, Name}, Message}` error if a histogram
 with the same `Spec` already exists.
 
 Histogram-specific errors:<br />
-Raises `{histogram_no_buckets, Buckets}` error if `Buckets` are missing,
+Raises `{no_buckets, Buckets}` error if `Buckets` are missing,
 not a list, empty list or not known buckets spec.<br />
-Raises `{histogram_invalid_buckets, Buckets, Message}` error if `Buckets`
+Raises `{invalid_buckets, Buckets, Message}` error if `Buckets`
 aren't in increasing order.<br />
-Raises `{histogram_invalid_bound, Bound}` error if `Bound` isn't a number.
+Raises `{invalid_bound, Bound}` error if `Bound` isn't a number.
 
 <a name="observe-2"></a>
 

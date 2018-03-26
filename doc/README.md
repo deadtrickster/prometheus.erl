@@ -20,6 +20,7 @@ __Version:__ 4.1.0
 
 ## Integrations
 - [Cowboy1/2 Exporters and Cowboy2 instrumenter](https://hex.pm/packages/prometheus_cowboy)
+- [Opencensus.io integration](https://github.com/deadtrickster/opencensus-erlang-prometheus)
 - [Ecto Instrumenter](https://hex.pm/packages/prometheus_ecto)
 - [Elixir client](https://github.com/deadtrickster/prometheus.ex)
 - [Elixir plugs Instrumenters and Exporter](https://hex.pm/packages/prometheus_plugs)

@@ -104,6 +104,12 @@
 %%     Type: gauge.<br/>
 %%     The maximum number of simultaneously existing atom at the local node.
 %%   </li>
+%%   <li>
+%%     `erlang_vm_allocators'<br/>
+%%     Type: gauge.<br/>
+%%     Allocated (carriers_size) and used (blocks_size) memory
+%%     for the different allocators in the VM. See erts_alloc(3).
+%%   </li>
 %% </ul>
 %%
 %% ==Configuration==
@@ -164,6 +170,9 @@
 %%   </li>
 %%   <li>
 %%     `atom_limit' for `erlang_vm_atom_limit'.
+%%   </li>
+%%   <li>
+%%     `allocators' for `erlang_vm_allocators'.
 %%   </li>
 %% </ul>
 %%
@@ -264,9 +273,15 @@ metrics() ->
     "at the local node."},
    {atom_limit, gauge,
     "The maximum number of simultaneously existing "
-    "atom at the local node."}
+    "atom at the local node."},
+   {allocators, gauge,
+    "Allocated (carriers_size) and used (blocks_size) "
+    "memory for the different allocators in the VM. "
+    "See erts_alloc(3)."}
   ].
 
+collect_metrics(allocators) ->
+    collect_allocator_metrics();
 collect_metrics(Name) ->
   try
     case erlang:system_info(Name) of
@@ -282,3 +297,29 @@ enabled_metrics() ->
 
 metric_enabled(Name, Metrics) ->
   Metrics =:= all orelse lists:member(Name, Metrics).
+
+collect_allocator_metrics() ->
+    Metrics = lists:flatten([begin
+        [
+            [
+                allocator_metric(Alloc, Instance, Kind, Key, KindInfo)
+            || Key <- [blocks_size, carriers_size]]
+        || {Kind, KindInfo} <- Info, (Kind =:= mbcs) orelse (Kind =:= sbcs)]
+    end || {{Alloc, Instance}, Info} <- allocators()]),
+    prometheus_model_helpers:gauge_metrics(Metrics).
+
+allocator_metric(Alloc, Instance, Kind, Key, Values) ->
+    {[{alloc, Alloc}, {instance, Instance}, {kind, Kind}, {usage, Key}],
+        element(2, lists:keyfind(Key, 1, Values))}.
+
+%% Copied from recon_alloc.
+allocators() ->
+    UtilAllocators = erlang:system_info(alloc_util_allocators),
+    Allocators = [sys_alloc,mseg_alloc|UtilAllocators],
+    %% versions is deleted in order to allow the use of the orddict api,
+    %% and never really having come across a case where it was useful to know.
+    [{{A,N},lists:sort(proplists:delete(versions,Props))} ||
+        A <- Allocators,
+        Allocs <- [erlang:system_info({allocator,A})],
+        Allocs =/= false,
+        {_,N,Props} <- Allocs].

@@ -304,7 +304,7 @@ collect_allocator_metrics() ->
             [
                 allocator_metric(Alloc, Instance, Kind, Key, KindInfo)
             || Key <- [blocks_size, carriers_size]]
-        || {Kind, KindInfo} <- Info, (Kind =:= mbcs) orelse (Kind =:= sbcs)]
+        || {Kind, KindInfo} <- Info, (Kind =:= mbcs) orelse (Kind =:= mbcs_pool) orelse (Kind =:= sbcs)]
     end || {{Alloc, Instance}, Info} <- allocators()]),
     prometheus_model_helpers:gauge_metrics(Metrics).
 

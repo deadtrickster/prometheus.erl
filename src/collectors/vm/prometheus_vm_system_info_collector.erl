@@ -317,8 +317,8 @@ allocators() ->
     Allocators = erlang:system_info(alloc_util_allocators),
     %% versions is deleted in order to allow the use of the orddict api,
     %% and never really having come across a case where it was useful to know.
-    [{{A,N},lists:sort(proplists:delete(versions,Props))} ||
+    [{{A, N}, lists:sort(proplists:delete(versions, Props))} ||
         A <- Allocators,
-        Allocs <- [erlang:system_info({allocator,A})],
+        Allocs <- [erlang:system_info({allocator, A})],
         Allocs =/= false,
-        {_,N,Props} <- Allocs].
+        {_, N, Props} <- Allocs].

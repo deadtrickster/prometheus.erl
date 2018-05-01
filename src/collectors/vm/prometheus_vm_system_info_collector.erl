@@ -312,10 +312,9 @@ allocator_metric(Alloc, Instance, Kind, Key, Values) ->
     {[{alloc, Alloc}, {instance, Instance}, {kind, Kind}, {usage, Key}],
         element(2, lists:keyfind(Key, 1, Values))}.
 
-%% Copied from recon_alloc.
+%% Originally copied from recon_alloc.
 allocators() ->
-    UtilAllocators = erlang:system_info(alloc_util_allocators),
-    Allocators = [sys_alloc,mseg_alloc|UtilAllocators],
+    Allocators = erlang:system_info(alloc_util_allocators),
     %% versions is deleted in order to allow the use of the orddict api,
     %% and never really having come across a case where it was useful to know.
     [{{A,N},lists:sort(proplists:delete(versions,Props))} ||

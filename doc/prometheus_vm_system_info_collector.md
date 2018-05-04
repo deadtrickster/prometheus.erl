@@ -97,6 +97,11 @@ The number of atom currently existing at the local node.
 Type: gauge.<br />
 The maximum number of simultaneously existing atom at the local node.
 
+* `erlang_vm_allocators`<br />
+Type: gauge.<br />
+Allocated (carriers_size) and used (blocks_size) memory
+for the different allocators in the VM. See erts_alloc(3).
+
 
 
 ### <a name="Configuration">Configuration</a> ###
@@ -141,6 +146,8 @@ erlang:system_info/1
 * `atom_count` for `erlang_vm_atom_count`.
 
 * `atom_limit` for `erlang_vm_atom_limit`.
+
+* `allocators` for `erlang_vm_allocators`.
 
 
 By default all metrics are enabled.

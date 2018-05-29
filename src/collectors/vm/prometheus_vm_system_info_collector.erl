@@ -309,7 +309,7 @@ collect_allocator_metrics() ->
     prometheus_model_helpers:gauge_metrics(Metrics).
 
 allocator_metric(Alloc, Instance, Kind, Key, Values) ->
-    {[{alloc, Alloc}, {instance, Instance}, {kind, Kind}, {usage, Key}],
+    {[{alloc, Alloc}, {instance_no, Instance}, {kind, Kind}, {usage, Key}],
         element(2, lists:keyfind(Key, 1, Values))}.
 
 %% Originally copied from recon_alloc.

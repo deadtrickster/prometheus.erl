@@ -195,6 +195,11 @@
 
 -define(METRIC_NAME_PREFIX, "erlang_vm_").
 
+-define(ALLOCATOR_KIND(Kind),
+        (Kind =:= mbcs)
+        orelse (Kind =:= mbcs_pool)
+        orelse (Kind =:= sbcs)).
+
 %%====================================================================
 %% Collector API
 %%====================================================================
@@ -304,7 +309,7 @@ collect_allocator_metrics() ->
             [
                 allocator_metric(Alloc, Instance, Kind, Key, KindInfo)
             || Key <- [blocks, blocks_size, carriers, carriers_size]]
-        || {Kind, KindInfo} <- Info, (Kind =:= mbcs) orelse (Kind =:= mbcs_pool) orelse (Kind =:= sbcs)]
+        || {Kind, KindInfo} <- Info, ?ALLOCATOR_KIND(Kind)]
     end || {{Alloc, Instance}, Info} <- allocators()]),
     prometheus_model_helpers:gauge_metrics(Metrics).
 

@@ -11,6 +11,6 @@ cache:
   directories:
   - $HOME/.cache/rebar3/
 otp_release:
-- 20.1
-- 20.0
+- 21.0.2
+- 20.3
 script: "./bin/checks.sh && ./rebar3 as test coveralls send"

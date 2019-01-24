@@ -6,7 +6,7 @@
 Collects Erlang VM metrics using
 [
 erlang:statistics/1
-](http://erlang.org/doc/man/erlang.html#statistics-1).
+](http://erlang.org/doc/man/erlang.md#statistics-1).
 
 __Behaviours:__ [`prometheus_collector`](prometheus_collector.md).
 

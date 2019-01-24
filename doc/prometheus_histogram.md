@@ -145,7 +145,7 @@ Otherwise returns `{false, _}`.
 
 Creates a histogram using `Spec`.
 
-Raises `{missing_metric_spec_key, Key, Spec}` error if required `Spec` key
+Raises `{missing_metric_spec_key, Key, Spec}` error if required `Soec` key
 is missing.<br />
 Raises `{invalid_metric_name, Name, Message}` error if metric `Name`
 is invalid.<br />

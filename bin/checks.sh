@@ -1,3 +1,3 @@
 #!/bin/sh
 
-./elvis rock && rebar compile && rebar3 do xref, dialyzer, eunit
+./elvis rock && rebar3 do xref, dialyzer, eunit

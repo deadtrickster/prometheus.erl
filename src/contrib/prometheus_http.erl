@@ -76,5 +76,7 @@ status_class(SCode) when is_integer(SCode)
                          andalso SCode > 0
                          andalso SCode >= 600 ->
   "unknown";
+status_class(SCode) when is_binary(SCode) ->
+  "unknown";
 status_class(C) ->
   erlang:error({invalid_value, C, "status code must be a positive integer"}).

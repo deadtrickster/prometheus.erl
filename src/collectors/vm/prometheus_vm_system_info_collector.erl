@@ -95,6 +95,11 @@
 %%     1 if time correction is enabled, otherwise 0.
 %%   </li>
 %%   <li>
+%%     `erlang_vm_wordsize_bytes'<br/>
+%%     Type: gauge.<br/>
+%%     The size of Erlang term words in bytes.
+%%   </li>
+%%   <li>
 %%     `erlang_vm_atom_count'<br/>
 %%     Type: gauge.<br/>
 %%     The number of atom currently existing at the local node.
@@ -164,6 +169,9 @@
 %%   </li>
 %%   <li>
 %%     `time_correction' for `erlang_vm_time_correction'.
+%%   </li>
+%%   <li>
+%%     `wordsize_bytes' for `erlang_vm_wordsize_bytes'.
 %%   </li>
 %%   <li>
 %%     `atom_count' for `erlang_vm_atom_count'.
@@ -268,6 +276,8 @@ metrics() ->
     "used for asynchronous driver calls."},
    {time_correction, boolean,
     "1 if time correction is enabled, otherwise 0."},
+   {wordsize_bytes, gauge,
+    "The size of Erlang term words in bytes."},
    {atom_count, gauge,
     "The number of atom currently existing "
     "at the local node."},
@@ -282,6 +292,8 @@ metrics() ->
 
 collect_metrics(allocators) ->
     collect_allocator_metrics();
+collect_metrics(wordsize_bytes) ->
+    erlang:system_info(wordsize);
 collect_metrics(Name) ->
   try
     case erlang:system_info(Name) of

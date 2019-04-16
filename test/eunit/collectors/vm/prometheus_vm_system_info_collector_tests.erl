@@ -32,6 +32,7 @@ test_default_metrics(_) ->
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_threads")),
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_thread_pool_size")),
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_time_correction")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_wordsize_bytes")),
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_atom_count")),
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_atom_limit"))
   ].
@@ -55,6 +56,7 @@ test_all_metrics(_) ->
                          threads,
                          thread_pool_size,
                          time_correction,
+                         wordsize_bytes,
                          atom_count,
                          atom_limit
                         ]),
@@ -75,6 +77,7 @@ test_all_metrics(_) ->
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_threads")),
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_thread_pool_size")),
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_time_correction")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_wordsize_bytes")),
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_atom_count")),
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_atom_limit"))
     ]
@@ -111,7 +114,8 @@ test_custom_metrics(_) ->
      ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_smp_support")),
      ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_threads")),
      ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_thread_pool_size")),
-     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_time_correction"))
+     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_time_correction")),
+     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_wordsize_bytes"))
     ]
 
   after

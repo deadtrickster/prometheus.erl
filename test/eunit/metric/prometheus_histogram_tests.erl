@@ -19,7 +19,8 @@ prometheus_format_test_() ->
     fun test_default_value/1,
     fun test_values/1,
     fun test_collector1/1,
-    fun test_collector2/1]}.
+    fun test_collector2/1,
+    fun test_collector3/1]}.
 
 test_registration(_)->
   Name = request_duration,
@@ -379,3 +380,33 @@ test_collector2(_) ->
                                                                               #'Bucket'{cumulative_count=1,
                                                                                         upper_bound=infinity}]}}]}],
                  prometheus_collector:collect_mf_to_list(prometheus_histogram))].
+
+
+test_collector3(_) ->
+  MFList = try
+    prometheus:start(),
+    application:set_env(prometheus, global_labels, [{node, node()}]),
+    prometheus_histogram:new([{name, simple_histogram},
+                              {labels, ["label"]},
+                              {buckets, [5, 10]},
+                              {help, ""}]),
+    prometheus_histogram:observe(simple_histogram, [label_value], 7),
+    prometheus_collector:collect_mf_to_list(prometheus_histogram)
+  after
+    application:unset_env(prometheus, global_labels)
+  end,
+  NodeBin = atom_to_binary(node(), utf8),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= <<"node">>,
+                                                                   value= NodeBin},
+                                                      #'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               histogram=#'Histogram'{sample_count=1,
+                                                                      sample_sum=7,
+                                                                      bucket=[#'Bucket'{cumulative_count=0,
+                                                                                        upper_bound=5},
+                                                                              #'Bucket'{cumulative_count=1,
+                                                                                        upper_bound=10},
+                                                                              #'Bucket'{cumulative_count=1,
+                                                                                        upper_bound=infinity}]}}]}],
+                 MFList)].

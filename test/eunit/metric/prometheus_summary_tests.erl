@@ -18,7 +18,8 @@ prometheus_format_test_() ->
     fun test_default_value/1,
     fun test_values/1,
     fun test_collector1/1,
-    fun test_collector2/1]}.
+    fun test_collector2/1,
+    fun test_collector3/1]}.
 
 test_registration(_)->
   Name = orders_summary,
@@ -238,3 +239,26 @@ test_collector2(_) ->
                                                summary=#'Summary'{sample_count=1,
                                                                   sample_sum=5}}]}],
                  prometheus_collector:collect_mf_to_list(prometheus_summary))].
+
+
+test_collector3(_) ->
+  MFList = try
+    prometheus:start(),
+    application:set_env(prometheus, global_labels, [{node, node()}]),
+    prometheus_summary:new([{name, simple_summary},
+                            {labels, ["label"]},
+                            {help, ""}]),
+    prometheus_summary:observe(simple_summary, [label_value], 5),
+    prometheus_collector:collect_mf_to_list(prometheus_summary)
+  after
+    application:unset_env(prometheus, global_labels)
+  end,
+  NodeBin = atom_to_binary(node(), utf8),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= <<"node">>,
+                                                                   value= NodeBin},
+                                                      #'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               summary=#'Summary'{sample_count=1,
+                                                                  sample_sum=5}}]}],
+                 MFList)].

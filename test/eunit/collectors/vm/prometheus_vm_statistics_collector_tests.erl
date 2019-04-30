@@ -8,7 +8,8 @@ prometheus_format_test_() ->
    fun prometheus_eunit_common:stop/1,
    [fun test_default_metrics/1,
     fun test_all_metrics/1,
-    fun test_custom_metrics/1]}.
+    fun test_custom_metrics/1,
+    fun test_global_labels/1]}.
 
 test_default_metrics(_) ->
   prometheus_registry:register_collector(prometheus_vm_statistics_collector),
@@ -133,3 +134,17 @@ test_custom_metrics(_) ->
   after
     application:unset_env(prometheus, vm_statistics_collector_metrics)
   end.
+
+test_global_labels(_) ->
+  Metrics = try
+    prometheus:start(),
+    application:set_env(prometheus, global_labels, [{node, node()}]),
+    prometheus_registry:register_collector(prometheus_vm_statistics_collector),
+    prometheus_text_format:format()
+  after
+    application:unset_env(prometheus, global_labels)
+  end,
+  [
+   ?_assertMatch({match, _},
+                 re:run(Metrics, "erlang_vm_statistics_bytes_output_total{node="))
+  ].

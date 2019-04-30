@@ -17,6 +17,7 @@ prometheus_format_test_() ->
     fun test_default_value/1,
     fun test_collector1/1,
     fun test_collector2/1,
+    fun test_collector3/1,
     fun test_values/1]}.
 
 test_registration(_)->
@@ -194,3 +195,25 @@ test_collector2(_) ->
                                                                    value= <<"label_value">>}],
                                                untyped=#'Untyped'{value=0}}]}],
                  prometheus_collector:collect_mf_to_list(prometheus_boolean))].
+
+
+test_collector3(_) ->
+  MFList = try
+    prometheus:start(),
+    application:set_env(prometheus, global_labels, [{node, node()}]),
+    prometheus_boolean:new([{name, simple_boolean},
+                            {labels, ["label"]},
+                            {help, ""}]),
+    prometheus_boolean:set(simple_boolean, [label_value], false),
+    prometheus_collector:collect_mf_to_list(prometheus_boolean)
+  after
+    application:unset_env(prometheus, global_labels)
+  end,
+  NodeBin = atom_to_binary(node(), utf8),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= <<"node">>,
+                                                                   value= NodeBin},
+                                                      #'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               untyped=#'Untyped'{value=0}}]}],
+                 MFList)].

@@ -89,6 +89,7 @@
          prometheus_vm_system_info_collector]).
 
 -include("prometheus.hrl").
+-include("prometheus_model.hrl").
 
 %%====================================================================
 %% Types
@@ -137,7 +138,18 @@ enabled_collectors() ->
     Registry  :: prometheus_registry:registry(),
     Collector :: collector(),
     Callback  :: collect_mf_callback().
-collect_mf(Registry, Collector, Callback) ->
+collect_mf(Registry, Collector, Callback0) ->
+  Callback = case application:get_env(prometheus, global_labels) of
+    undefined ->
+      Callback0;
+    {ok, Labels0} ->
+      Labels = prometheus_model_helpers:label_pairs(Labels0),
+      fun (MF=#'MetricFamily'{metric=Metrics0}) ->
+          Metrics = [M#'Metric'{label=Labels ++ ML}
+            || M=#'Metric'{label=ML} <- Metrics0],
+          Callback0(MF#'MetricFamily'{metric=Metrics})
+      end
+  end,
   ok = Collector:collect_mf(Registry, Callback).
 
 %%====================================================================

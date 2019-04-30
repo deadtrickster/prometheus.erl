@@ -22,7 +22,8 @@ prometheus_format_test_() ->
     fun test_default_value/1,
     fun test_values/1,
     fun test_collector1/1,
-    fun test_collector2/1]}.
+    fun test_collector2/1,
+    fun test_collector3/1]}.
 
 test_registration(_)->
   Name = pool_size,
@@ -314,3 +315,25 @@ test_collector2(_) ->
                                                                    value= <<"label_value">>}],
                                                gauge=#'Gauge'{value=1}}]}],
                  prometheus_collector:collect_mf_to_list(prometheus_gauge))].
+
+
+test_collector3(_) ->
+  MFList = try
+    prometheus:start(),
+    application:set_env(prometheus, global_labels, [{node, node()}]),
+    prometheus_gauge:new([{name, simple_gauge},
+                          {labels, ["label"]},
+                          {help, ""}]),
+    prometheus_gauge:set(simple_gauge, [label_value], 1),
+    prometheus_collector:collect_mf_to_list(prometheus_gauge)
+  after
+    application:unset_env(prometheus, global_labels)
+  end,
+  NodeBin = atom_to_binary(node(), utf8),
+  [?_assertMatch([#'MetricFamily'{metric=
+                                    [#'Metric'{label=[#'LabelPair'{name= <<"node">>,
+                                                                   value= NodeBin},
+                                                      #'LabelPair'{name= "label",
+                                                                   value= <<"label_value">>}],
+                                               gauge=#'Gauge'{value=1}}]}],
+                 MFList)].

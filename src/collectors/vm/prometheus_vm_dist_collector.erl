@@ -142,6 +142,12 @@
 %%     The state is represented as a numerical value where `pending=1',
 %%     `up_pending=2' and `up=3'.
 %%   </li>
+%%   <li>
+%%     `erlang_vm_dist_node_queue_size_bytes'<br/>
+%%     Type: gauge.<br/>
+%%     The number of bytes in the output distribution queue.<br/>
+%%     This queue sits between the Erlang code and the port driver.
+%%   </li>
 %% </ul>
 %%
 %% ==Configuration==
@@ -223,6 +229,9 @@
 %%   <li>
 %%     `node_state' for `erlang_vm_dist_node_state'.
 %%   </li>
+%%   <li>
+%%     `node_queue_size_bytes' for `erlang_vm_dist_node_queue_size_bytes'.
+%%   </li>
 %% </ul>
 %%
 %% By default all metrics are enabled.
@@ -238,6 +247,8 @@
 -include("prometheus.hrl").
 
 -behaviour(prometheus_collector).
+
+-dialyzer({nowarn_function, node_queue_size/1}).
 
 %%====================================================================
 %% Macros
@@ -360,7 +371,11 @@ metrics1() ->
     "The current state of the distribution link. "
     "The state is represented as a numerical value where `pending=1', "
     "`up_pending=2' and `up=3'.",
-    metric_node_state(Data)}].
+    metric_node_state(Data)},
+   {node_queue_size_bytes, gauge,
+    "The number of bytes in the output distribution queue. "
+    "This queue sits between the Erlang code and the port driver.",
+    metric_node_queue_size(Data)}].
 
 enabled_metrics() ->
   application:get_env(prometheus, vm_dist_collector_metrics, all).
@@ -482,3 +497,17 @@ metric_node_state(Data) ->
 node_state(pending) -> 1;
 node_state(up_pending) -> 2;
 node_state(up) -> 3.
+
+metric_node_queue_size(Data) ->
+    [
+        {[{peer, Node}], node_queue_size(Node)}
+    || {Node, _} <- Data].
+
+node_queue_size(Node) ->
+    ConnId = ets:lookup_element(sys_dist, Node, 3),
+    {ok, _, _, QueueSize} = erlang:dist_get_stat(ConnId),
+    case QueueSize of
+        false -> 0;
+        true -> -1;
+        _ -> QueueSize
+    end.

@@ -106,7 +106,7 @@ insert_mf(Table, Module, Spec) ->
   {Registry, Name, Labels, Help, CLabels, DurationUnit, Data} =
     prometheus_metric_spec:extract_common_params(Spec),
   prometheus_registry:register_collector(Registry, Module),
-  case ets:insert_new(Table, {{Registry, mf, Name},
+  case ets:insert_new(Table, {{Registry, mf, Name, length(Labels)},
                               {Labels, Help},
                               CLabels,
                               DurationUnit,
@@ -120,7 +120,7 @@ insert_mf(Table, Module, Spec) ->
 
 %% @private
 deregister_mf(Table, Registry) ->
-  ets:match_delete(Table, {{Registry, mf, '_'},
+  ets:match_delete(Table, {{Registry, mf, '_', '_'},
                            '_',
                            '_',
                            '_',
@@ -128,7 +128,7 @@ deregister_mf(Table, Registry) ->
 
 %% @private
 deregister_mf(Table, Registry, Name) ->
-  case ets:take(Table, {Registry, mf, Name}) of
+  case ets:take(Table, {Registry, mf, Name, '_'}) of
     [] ->
       false;
     _ ->
@@ -137,7 +137,7 @@ deregister_mf(Table, Registry, Name) ->
 
 %% @private
 check_mf_exists(Table, Registry, Name, LabelValues) ->
-  case ets:lookup(Table, {Registry, mf, Name}) of
+  case ets:lookup(Table, {Registry, mf, Name, length(LabelValues)}) of
     [] ->
       erlang:error({unknown_metric, Registry, Name});
     [{_, {Labels, _}, _, _, _} = MF] ->
@@ -152,7 +152,7 @@ check_mf_exists(Table, Registry, Name, LabelValues) ->
 
 %% @private
 check_mf_exists(Table, Registry, Name) ->
-  case ets:lookup(Table, {Registry, mf, Name}) of
+  case ets:lookup(Table, {Registry, mf, Name, '_'}) of
     [] ->
       false;
     [MF] ->
@@ -175,7 +175,7 @@ mf_data(MF) ->
 
 %% @private
 metrics(Table, Registry) ->
-  ets:match(Table, {{Registry, mf, '$1'}, '$2', '$3', '$4', '$5'}).
+  ets:match(Table, {{Registry, mf, '$1', '_'}, '$2', '$3', '$4', '$5'}).
 
 %%====================================================================
 %% Private Parts
@@ -199,7 +199,7 @@ maybe_set_default(_, _, _, _) ->
     LValues  :: list().
 remove_labels(Table, Registry, Name, LabelValues) ->
   check_mf_exists(Table, Registry, Name, LabelValues),
-  case ets:take(Table, {Registry, Name, LabelValues}) of
+  case ets:take(Table, {Registry, Name, LabelValues, length(LabelValues)}) of
     [] -> false;
     _ -> true
   end.

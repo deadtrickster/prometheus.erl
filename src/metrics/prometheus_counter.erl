@@ -288,11 +288,13 @@ values(Registry, Name) ->
     MF ->
       Labels = prometheus_metric:mf_labels(MF),
       MFValues = load_all_values(Registry, Name),
+      Arity = length(Labels),
       [begin
          Value = reduce_label_values(LabelValues, MFValues),
          {lists:zip(Labels, LabelValues), Value}
        end ||
-        LabelValues <- collect_unique_labels(MFValues)]
+        LabelValues <- collect_unique_labels(MFValues),
+        Arity == length(LabelValues)]
   end.
 
 %%====================================================================
@@ -315,12 +317,14 @@ collect_mf(Registry, Callback) ->
 %% @private
 collect_metrics(Name, {CLabels, Labels, Registry}) ->
   MFValues = load_all_values(Registry, Name),
+  Arity = length(Labels),
   [begin
      Value = reduce_label_values(LabelValues, MFValues),
      prometheus_model_helpers:counter_metric(
        CLabels ++ lists:zip(Labels, LabelValues), Value)
    end ||
-    LabelValues <- collect_unique_labels(MFValues)].
+    LabelValues <- collect_unique_labels(MFValues),
+    Arity == length(LabelValues)].
 
 %%====================================================================
 %% Private Parts

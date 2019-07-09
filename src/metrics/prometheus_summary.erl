@@ -294,12 +294,14 @@ values(Registry, Name) ->
       DU = prometheus_metric:mf_duration_unit(MF),
       Labels = prometheus_metric:mf_labels(MF),
       MFValues = load_all_values(Registry, Name),
+      Arity = length(Labels),
       [begin
          {Count, Sum} = reduce_label_values(LabelValues, MFValues),
          {lists:zip(Labels, LabelValues), Count,
           prometheus_time:maybe_convert_to_du(DU, Sum)}
        end ||
-        LabelValues <- collect_unique_labels(MFValues)]
+        LabelValues <- collect_unique_labels(MFValues),
+        Arity == length(LabelValues)]
   end.
 
 %%====================================================================
@@ -322,13 +324,15 @@ collect_mf(Registry, Callback) ->
 %% @private
 collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
   MFValues = load_all_values(Registry, Name),
+  Arity = length(Labels),
   [begin
      {Count, Sum} = reduce_label_values(LabelValues, MFValues),
      prometheus_model_helpers:summary_metric(
        CLabels ++ lists:zip(Labels, LabelValues), Count,
        prometheus_time:maybe_convert_to_du(DU, Sum))
    end ||
-    LabelValues <- collect_unique_labels(MFValues)].
+    LabelValues <- collect_unique_labels(MFValues),
+    Arity == length(LabelValues)].
 
 %%====================================================================
 %% Private Parts

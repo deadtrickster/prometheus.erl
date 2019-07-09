@@ -263,8 +263,10 @@ values(Registry, Name) ->
     false -> [];
     MF ->
       Labels = prometheus_metric:mf_labels(MF),
+      Arity = length(Labels),
       [{lists:zip(Labels, LabelValues), Value =:= 1} ||
-        [LabelValues, Value] <- load_all_values(Registry, Name)]
+        [LabelValues, Value] <- load_all_values(Registry, Name),
+        Arity == length(LabelValues)]
   end.
 
 %%====================================================================
@@ -286,9 +288,11 @@ collect_mf(Registry, Callback) ->
 
 %% @private
 collect_metrics(Name, {CLabels, Labels, Registry}) ->
+  Arity = length(Labels),
   [prometheus_model_helpers:boolean_metric(
      CLabels ++ lists:zip(Labels, LabelValues), Value) ||
-    [LabelValues, Value] <- load_all_values(Registry, Name)].
+    [LabelValues, Value] <- load_all_values(Registry, Name),
+    Arity == length(LabelValues)].
 
 %%====================================================================
 %% Private Parts

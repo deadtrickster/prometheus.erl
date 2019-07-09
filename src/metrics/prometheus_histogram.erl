@@ -367,6 +367,7 @@ values(Registry, Name) ->
       Labels = prometheus_metric:mf_labels(MF),
       Bounds = prometheus_metric:mf_data(MF),
       MFValues = load_all_values(Registry, Name, Bounds),
+      Arity = length(Labels),
       [begin
          [ISum, FSum | BCounters] = reduce_label_values(LabelValues, MFValues),
          Bounds1 = lists:zipwith(fun(Bound, Bucket) ->
@@ -376,7 +377,8 @@ values(Registry, Name) ->
          {lists:zip(Labels, LabelValues),  Bounds1,
           prometheus_time:maybe_convert_to_du(DU, ISum + FSum)}
        end ||
-        LabelValues <- collect_unique_labels(MFValues)]
+        LabelValues <- collect_unique_labels(MFValues),
+        Arity == length(LabelValues)]
   end.
 
 %% @equiv buckets(default, Name, [])
@@ -415,11 +417,13 @@ collect_mf(Registry, Callback) ->
 %% @private
 collect_metrics(Name, {CLabels, Labels, Registry, DU, Bounds}) ->
   MFValues = load_all_values(Registry, Name, Bounds),
+  Arity = length(Labels),
   [begin
      Stat = reduce_label_values(LabelValues, MFValues),
      create_histogram_metric(CLabels, Labels, DU, Bounds, LabelValues, Stat)
    end ||
-    LabelValues <- collect_unique_labels(MFValues)].
+    LabelValues <- collect_unique_labels(MFValues),
+    Arity == length(LabelValues)].
 
 %%====================================================================
 %% Private Parts

@@ -128,12 +128,10 @@ deregister_mf(Table, Registry) ->
 
 %% @private
 deregister_mf(Table, Registry, Name) ->
-  case ets:take(Table, {Registry, mf, Name, '_'}) of
-    [] ->
-      false;
-    _ ->
-      true
-  end.
+  MatchSpec = {{Registry, mf, Name, '_'}, '_', '_', '_', '_'},
+  Result = ets:match(Table, MatchSpec) /= [],
+  ets:match_delete(Table, MatchSpec),
+  Result.
 
 %% @private
 check_mf_exists(Table, Registry, Name, LabelValues) ->
@@ -152,11 +150,12 @@ check_mf_exists(Table, Registry, Name, LabelValues) ->
 
 %% @private
 check_mf_exists(Table, Registry, Name) ->
-  case ets:lookup(Table, {Registry, mf, Name, '_'}) of
+  MatchSpec = {{Registry, mf, Name, '_'}, '_', '_', '_', '_'},
+  case ets:match_object(Table, MatchSpec) of
     [] ->
       false;
-    [MF] ->
-      MF
+    MFs ->
+      MFs
   end.
 
 mf_labels(MF) ->
@@ -199,7 +198,7 @@ maybe_set_default(_, _, _, _) ->
     LValues  :: list().
 remove_labels(Table, Registry, Name, LabelValues) ->
   check_mf_exists(Table, Registry, Name, LabelValues),
-  case ets:take(Table, {Registry, Name, LabelValues, length(LabelValues)}) of
+  case ets:take(Table, {Registry, Name, LabelValues}) of
     [] -> false;
     _ -> true
   end.

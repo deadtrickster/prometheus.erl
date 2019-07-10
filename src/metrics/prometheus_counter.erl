@@ -285,17 +285,19 @@ value(Registry, Name, LabelValues) ->
 values(Registry, Name) ->
   case prometheus_metric:check_mf_exists(?TABLE, Registry, Name) of
     false -> [];
-    MF ->
-      Labels = prometheus_metric:mf_labels(MF),
-      MFValues = load_all_values(Registry, Name),
-      Arity = length(Labels),
-      [begin
-         Value = reduce_label_values(LabelValues, MFValues),
-         {lists:zip(Labels, LabelValues), Value}
-       end ||
-        LabelValues <- collect_unique_labels(MFValues),
-        Arity == length(LabelValues)]
+    MFs -> lists:concat([mf_values(MF, Registry, Name) || MF <- MFs])
   end.
+
+mf_values(MF, Registry, Name) ->
+  Labels = prometheus_metric:mf_labels(MF),
+  MFValues = load_all_values(Registry, Name),
+  Arity = length(Labels),
+  [begin
+     Value = reduce_label_values(LabelValues, MFValues),
+     {lists:zip(Labels, LabelValues), Value}
+   end ||
+    LabelValues <- collect_unique_labels(MFValues),
+    Arity == length(LabelValues)].
 
 %%====================================================================
 %% Collector API

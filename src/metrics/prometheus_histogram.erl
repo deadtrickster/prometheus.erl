@@ -160,11 +160,8 @@ deregister(Name) ->
 %% @end
 deregister(Registry, Name) ->
   try
-    MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name),
-    Buckets = prometheus_metric:mf_data(MF),
-    prometheus_metric:deregister_mf(?TABLE, Registry, Name),
-    Select = deregister_select(Registry, Name, Buckets),
-    NumDeleted = ets:select_delete(?TABLE, Select),
+    MFs = prometheus_metric:check_mf_exists(?TABLE, Registry, Name),
+    NumDeleted = lists:sum([mf_deregister(MF, Registry, Name) || MF <- MFs]),
     {true, NumDeleted > 0}
   catch
     _:_ -> {false, false}
@@ -362,24 +359,26 @@ value(Registry, Name, LabelValues) ->
 values(Registry, Name) ->
   case prometheus_metric:check_mf_exists(?TABLE, Registry, Name) of
     false -> [];
-    MF ->
-      DU = prometheus_metric:mf_duration_unit(MF),
-      Labels = prometheus_metric:mf_labels(MF),
-      Bounds = prometheus_metric:mf_data(MF),
-      MFValues = load_all_values(Registry, Name, Bounds),
-      Arity = length(Labels),
-      [begin
-         [ISum, FSum | BCounters] = reduce_label_values(LabelValues, MFValues),
-         Bounds1 = lists:zipwith(fun(Bound, Bucket) ->
-                                     {Bound, Bucket}
-                                 end,
-                                 Bounds, BCounters),
-         {lists:zip(Labels, LabelValues),  Bounds1,
-          prometheus_time:maybe_convert_to_du(DU, ISum + FSum)}
-       end ||
-        LabelValues <- collect_unique_labels(MFValues),
-        Arity == length(LabelValues)]
+    MFs -> lists:concat([mf_values(MF, Registry, Name) || MF <- MFs])
   end.
+
+mf_values(MF, Registry, Name) ->
+  DU = prometheus_metric:mf_duration_unit(MF),
+  Labels = prometheus_metric:mf_labels(MF),
+  Bounds = prometheus_metric:mf_data(MF),
+  MFValues = load_all_values(Registry, Name, Bounds),
+  Arity = length(Labels),
+  [begin
+     [ISum, FSum | BCounters] = reduce_label_values(LabelValues, MFValues),
+     Bounds1 = lists:zipwith(fun(Bound, Bucket) ->
+                                 {Bound, Bucket}
+                             end,
+                             Bounds, BCounters),
+     {lists:zip(Labels, LabelValues),  Bounds1,
+      prometheus_time:maybe_convert_to_du(DU, ISum + FSum)}
+   end ||
+    LabelValues <- collect_unique_labels(MFValues),
+    Arity == length(LabelValues)].
 
 %% @equiv buckets(default, Name, [])
 buckets(Name) ->
@@ -545,6 +544,12 @@ load_all_values(Registry, Name, Bounds) ->
   QuerySpec = [{Registry, Name, '$1', '_'}, '_', '$3', '$4'] ++ BoundPlaceholders,
 
   ets:match(?TABLE, list_to_tuple(QuerySpec)).
+
+mf_deregister(MF, Registry, Name) ->
+  Buckets = prometheus_metric:mf_data(MF),
+  prometheus_metric:deregister_mf(?TABLE, Registry, Name),
+  Select = deregister_select(Registry, Name, Buckets),
+  ets:select_delete(?TABLE, Select).
 
 deregister_select(Registry, Name, Buckets) ->
   BoundCounters = lists:duplicate(length(Buckets), '_'),

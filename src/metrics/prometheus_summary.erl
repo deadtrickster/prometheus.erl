@@ -150,8 +150,6 @@ observe(Name, LabelValues, Value) ->
 %% isn't an integer.<br/>
 %% Raises `{unknown_metric, Registry, Name}' error if summary with named `Name'
 %% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
 %% @end
 observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
   try
@@ -188,8 +186,6 @@ observe_duration(Name, LabelValues, Fun) ->
 %%
 %% Raises `{unknown_metric, Registry, Name}' error if summary with named `Name'
 %% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
 %% Raises `{invalid_value, Value, Message}' if `Fun'
 %% isn't a function.<br/>
 %% @end
@@ -216,8 +212,6 @@ remove(Name, LabelValues) ->
 %%
 %% Raises `{unknown_metric, Registry, Name}' error if summary with name `Name'
 %% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
 %% @end
 remove(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
@@ -241,8 +235,6 @@ reset(Name, LabelValues) ->
 %%
 %% Raises `{unknown_metric, Registry, Name}' error if summary with name `Name'
 %% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
 %% @end
 reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
@@ -272,8 +264,6 @@ value(Name, LabelValues) ->
 %%
 %% Raises `{unknown_metric, Registry, Name}' error if summary named `Name'
 %% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
 %% @end
 value(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),

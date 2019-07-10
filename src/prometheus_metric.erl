@@ -136,16 +136,8 @@ deregister_mf(Table, Registry, Name) ->
 %% @private
 check_mf_exists(Table, Registry, Name, LabelValues) ->
   case ets:lookup(Table, {Registry, mf, Name, length(LabelValues)}) of
-    [] ->
-      erlang:error({unknown_metric, Registry, Name});
-    [{_, {Labels, _}, _, _, _} = MF] ->
-      LVLength = length(LabelValues),
-      case length(Labels) of
-        LVLength ->
-          MF;
-        LabelsLength ->
-          erlang:error({invalid_metric_arity, LVLength, LabelsLength})
-      end
+    []   -> erlang:error({unknown_metric, Registry, Name});
+    [MF] -> MF
   end.
 
 %% @private

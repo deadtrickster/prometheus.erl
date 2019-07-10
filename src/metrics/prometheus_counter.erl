@@ -177,8 +177,6 @@ inc(Name, LabelValues, Value) ->
 %% isn't a positive number.<br/>
 %% Raises `{unknown_metric, Registry, Name}' error if counter with named `Name'
 %% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
 %% @end
 inc(Registry, Name, LabelValues, Value) when is_integer(Value), Value >= 0 ->
   try
@@ -217,8 +215,6 @@ remove(Name, LabelValues) ->
 %%
 %% Raises `{unknown_metric, Registry, Name}' error if counter with name `Name'
 %% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
 %% @end
 remove(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
@@ -242,8 +238,6 @@ reset(Name, LabelValues) ->
 %%
 %% Raises `{unknown_metric, Registry, Name}' error if counter with name `Name'
 %% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
 %% @end
 reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
@@ -270,8 +264,6 @@ value(Name, LabelValues) ->
 %%
 %% Raises `{unknown_metric, Registry, Name}' error if counter named `Name'
 %% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
 %% @end
 value(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),

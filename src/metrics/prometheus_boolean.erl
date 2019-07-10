@@ -154,8 +154,6 @@ set(Name, LabelValues, Value) ->
 %% isn't a boolean or `undefined'.<br/>
 %% Raises `{unknown_metric, Registry, Name}' error if boolean with named `Name'
 %% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
 %% @end
 set(Registry, Name, LabelValues, Value0) ->
   Value = prometheus_model_helpers:boolean_value(Value0),
@@ -177,8 +175,6 @@ toggle(Name, LabelValues) ->
 %% Raises `{invalid_value, undefined, Message}' if boolean is undefined.<br/>
 %% Raises `{unknown_metric, Registry, Name}' error if boolean with named `Name'
 %% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
 %% @end
 toggle(Registry, Name, LabelValues) ->
   try
@@ -202,8 +198,6 @@ remove(Name, LabelValues) ->
 %%
 %% Raises `{unknown_metric, Registry, Name}' error if boolean with name `Name'
 %% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
 %% @end
 remove(Registry, Name, LabelValues) ->
   prometheus_metric:remove_labels(?TABLE, Registry, Name, LabelValues).
@@ -221,8 +215,6 @@ reset(Name, LabelValues) ->
 %%
 %% Raises `{unknown_metric, Registry, Name}' error if boolean with name `Name'
 %% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
 %% @end
 reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
@@ -242,8 +234,6 @@ value(Name, LabelValues) ->
 %%
 %% Raises `{unknown_metric, Registry, Name}' error if boolean named `Name'
 %% can't be found in `Registry'.<br/>
-%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
-%% mismatch.
 %% @end
 value(Registry, Name, LabelValues) ->
   case ets:lookup(?TABLE, {Registry, Name, LabelValues}) of

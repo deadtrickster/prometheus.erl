@@ -49,19 +49,19 @@ test_errors(_) ->
    %% mf/arity errors
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_counter:inc(unknown_metric)),
-   ?_assertError({unknown_metric,default,db_query_duration},
+   ?_assertError({unknown_metric, default, db_query_duration},
                  prometheus_counter:inc(db_query_duration, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_counter:reset(unknown_metric)),
-   ?_assertError({unknown_metric,default,db_query_duration},
+   ?_assertError({unknown_metric, default, db_query_duration},
                  prometheus_counter:reset(db_query_duration, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_counter:value(unknown_metric)),
-   ?_assertError({unknown_metric,default,db_query_duration},
+   ?_assertError({unknown_metric, default, db_query_duration},
                  prometheus_counter:value(db_query_duration, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_counter:remove(unknown_metric)),
-   ?_assertError({unknown_metric,default,db_query_duration},
+   ?_assertError({unknown_metric, default, db_query_duration},
                  prometheus_counter:remove(db_query_duration, [repo, db]))
   ].
 

@@ -53,19 +53,19 @@ test_errors(_) ->
    %% mf/arity errors
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_boolean:set(unknown_metric, 2)),
-   ?_assertError({unknown_metric,default,with_label},
+   ?_assertError({unknown_metric, default, with_label},
                  prometheus_boolean:set(with_label, [repo, db], 2)),
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_boolean:reset(unknown_metric)),
-   ?_assertError({unknown_metric,default,with_label},
+   ?_assertError({unknown_metric, default, with_label},
                  prometheus_boolean:reset(with_label, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_boolean:value(unknown_metric)),
-   ?_assertError({unknown_metric,default,with_label},
+   ?_assertError({unknown_metric, default, with_label},
                  prometheus_boolean:value(with_label, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_boolean:remove(unknown_metric)),
-   ?_assertError({unknown_metric,default,with_label},
+   ?_assertError({unknown_metric, default, with_label},
                  prometheus_boolean:remove(with_label, [repo, db]))
   ].
 

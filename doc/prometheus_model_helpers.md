@@ -94,7 +94,7 @@ label_value() = term()
 
 
 <pre><code>
-labels() = [<a href="#type-labels">labels()</a>]
+labels() = [<a href="#type-labels">label()</a>]
 </code></pre>
 
 

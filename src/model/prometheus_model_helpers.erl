@@ -49,7 +49,7 @@
 -type label_name() :: term().
 -type label_value() :: term().
 -type label() :: {label_name(), label_value()}.
--type labels() :: [labels()].
+-type labels() :: [label()].
 -type value() :: float() | integer() | undefined | infinity.
 -type prometheus_boolean() :: boolean() | number() | list() | undefined.
 -type gauge() :: value() | {value()} | {labels(), value()}.

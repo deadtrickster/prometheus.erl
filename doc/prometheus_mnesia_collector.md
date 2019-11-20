@@ -6,7 +6,7 @@
 Collects Mnesia metrics mainly using
 [
 mnesia:system_info/1
-](http://erlang.org/doc/man/mnesia.md#system_info-1).
+](http://erlang.org/doc/man/mnesia.html#system_info-1).
 
 __Behaviours:__ [`prometheus_collector`](prometheus_collector.md).
 

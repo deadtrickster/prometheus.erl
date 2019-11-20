@@ -6,7 +6,7 @@
 Collects Erlang VM metrics using
 [
 erlang:statistics/1
-](http://erlang.org/doc/man/erlang.md#statistics-1).
+](http://erlang.org/doc/man/erlang.html#statistics-1).
 
 __Behaviours:__ [`prometheus_collector`](prometheus_collector.md).
 
@@ -80,7 +80,7 @@ Metrics exported by this collector can be configured via
 Options are the same as Item parameter values for
 [
 erlang:statistics/1
-](http://erlang.org/doc/man/erlang.md#statistics-1):
+](http://erlang.org/doc/man/erlang.html#statistics-1):
 
 * `context_switches` for `erlang_vm_statistics_context_switches`;
 

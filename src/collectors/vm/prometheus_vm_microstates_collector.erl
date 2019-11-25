@@ -103,7 +103,7 @@ metric_name() ->
   ?METRIC_NAME([unit(), $s]).
 
 scale() ->
-  erlang:convert_time_unit(1, unit(), native).
+  erlang:convert_time_unit(1, unit(), perf_counter).
 
 unit() ->
   application:get_env(prometheus, vm_microstates_collector_unit, microsecond).

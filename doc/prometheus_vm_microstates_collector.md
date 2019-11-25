@@ -21,9 +21,23 @@ erlang:statistics(microstate_accounting)
 ### <a name="Exported_metrics">Exported metrics</a> ###
 
 
-* `erlang_vm_thread_microstates_microseconds{thread_type="async|aux|dirty_io_scheduler|dirty_cpu_scheduler|poll|scheduler", thread_state="alloc|aux|bif|busy_wait|check_io|emulator|ets|gc|gc_fullsweep|nif|other|port|send|sleep|timers", thread_id=ID}`<br />
+*
+
+`erlang_vm_thread_microstates_microseconds{thread_type=Type, thread_state=State, thread_id=ID}`<br />
 Type: counter<br />
-The time spent in the labeled microstate since collection began for the labeled VM thread.
+The time spent in the labeled microstate since collection began for the labeled VM thread. <br />
+
+Labels:
+
+* `thread_type`: `async | aux | dirty_io_scheduler | dirty_cpu_scheduler |
+poll | scheduler`
+
+* `thread_state`: `alloc | aux | bif | busy_wait | check_io | emulator | ets |
+gc | gc_fullsweep | nif | other | port | send | sleep | timers`
+
+* `thread_id`: the numeric ID of the VM thread
+
+
 
 
 

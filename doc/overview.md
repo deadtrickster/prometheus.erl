@@ -42,7 +42,8 @@
 - {@link prometheus_vm_memory_collector. Memory Collector}
 - {@link prometheus_mnesia_collector. Mnesia Collector}
 - {@link prometheus_vm_statistics_collector. Statistics Collector}
-- {@link prometheus_vm_system_info_collector. System Information Collector}.
+- {@link prometheus_vm_system_info_collector. System Information Collector}
+- {@link prometheus_vm_microstates_collector. Thread Microstates Collector}.
 
 ## Compatibility
 

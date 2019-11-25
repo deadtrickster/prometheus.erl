@@ -32,6 +32,7 @@ default_registry() ->
                  prometheus_summary,
                  prometheus_vm_dist_collector,
                  prometheus_vm_memory_collector,
+                 prometheus_vm_microstates_collector,
                  prometheus_vm_statistics_collector,
                  prometheus_vm_system_info_collector],
                 prometheus_registry:collectors(default)).

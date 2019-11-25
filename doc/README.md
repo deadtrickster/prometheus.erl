@@ -45,7 +45,8 @@ __Version:__ 4.4.1
 - [Memory Collector](prometheus_vm_memory_collector.md)
 - [Mnesia Collector](prometheus_mnesia_collector.md)
 - [Statistics Collector](prometheus_vm_statistics_collector.md)
-- [System Information Collector](prometheus_vm_system_info_collector.md).
+- [System Information Collector](prometheus_vm_system_info_collector.md)
+- [Thread Microstates Collector](prometheus_vm_microstates_collector.md).
 
 ## Compatibility
 
@@ -290,6 +291,7 @@ MIT
 <tr><td><a href="prometheus_time.md" class="module">prometheus_time</a></td></tr>
 <tr><td><a href="prometheus_vm_dist_collector.md" class="module">prometheus_vm_dist_collector</a></td></tr>
 <tr><td><a href="prometheus_vm_memory_collector.md" class="module">prometheus_vm_memory_collector</a></td></tr>
+<tr><td><a href="prometheus_vm_microstates_collector.md" class="module">prometheus_vm_microstates_collector</a></td></tr>
 <tr><td><a href="prometheus_vm_statistics_collector.md" class="module">prometheus_vm_statistics_collector</a></td></tr>
 <tr><td><a href="prometheus_vm_system_info_collector.md" class="module">prometheus_vm_system_info_collector</a></td></tr></table>
 

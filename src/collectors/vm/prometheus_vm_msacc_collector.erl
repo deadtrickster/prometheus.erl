@@ -14,88 +14,88 @@
 %%
 %% <ul>
 %%   <li>
-%%     `erlang_vm_msacc_aux_microseconds'<br/>
+%%     `erlang_vm_msacc_aux_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent handling auxiliary jobs.
+%%     Total time in seconds spent handling auxiliary jobs.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_msacc_check_io_microseconds'<br/>
+%%     `erlang_vm_msacc_check_io_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent checking for new I/O events.
+%%     Total time in seconds spent checking for new I/O events.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_msacc_emulator_microseconds'<br/>
+%%     `erlang_vm_msacc_emulator_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent executing Erlang processes.
+%%     Total time in seconds spent executing Erlang processes.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_msacc_gc_microseconds'<br/>
+%%     `erlang_vm_msacc_gc_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent doing garbage collection.
+%%     Total time in seconds spent doing garbage collection.
 %%     When extra states are enabled this is the time spent
 %%     doing non-fullsweep garbage collections.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_msacc_other_microseconds'<br/>
+%%     `erlang_vm_msacc_other_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent doing unaccounted things.
+%%     Total time in seconds spent doing unaccounted things.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_msacc_port_microseconds'<br/>
+%%     `erlang_vm_msacc_port_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent executing ports.
+%%     Total time in seconds spent executing ports.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_msacc_sleep_microseconds'<br/>
+%%     `erlang_vm_msacc_sleep_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent sleeping.
+%%     Total time in seconds spent sleeping.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_msacc_alloc_microseconds'<br/>
+%%     `erlang_vm_msacc_alloc_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent managing memory.
+%%     Total time in seconds spent managing memory.
 %%     Without extra states this time is spread out over all other states.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_msacc_bif_microseconds'<br/>
+%%     `erlang_vm_msacc_bif_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent in BIFs.
+%%     Total time in seconds spent in BIFs.
 %%     Without extra states this time is part of the 'emulator' state.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_msacc_busy_wait_microseconds'<br/>
+%%     `erlang_vm_msacc_busy_wait_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent busy waiting.
+%%     Total time in seconds spent busy waiting.
 %%     Without extra states this time is part of the 'other' state.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_msacc_ets_microseconds'<br/>
+%%     `erlang_vm_msacc_ets_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent executing ETS BIFs.
+%%     Total time in seconds spent executing ETS BIFs.
 %%     Without extra states this time is part of the 'emulator' state.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_msacc_gc_full_microseconds'<br/>
+%%     `erlang_vm_msacc_gc_full_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent doing fullsweep garbage collection.
+%%     Total time in seconds spent doing fullsweep garbage collection.
 %%     Without extra states this time is part of the 'gc' state.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_msacc_nif_microseconds'<br/>
+%%     `erlang_vm_msacc_nif_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent in NIFs.
+%%     Total time in seconds spent in NIFs.
 %%     Without extra states this time is part of the 'emulator' state.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_msacc_send_microseconds'<br/>
+%%     `erlang_vm_msacc_send_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent sending messages (processes only).
+%%     Total time in seconds spent sending messages (processes only).
 %%     Without extra states this time is part of the 'emulator' state.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_msacc_timers_microseconds'<br/>
+%%     `erlang_vm_msacc_timers_seconds_total'<br/>
 %%     Type: counter.<br/>
-%%     Time in microseconds spent managing timers.
+%%     Total time in seconds spent managing timers.
 %%     Without extra states this time is part of the 'other' state.
 %%   </li>
 %% </ul>
@@ -108,52 +108,52 @@
 %% Options are the same as MSAcc_Thread_State return type from
 %% <a href="http://erlang.org/doc/man/erlang.html#statistics_microstate_accounting">
 %%   erlang:statistics(microstate_accounting)
-%% </a>:
+%% </a> with `_seconds_total' as the suffix:
 %% <ul>
 %%   <li>
-%%     `aux' for `erlang_vm_msacc_aux_microseconds'.
+%%     `aux_seconds_total' for `erlang_vm_msacc_aux_seconds_total'.
 %%   </li>
 %%   <li>
-%%     `check_io' for `erlang_vm_msacc_check_io_microseconds'.
+%%     `check_io_seconds_total' for `erlang_vm_msacc_check_io_seconds_total'.
 %%   </li>
 %%   <li>
-%%     `emulator' for `erlang_vm_msacc_emulator_microseconds'.
+%%     `emulator_seconds_total' for `erlang_vm_msacc_emulator_seconds_total'.
 %%   </li>
 %%   <li>
-%%     `gc' for `erlang_vm_msacc_gc_microseconds'.
+%%     `gc_seconds_total' for `erlang_vm_msacc_gc_seconds_total'.
 %%   </li>
 %%   <li>
-%%     `other' for `erlang_vm_msacc_other_microseconds'.
+%%     `other_seconds_total' for `erlang_vm_msacc_other_seconds_total'.
 %%   </li>
 %%   <li>
-%%     `port' for `erlang_vm_msacc_port_microseconds'.
+%%     `port_seconds_total' for `erlang_vm_msacc_port_seconds_total'.
 %%   </li>
 %%   <li>
-%%     `sleep' for `erlang_vm_msacc_sleep_microseconds'.
+%%     `sleep_seconds_total' for `erlang_vm_msacc_sleep_seconds_total'.
 %%   </li>
 %%   <li>
-%%     `alloc' for `erlang_vm_msacc_alloc_microseconds'.
+%%     `alloc_seconds_total' for `erlang_vm_msacc_alloc_seconds_total'.
 %%   </li>
 %%   <li>
-%%     `bif' for `erlang_vm_msacc_bif_microseconds'.
+%%     `bif_seconds_total' for `erlang_vm_msacc_bif_seconds_total'.
 %%   </li>
 %%   <li>
-%%     `busy_wait' for `erlang_vm_msacc_busy_wait_microseconds'.
+%%     `busy_wait_seconds_total' for `erlang_vm_msacc_busy_wait_seconds_total'.
 %%   </li>
 %%   <li>
-%%     `ets' for `erlang_vm_msacc_ets_microseconds'.
+%%     `ets_seconds_total' for `erlang_vm_msacc_ets_seconds_total'.
 %%   </li>
 %%   <li>
-%%     `gc_full' for `erlang_vm_msacc_gc_full_microseconds'.
+%%     `gc_full_seconds_total' for `erlang_vm_msacc_gc_full_seconds_total'.
 %%   </li>
 %%   <li>
-%%     `nif' for `erlang_vm_msacc_nif_microseconds'.
+%%     `nif_seconds_total' for `erlang_vm_msacc_nif_seconds_total'.
 %%   </li>
 %%   <li>
-%%     `send' for `erlang_vm_msacc_send_microseconds'.
+%%     `send_seconds_total' for `erlang_vm_msacc_send_seconds_total'.
 %%   </li>
 %%   <li>
-%%     `timers' for `erlang_vm_msacc_timers_microseconds'.
+%%     `timers_seconds_total' for `erlang_vm_msacc_timers_seconds_total'.
 %%   </li>
 %% </ul>
 %%
@@ -206,69 +206,70 @@ metrics() ->
   Data = erlang:statistics(microstate_accounting),
   [
    %% Base states.
-   {aux_microseconds, counter,
-    "Time in microseconds spent handling auxiliary jobs.",
+   {aux_seconds_total, counter,
+    "Total time in seconds spent handling auxiliary jobs.",
     metric(aux, Data)},
-   {check_io_microseconds, counter,
-    "Time in microseconds spent checking for new I/O events.",
+   {check_io_seconds_total, counter,
+    "Total time in seconds spent checking for new I/O events.",
     metric(check_io, Data)},
-   {emulator_microseconds, counter,
-    "Time in microseconds spent executing Erlang processes.",
+   {emulator_seconds_total, counter,
+    "Total time in seconds spent executing Erlang processes.",
     metric(emulator, Data)},
-   {gc_microseconds, counter,
-    "Time in microseconds spent doing garbage collection. "
+   {gc_seconds_total, counter,
+    "Total time in seconds spent doing garbage collection. "
     "When extra states are enabled this is the time spent "
     "doing non-fullsweep garbage collections.",
     metric(gc, Data)},
-   {other_microseconds, counter,
-    "Time in microseconds spent doing unaccounted things.",
+   {other_seconds_total, counter,
+    "Total time in seconds spent doing unaccounted things.",
     metric(other, Data)},
-   {port_microseconds, counter,
-    "Time in microseconds spent executing ports.",
+   {port_seconds_total, counter,
+    "Total time in seconds spent executing ports.",
     metric(port, Data)},
-   {sleep_microseconds, counter,
-    "Time in microseconds spent sleeping.",
+   {sleep_seconds_total, counter,
+    "Total time in seconds spent sleeping.",
     metric(sleep, Data)},
    %% Extra states.
-   {alloc_microseconds, counter,
-    "Time in microseconds spent managing memory. "
+   {alloc_seconds_total, counter,
+    "Total time in seconds spent managing memory. "
     "Without extra states this time is spread out over all other states.",
     metric(alloc, Data)},
-   {bif_microseconds, counter,
-    "Time in microseconds spent in BIFs. "
+   {bif_seconds_total, counter,
+    "Total time in seconds spent in BIFs. "
     "Without extra states this time is part of the 'emulator' state.",
     metric(bif, Data)},
-   {busy_wait_microseconds, counter,
-    "Time in microseconds spent busy waiting. "
+   {busy_wait_seconds_total, counter,
+    "Total time in seconds spent busy waiting. "
     "Without extra states this time is part of the 'other' state.",
     metric(busy_wait, Data)},
-   {ets_microseconds, counter,
-    "Time in microseconds spent executing ETS BIFs. "
+   {ets_seconds_total, counter,
+    "Total time in seconds spent executing ETS BIFs. "
     "Without extra states this time is part of the 'emulator' state.",
     metric(ets, Data)},
-   {gc_full_microseconds, counter,
-    "Time in microseconds spent doing fullsweep garbage collection. "
+   {gc_full_seconds_total, counter,
+    "Total time in seconds spent doing fullsweep garbage collection. "
     "Without extra states this time is part of the 'gc' state.",
     metric(gc_full, Data)},
-   {nif_microseconds, counter,
-    "Time in microseconds spent in NIFs. "
+   {nif_seconds_total, counter,
+    "Total time in seconds spent in NIFs. "
     "Without extra states this time is part of the 'emulator' state.",
     metric(nif, Data)},
-   {send_microseconds, counter,
-    "Time in microseconds spent sending messages (processes only). "
+   {send_seconds_total, counter,
+    "Total time in seconds spent sending messages (processes only). "
     "Without extra states this time is part of the 'emulator' state.",
     metric(send, Data)},
-   {timers_microseconds, counter,
-    "Time in microseconds spent managing timers. "
+   {timers_seconds_total, counter,
+    "Total time in seconds spent managing timers. "
     "Without extra states this time is part of the 'other' state.",
     metric(timers, Data)}
   ].
 
 metric(Counter, Data) ->
+    SecondAsNative = erlang:convert_time_unit(1, seconds, native),
     [
         {
             [{type, Type}, {id, ID}],
-            erlang:convert_time_unit(Value, perf_counter, microsecond)
+            erlang:convert_time_unit(Value, perf_counter, native) / SecondAsNative
         }
     || #{type := Type, id := ID, counters := #{Counter := Value}} <- Data].
 

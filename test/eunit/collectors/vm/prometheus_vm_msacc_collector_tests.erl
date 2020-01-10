@@ -16,22 +16,22 @@ test_default_metrics(_) ->
   Metrics = prometheus_text_format:format(),
   [
    %% Base.
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_aux")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_check_io")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_emulator")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_gc")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_other")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_port")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_sleep")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_aux_microseconds")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_check_io_microseconds")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_emulator_microseconds")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_gc_microseconds")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_other_microseconds")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_port_microseconds")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_sleep_microseconds")),
    %% Extra.
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_alloc")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_bif")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_busy_wait")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_ets")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_gc_full")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_nif")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_send")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_timers"))
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_alloc_microseconds")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_bif_microseconds")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_busy_wait_microseconds")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_ets_microseconds")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_gc_full_microseconds")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_nif_microseconds")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_send_microseconds")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_timers_microseconds"))
   ].
 
 
@@ -40,43 +40,43 @@ test_all_metrics(_) ->
     application:set_env(prometheus, vm_msacc_collector_metrics,
                         [
                          %% Base.
-                         aux,
-                         check_io,
-                         emulator,
-                         gc,
-                         other,
-                         port,
-                         sleep,
+                         aux_microseconds,
+                         check_io_microseconds,
+                         emulator_microseconds,
+                         gc_microseconds,
+                         other_microseconds,
+                         port_microseconds,
+                         sleep_microseconds,
                          %% Extra.
-                         alloc,
-                         bif,
-                         busy_wait,
-                         ets,
-                         gc_full,
-                         nif,
-                         send,
-                         timers
+                         alloc_microseconds,
+                         bif_microseconds,
+                         busy_wait_microseconds,
+                         ets_microseconds,
+                         gc_full_microseconds,
+                         nif_microseconds,
+                         send_microseconds,
+                         timers_microseconds
                         ]),
     prometheus_registry:register_collector(prometheus_vm_msacc_collector),
     Metrics = prometheus_text_format:format(),
     [
      %% Base.
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_aux")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_check_io")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_emulator")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_gc")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_other")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_port")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_sleep")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_aux_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_check_io_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_emulator_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_gc_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_other_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_port_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_sleep_microseconds")),
      %% Extra.
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_alloc")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_bif")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_busy_wait")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_ets")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_gc_full")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_nif")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_send")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_timers"))
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_alloc_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_bif_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_busy_wait_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_ets_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_gc_full_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_nif_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_send_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_timers_microseconds"))
     ]
 
   after
@@ -88,32 +88,32 @@ test_custom_metrics(_) ->
   try
     application:set_env(prometheus, vm_msacc_collector_metrics,
                         [
-                         aux,
-                         emulator,
-                         gc,
-                         gc_full,
-                         nif
+                         aux_microseconds,
+                         emulator_microseconds,
+                         gc_microseconds,
+                         gc_full_microseconds,
+                         nif_microseconds
                         ]),
     prometheus_registry:register_collector(prometheus_vm_msacc_collector),
     Metrics = prometheus_text_format:format(),
     [
      %% Base.
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_aux")),
-     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_check_io")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_emulator")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_gc")),
-     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_other")),
-     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_port")),
-     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_sleep")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_aux_microseconds")),
+     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_check_io_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_emulator_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_gc_microseconds")),
+     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_other_microseconds")),
+     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_port_microseconds")),
+     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_sleep_microseconds")),
      %% Extra.
-     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_alloc")),
-     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_bif")),
-     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_busy_wait")),
-     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_ets")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_gc_full")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_nif")),
-     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_send")),
-     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_timers"))
+     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_alloc_microseconds")),
+     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_bif_microseconds")),
+     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_busy_wait_microseconds")),
+     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_ets_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_gc_full_microseconds")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_nif_microseconds")),
+     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_send_microseconds")),
+     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_msacc_timers_microseconds"))
     ]
 
   after
@@ -131,5 +131,5 @@ test_global_labels(_) ->
     application:unset_env(prometheus, global_labels)
   end,
   [
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_aux{node="))
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_msacc_aux_microseconds{node="))
   ].

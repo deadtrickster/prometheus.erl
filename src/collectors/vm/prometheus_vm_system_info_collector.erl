@@ -315,7 +315,11 @@ collect_allocator_metrics() ->
         [
             [
                 allocator_metric(Alloc, Instance, Kind, Key, KindInfo)
-            || Key <- [blocks, blocks_size, carriers, carriers_size]]
+            || Key <- [carriers, carriers_size]] ++
+            [
+                allocator_blocks_metric(Alloc, Instance, Kind, Key, KindInfo)
+            || Key <- [count, size]]
+
         || {Kind, KindInfo} <- Info, (Kind =:= mbcs) orelse (Kind =:= mbcs_pool) orelse (Kind =:= sbcs)]
     end || {{Alloc, Instance}, Info} <- allocators()]),
     prometheus_model_helpers:gauge_metrics(Metrics).
@@ -334,3 +338,31 @@ allocators() ->
         Allocs <- [erlang:system_info({allocator, A})],
         Allocs =/= false,
         {_, N, Props} <- Allocs].
+
+allocator_blocks_metric(Alloc, Instance, Kind, count, KindInfo) ->
+  Count = case lists:keyfind(blocks, 1, KindInfo) of
+            {blocks, L} when is_list(L) ->
+              sum_alloc_block_list(count, L, 0);
+            Tuple ->
+              element(2, Tuple)
+          end,
+  {[{alloc, Alloc}, {instance_no, Instance}, {kind, Kind}, {usage, blocks}], Count};
+allocator_blocks_metric(Alloc, Instance, Kind, size, KindInfo) ->
+    Size = case lists:keyfind(blocks_size, 1, KindInfo) of
+               false ->
+                   sum_alloc_block_list(size, element(2, lists:keyfind(blocks, 1, KindInfo)), 0);
+               Tuple ->
+                   element(2, Tuple)
+           end,
+    {[{alloc, Alloc}, {instance_no, Instance}, {kind, Kind}, {usage, blocks_size}], Size}.
+
+sum_alloc_block_list(Type, [{_, L} | Rest], Acc) ->
+    Value = case lists:keyfind(Type, 1, L) of
+              false -> 0;
+              Tuple -> element(2, Tuple)
+            end,
+    sum_alloc_block_list(Type, Rest, Value + Acc);
+sum_alloc_block_list(Type, [_ | Rest], Acc) ->
+    sum_alloc_block_list(Type, Rest, Acc);
+sum_alloc_block_list(_Type, [], Acc) ->
+    Acc.

@@ -232,9 +232,9 @@ prometheus_vm_system_info_collector
 
 ### Configuration
 
-All 3d-party libraries should be configured via `prometheus` app env.
+All 3rd-party libraries should be configured via `prometheus` app env.
 
-Exproters are responsible for maintianing scrape endpoint.
+Exporters are responsible for maintaining scrape endpoint.
 Exporters usually tightly coupled with web server and are singletons. They should understand these keys:
  - `path` - url for scraping;
  - `format` - scrape format as module name i.e. `prometheus_text_format` or `prometheus_protobuf_format`.

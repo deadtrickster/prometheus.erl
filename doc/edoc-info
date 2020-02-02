@@ -6,5 +6,6 @@
           prometheus_mnesia_collector,prometheus_model_helpers,
           prometheus_protobuf_format,prometheus_registry,prometheus_summary,
           prometheus_text_format,prometheus_time,prometheus_vm_dist_collector,
-          prometheus_vm_memory_collector,prometheus_vm_statistics_collector,
+          prometheus_vm_memory_collector,prometheus_vm_msacc_collector,
+          prometheus_vm_statistics_collector,
           prometheus_vm_system_info_collector]}.

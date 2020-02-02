@@ -89,6 +89,10 @@ used for asynchronous driver calls.
 Type: boolean.<br />
 1 if time correction is enabled, otherwise 0.
 
+* `erlang_vm_wordsize_bytes`<br />
+Type: gauge.<br />
+The size of Erlang term words in bytes.
+
 * `erlang_vm_atom_count`<br />
 Type: gauge.<br />
 The number of atom currently existing at the local node.
@@ -142,6 +146,8 @@ erlang:system_info/1
 * `thread_pool_size` for `erlang_vm_thread_pool_size`.
 
 * `time_correction` for `erlang_vm_time_correction`.
+
+* `wordsize_bytes` for `erlang_vm_wordsize_bytes`.
 
 * `atom_count` for `erlang_vm_atom_count`.
 

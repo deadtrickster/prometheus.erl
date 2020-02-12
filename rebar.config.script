@@ -10,5 +10,8 @@ case erlang:function_exported(rebar3, main, 1) of
     true -> % rebar3
         TravisConfig;
     false -> % rebar 2.x or older
-        lists:keystore(proto_opts, 1, TravisConfig, {proto_opts, [{src_dirs, []}]})
+        TravisConfig2 = lists:keystore(proto_opts, 1, TravisConfig, {proto_opts, [{src_dirs, []}]}),
+
+        % rebar3 plugins won't work in rebar2
+        lists:keydelete(plugins, 1, TravisConfig2)
 end.

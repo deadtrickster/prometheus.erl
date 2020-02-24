@@ -30,6 +30,7 @@ __Version:__ 4.5.0
 - [OS process info Collector](https://hex.pm/packages/prometheus_process_collector) (linux, freebsd, macos)
 - [Phoenix Instrumenter](https://hex.pm/packages/prometheus_phoenix)
 - [RabbitMQ Exporter](https://github.com/deadtrickster/prometheus_rabbitmq_exporter).
+- [DIAMETER Exporter](https://github.com/travelping/prometheus_diameter_collector).
 
 ## Dashboards
 

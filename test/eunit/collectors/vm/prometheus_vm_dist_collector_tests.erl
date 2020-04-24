@@ -35,7 +35,8 @@ test_no_distribution(_) ->
    ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_dist_proc_message_queue_len")),
    ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_dist_proc_reductions")),
    ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_dist_proc_status")),
-   ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_dist_node_state"))
+   ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_dist_node_state")),
+   ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_dist_node_queue_size_bytes"))
   ].
 
 
@@ -81,7 +82,8 @@ test_default_metrics(_) ->
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_proc_message_queue_len{peer")),
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_proc_reductions{peer")),
    ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_proc_status{peer")),
-   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_node_state{peer"))
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_node_state{peer")),
+   ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_node_queue_size_bytes{peer"))
   ].
 
 
@@ -112,7 +114,8 @@ test_all_metrics(_) ->
                          proc_message_queue_len,
                          proc_reductions,
                          proc_status,
-                         node_state
+                         node_state,
+                         node_queue_size_bytes
                         ]),
     prometheus_registry:register_collector(prometheus_vm_dist_collector),
     Metrics = prometheus_text_format:format(),
@@ -140,7 +143,8 @@ test_all_metrics(_) ->
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_proc_message_queue_len")),
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_proc_reductions")),
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_proc_status")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_node_state"))
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_node_state")),
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_node_queue_size_bytes"))
     ]
 
   after
@@ -188,7 +192,8 @@ test_custom_metrics(_) ->
      ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_dist_proc_message_queue_len")),
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_proc_reductions")),
      ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_proc_status")),
-     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_node_state"))
+     ?_assertMatch({match, _}, re:run(Metrics, "erlang_vm_dist_node_state")),
+     ?_assertMatch(nomatch, re:run(Metrics, "erlang_vm_dist_node_queue_size_bytes"))
     ]
 
   after

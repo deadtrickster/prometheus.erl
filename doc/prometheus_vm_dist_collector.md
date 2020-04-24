@@ -128,6 +128,10 @@ The current state of the distribution link.<br />
 The state is represented as a numerical value where `pending=1`,
 `up_pending=2` and `up=3`.
 
+* `erlang_vm_dist_node_queue_size_bytes`<br/>
+Type: gauge.<br/>
+The number of bytes in the output distribution queue.<br/>
+This queue sits between the Erlang code and the port driver.
 
 
 ### <a name="Configuration">Configuration</a> ###
@@ -185,5 +189,6 @@ Available options:
 
 * `node_state` for `erlang_vm_dist_node_state`.
 
+* `node_queue_size_bytes` for `erlang_vm_dist_node_queue_size_bytes`.
 
 By default all metrics are enabled.

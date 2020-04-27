@@ -4,7 +4,7 @@
 
 Copyright (c) 2016,2017 Ilya Khaprov <<i.khaprov@gmail.com>>.
 
-__Version:__ 4.5.0
+__Version:__ 4.6.0
 
 [![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)](https://hex.pm/packages/prometheus)
 [![Hex.pm](https://img.shields.io/hexpm/dt/prometheus.svg?maxAge=2592000)](https://hex.pm/packages/prometheus)
@@ -30,7 +30,6 @@ __Version:__ 4.5.0
 - [OS process info Collector](https://hex.pm/packages/prometheus_process_collector) (linux, freebsd, macos)
 - [Phoenix Instrumenter](https://hex.pm/packages/prometheus_phoenix)
 - [RabbitMQ Exporter](https://github.com/deadtrickster/prometheus_rabbitmq_exporter).
-- [DIAMETER Exporter](https://github.com/travelping/prometheus_diameter_collector).
 
 ## Dashboards
 

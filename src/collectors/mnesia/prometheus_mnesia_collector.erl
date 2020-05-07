@@ -47,7 +47,7 @@
 %%     Total number of transaction restarts.
 %%   </li>
 %%   <li>
-%%     `erlang_mnesia_memory_usage'<br/>
+%%     `erlang_mnesia_memory_usage_bytes'<br/>
 %%     Type: counter.<br/>
 %%     Total number of bytes allocated by all mnesia tables.
 %%   </li>
@@ -66,8 +66,8 @@
 %% - `transaction_failures' for `erlang_mnesia_failed_transactions';
 %% - `transaction_commits' for `erlang_mnesia_committed_transactions';
 %% - `transaction_log_writes' for `erlang_mnesia_logged_transactions';
-%% - `transaction_restarts' for `erlang_mnesia_restarted_transactions'.
-%% - `memory_usage' for `erlang_mnesia_memory_usage'.
+%% - `transaction_restarts' for `erlang_mnesia_restarted_transactions';
+%% - `memory_usage_bytes' for `erlang_mnesia_memory_usage_bytes'.
 %%
 %% By default all metrics are enabled.
 %%
@@ -147,7 +147,7 @@ metrics(EnabledMetrics) ->
    {restarted_transactions, counter,
     "Total number of transaction restarts.",
     fun() -> mnesia:system_info(transaction_restarts) end},
-   {memory_usage, counter,
+   {memory_usage_bytes, counter,
     "Total number of bytes allocated by all mnesia tables",
     fun() -> MemoryUsage end}].
 

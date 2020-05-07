@@ -51,7 +51,7 @@ Type: counter.<br />
 Total number of transaction restarts.
 
 * `erlang_mnesia_memory_usage_bytes`<br/>
-Type: counter.<br/>
+Type: gauge.<br/>
 Total number of bytes allocated by all mnesia tables.
 
 

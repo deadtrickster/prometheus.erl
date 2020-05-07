@@ -48,7 +48,7 @@
 %%   </li>
 %%   <li>
 %%     `erlang_mnesia_memory_usage_bytes'<br/>
-%%     Type: counter.<br/>
+%%     Type: gauge.<br/>
 %%     Total number of bytes allocated by all mnesia tables.
 %%   </li>
 %% </ul>
@@ -147,7 +147,7 @@ metrics(EnabledMetrics) ->
    {restarted_transactions, counter,
     "Total number of transaction restarts.",
     fun() -> mnesia:system_info(transaction_restarts) end},
-   {memory_usage_bytes, counter,
+   {memory_usage_bytes, gauge,
     "Total number of bytes allocated by all mnesia tables",
     fun() -> MemoryUsage end}].
 
@@ -185,8 +185,8 @@ metric_enabled(Name, Metrics) ->
   Metrics =:= all orelse lists:member(Name, Metrics).
 
 get_memory_usage() ->
-    WordSize = erlang:system_info(wordsize),
-    Calculator = fun(Tab, Sum) ->
-                    (mnesia:table_info(Tab, memory) * WordSize) + Sum
-                 end,
-    lists:foldl(Calculator, 0, mnesia:system_info(tables)).
+  WordSize = erlang:system_info(wordsize),
+  Calculator = fun(Tab, Sum) ->
+                 mnesia:table_info(Tab, memory) + Sum
+               end,
+  lists:foldl(Calculator, 0, mnesia:system_info(tables)) * WordSize.

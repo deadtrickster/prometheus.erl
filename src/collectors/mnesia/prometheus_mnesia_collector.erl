@@ -46,6 +46,11 @@
 %%     Type: counter.<br/>
 %%     Total number of transaction restarts.
 %%   </li>
+%%   <li>
+%%     `erlang_mnesia_memory_usage_bytes'<br/>
+%%     Type: gauge.<br/>
+%%     Total number of bytes allocated by all mnesia tables.
+%%   </li>
 %% </ul>
 %%
 %% ==Configuration==
@@ -61,7 +66,8 @@
 %% - `transaction_failures' for `erlang_mnesia_failed_transactions';
 %% - `transaction_commits' for `erlang_mnesia_committed_transactions';
 %% - `transaction_log_writes' for `erlang_mnesia_logged_transactions';
-%% - `transaction_restarts' for `erlang_mnesia_restarted_transactions'.
+%% - `transaction_restarts' for `erlang_mnesia_restarted_transactions';
+%% - `memory_usage_bytes' for `erlang_mnesia_memory_usage_bytes'.
 %%
 %% By default all metrics are enabled.
 %%
@@ -115,6 +121,7 @@ add_metric_family({Name, Type, Help, Metrics}, Callback) ->
 
 metrics(EnabledMetrics) ->
   {Participants, Coordinators} = get_tm_info(EnabledMetrics),
+  MemoryUsage = get_memory_usage(),
 
   [{held_locks, gauge,
     "Number of held locks.",
@@ -139,7 +146,10 @@ metrics(EnabledMetrics) ->
     fun() -> mnesia:system_info(transaction_log_writes) end},
    {restarted_transactions, counter,
     "Total number of transaction restarts.",
-    fun() -> mnesia:system_info(transaction_restarts) end}].
+    fun() -> mnesia:system_info(transaction_restarts) end},
+   {memory_usage_bytes, gauge,
+    "Total number of bytes allocated by all mnesia tables",
+    fun() -> MemoryUsage end}].
 
 %%====================================================================
 %% Private Parts
@@ -173,3 +183,10 @@ enabled_metrics() ->
 
 metric_enabled(Name, Metrics) ->
   Metrics =:= all orelse lists:member(Name, Metrics).
+
+get_memory_usage() ->
+  WordSize = erlang:system_info(wordsize),
+  Calculator = fun(Tab, Sum) ->
+                 mnesia:table_info(Tab, memory) + Sum
+               end,
+  lists:foldl(Calculator, 0, mnesia:system_info(tables)) * WordSize.

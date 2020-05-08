@@ -50,6 +50,9 @@ Number of transactions logged.
 Type: counter.<br />
 Total number of transaction restarts.
 
+* `erlang_mnesia_memory_usage_bytes`<br/>
+Type: gauge.<br/>
+Total number of bytes allocated by all mnesia tables.
 
 
 ### <a name="Configuration">Configuration</a> ###
@@ -65,6 +68,7 @@ Available options:
 - `transaction_failures` for `erlang_mnesia_failed_transactions`;
 - `transaction_commits` for `erlang_mnesia_committed_transactions`;
 - `transaction_log_writes` for `erlang_mnesia_logged_transactions`;
-- `transaction_restarts` for `erlang_mnesia_restarted_transactions`.
+- `transaction_restarts` for `erlang_mnesia_restarted_transactions`;
+- `memory_usage_bytes` for `erlang_mnesia_memory_usage_bytes`.
 
 By default all metrics are enabled.

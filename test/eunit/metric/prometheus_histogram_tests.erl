@@ -69,6 +69,10 @@ test_errors(_) ->
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_histogram:reset(db_query_duration, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_histogram:clear(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_histogram:clear(db_query_duration, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_histogram:value(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_histogram:value(db_query_duration, [repo, db])),
@@ -163,9 +167,12 @@ test_observe(_) ->
   Value = prometheus_histogram:value(http_request_duration_milliseconds, [get]),
   prometheus_histogram:reset(http_request_duration_milliseconds, [get]),
   RValue = prometheus_histogram:value(http_request_duration_milliseconds, [get]),
+  prometheus_histogram:clear(http_request_duration_milliseconds, [get]),
+  CValue = prometheus_histogram:value(http_request_duration_milliseconds, [get]),
   [?_assertMatch({[3, 4, 2, 2, 3, 1], Sum}
                  when Sum > 6974.5 andalso Sum < 6974.55, Value),
-   ?_assertEqual({[0, 0, 0, 0, 0, 0], 0}, RValue)].
+   ?_assertEqual({[0, 0, 0, 0, 0, 0], 0}, RValue),
+   ?_assertEqual(undefined, CValue)].
 
 test_observe_duration_seconds(_) ->
   prometheus_histogram:new([{name, fun_duration_seconds},

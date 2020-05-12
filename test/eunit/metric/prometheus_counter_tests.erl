@@ -56,6 +56,10 @@ test_errors(_) ->
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_counter:reset(db_query_duration, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_counter:clear(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_counter:clear(db_query_duration, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_counter:value(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_counter:value(db_query_duration, [repo, db])),
@@ -75,8 +79,11 @@ test_inc(_) ->
   Value = prometheus_counter:value(http_requests_total, [get]),
   prometheus_counter:reset(http_requests_total, [get]),
   RValue = prometheus_counter:value(http_requests_total, [get]),
+  prometheus_counter:clear(http_requests_total, [get]),
+  CValue = prometheus_counter:value(http_requests_total, [get]),
   [?_assertMatch(_ when Value > 7.4 andalso Value < 7.6, Value),
-   ?_assertEqual(0, RValue)].
+   ?_assertEqual(0, RValue),
+   ?_assertEqual(undefined, CValue)].
 
 test_deregister(_) ->
   prometheus_counter:new([{name, http_requests_total},

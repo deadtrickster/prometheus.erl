@@ -62,6 +62,10 @@ test_errors(_) ->
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_summary:reset(db_query_duration, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_summary:clear(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_summary:clear(db_query_duration, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_summary:value(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_summary:value(db_query_duration, [repo, db])),
@@ -88,8 +92,11 @@ test_observe(_) ->
   Value = prometheus_summary:value(orders_summary, [electronics]),
   prometheus_summary:reset(orders_summary, [electronics]),
   RValue = prometheus_summary:value(orders_summary, [electronics]),
+  prometheus_summary:clear(orders_summary, [electronics]),
+  CValue = prometheus_summary:value(orders_summary, [electronics]),
   [?_assertMatch({4, Sum} when Sum > 29.1 andalso Sum < 29.3, Value),
-   ?_assertEqual({0, 0}, RValue)].
+   ?_assertEqual({0, 0}, RValue),
+   ?_assertEqual(undefined, CValue)].
 
 test_observe_duration_seconds(_) ->
   prometheus_summary:new([{name, <<"fun_duration_seconds">>},

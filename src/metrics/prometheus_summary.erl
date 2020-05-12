@@ -44,6 +44,9 @@
          reset/1,
          reset/2,
          reset/3,
+         clear/1,
+         clear/2,
+         clear/3,
          value/1,
          value/2,
          value/3,
@@ -255,6 +258,29 @@ reset(Registry, Name, LabelValues) ->
     _ -> false
   end.
 
+%% @equiv clear(default, Name, [])
+clear(Name) ->
+  clear(default, Name, []).
+
+%% @equiv clear(default, Name, LabelValues)
+clear(Name, LabelValues) ->
+  clear(default, Name, LabelValues).
+
+%% @doc Clear the value of the summary identified by `Registry', `Name'
+%% and `LabelValues'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if summary with name `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
+clear(Registry, Name, LabelValues) ->
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  case ets:select_delete(?TABLE, clear_select(Registry, Name, LabelValues)) of
+    0 -> false;
+    _ -> true
+  end.
+
 %% @equiv value(default, Name, [])
 value(Name) ->
   value(default, Name, []).
@@ -336,6 +362,9 @@ collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
 
 deregister_select(Registry, Name) ->
   [{{{Registry, Name, '_', '_'}, '_', '_', '_'}, [], [true]}].
+
+clear_select(Registry, Name, LabelValues) ->
+  [{{{Registry, Name, LabelValues, '_'}, '_', '_', '_'}, [], [true]}].
 
 validate_summary_spec(Spec) ->
   Labels = prometheus_metric_spec:labels(Spec),

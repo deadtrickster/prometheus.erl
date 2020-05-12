@@ -84,6 +84,10 @@ test_errors(_) ->
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_gauge:reset(with_label, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_gauge:clear(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_gauge:clear(with_label, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_gauge:value(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_gauge:value(with_label, [repo, db])),
@@ -101,9 +105,12 @@ test_set(_) ->
   Value1 = prometheus_gauge:value(pool_size, [mongodb]),
   prometheus_gauge:reset(pool_size, [mongodb]),
   RValue = prometheus_gauge:value(pool_size, [mongodb]),
+  prometheus_gauge:clear(pool_size, [mongodb]),
+  CValue = prometheus_gauge:value(pool_size, [mongodb]),
   [?_assertEqual(100, Value),
    ?_assertEqual(105, Value1),
-   ?_assertEqual(0, RValue)].
+   ?_assertEqual(0, RValue),
+   ?_assertEqual(undefined, CValue)].
 
 test_inc(_) ->
   prometheus_gauge:new([{name, pool_size}, {labels, [client]}, {help, ""}]),

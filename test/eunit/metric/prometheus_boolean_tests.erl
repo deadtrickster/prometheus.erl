@@ -60,6 +60,10 @@ test_errors(_) ->
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_boolean:reset(with_label, [repo, db])),
    ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_boolean:clear(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_boolean:clear(with_label, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_boolean:value(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_boolean:value(with_label, [repo, db])),
@@ -85,9 +89,12 @@ test_set(_) ->
   Value1 = prometheus_boolean:value(fuse_state, [mongodb]),
   prometheus_boolean:reset(fuse_state, [mongodb]),
   RValue = prometheus_boolean:value(fuse_state, [mongodb]),
+  prometheus_boolean:clear(fuse_state, [mongodb]),
+  CValue = prometheus_boolean:value(fuse_state, [mongodb]),
   [?_assertEqual(true, Value),
    ?_assertEqual(false, Value1),
-   ?_assertEqual(false, RValue)].
+   ?_assertEqual(false, RValue),
+   ?_assertEqual(undefined, CValue)].
 
 test_toggle(_) ->
   prometheus_boolean:new([{name, fuse_state}, {labels, [name]}, {help, ""}]),

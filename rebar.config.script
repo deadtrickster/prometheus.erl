@@ -8,7 +8,7 @@ end,
 
 case erlang:function_exported(rebar3, main, 1) of
     true -> % rebar3
-        TravisConfig;
+        lists:keystore(plugins, 1, TravisConfig, {plugins, [{rebar3_archive_plugin, "0.0.1"}]});
     false -> % rebar 2.x or older
         lists:keystore(proto_opts, 1, TravisConfig, {proto_opts, [{src_dirs, []}]})
 end.

@@ -296,7 +296,7 @@ values(Registry, Name) ->
       MFValues = load_all_values(Registry, Name),
       ReducedMap = lists:foldl(
         fun([L, C, IS, FS], ResAcc) ->
-          {PrevCount, PrevSum} = maps:get(L, ResAcc, {0,0}),
+          {PrevCount, PrevSum} = maps:get(L, ResAcc, {0, 0}),
           ResAcc#{L => {PrevCount + C, PrevSum + IS + FS}}
         end,
       #{},
@@ -333,7 +333,7 @@ collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
   MFValues = load_all_values(Registry, Name),
   ReducedMap = lists:foldl(
         fun([L, C, IS, FS], ResAcc) ->
-          {PrevCount, PrevSum} = maps:get(L, ResAcc, {0,0}),
+          {PrevCount, PrevSum} = maps:get(L, ResAcc, {0, 0}),
           ResAcc#{L => {PrevCount + C, PrevSum + IS + FS}}
         end,
       #{},

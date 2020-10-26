@@ -122,6 +122,8 @@ add_metric_family({Name, Type, Help, Metrics}, Callback) ->
 metrics(EnabledMetrics) ->
   {Participants, Coordinators} = get_tm_info(EnabledMetrics),
   MemoryUsage = get_memory_usage(),
+  TablewiseMemoryUsage = get_tablewise_memory_usage(),
+  TablewiseSize = get_tablewise_size(),
 
   [{held_locks, gauge,
     "Number of held locks.",
@@ -149,7 +151,14 @@ metrics(EnabledMetrics) ->
     fun() -> mnesia:system_info(transaction_restarts) end},
    {memory_usage_bytes, gauge,
     "Total number of bytes allocated by all mnesia tables",
-    fun() -> MemoryUsage end}].
+    fun() -> MemoryUsage end},
+   {tablewise_memory_usage_bytes, gauge,
+    "Number of bytes allocated per mnesia table",
+    fun() -> TablewiseMemoryUsage end},
+   {tablewise_size, gauge,
+    "Number of rows present per table",
+    fun() -> TablewiseSize end}
+    ].
 
 %%====================================================================
 %% Private Parts
@@ -190,3 +199,18 @@ get_memory_usage() ->
                  mnesia:table_info(Tab, memory) + Sum
                end,
   lists:foldl(Calculator, 0, mnesia:system_info(tables)) * WordSize.
+
+get_tablewise_memory_usage() ->
+  WordSize = erlang:system_info(wordsize),
+  Calculator =
+    fun(Tab, Acc) ->
+      [{[{table, Tab}], mnesia:table_info(Tab, memory) * WordSize} | Acc]
+    end,
+  lists:foldl(Calculator, [], mnesia:system_info(tables)).
+
+get_tablewise_size() ->
+  Calculator =
+    fun(Tab, Acc) ->
+      [{[{table, Tab}], mnesia:table_info(Tab, size)} | Acc]
+    end,
+  lists:foldl(Calculator, [], mnesia:system_info(tables)).

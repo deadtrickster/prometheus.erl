@@ -294,12 +294,21 @@ values(Registry, Name) ->
       DU = prometheus_metric:mf_duration_unit(MF),
       Labels = prometheus_metric:mf_labels(MF),
       MFValues = load_all_values(Registry, Name),
-      [begin
-         {Count, Sum} = reduce_label_values(LabelValues, MFValues),
-         {lists:zip(Labels, LabelValues), Count,
-          prometheus_time:maybe_convert_to_du(DU, Sum)}
-       end ||
-        LabelValues <- collect_unique_labels(MFValues)]
+      ReducedMap = lists:foldl(
+        fun([L, C, IS, FS], ResAcc) ->
+          {PrevCount, PrevSum} = maps:get(L, ResAcc, {0, 0}),
+          ResAcc#{L => {PrevCount + C, PrevSum + IS + FS}}
+        end,
+      #{},
+      MFValues),
+      ReducedMapList = lists:sort(maps:to_list(ReducedMap)),
+      lists:foldr(
+        fun({LabelValues, {Count, Sum}}, Acc) ->
+          [{lists:zip(Labels, LabelValues), Count,
+          prometheus_time:maybe_convert_to_du(DU, Sum)} | Acc]
+        end,
+        [],
+      ReducedMapList)
   end.
 
 %%====================================================================
@@ -322,13 +331,22 @@ collect_mf(Registry, Callback) ->
 %% @private
 collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
   MFValues = load_all_values(Registry, Name),
-  [begin
-     {Count, Sum} = reduce_label_values(LabelValues, MFValues),
-     prometheus_model_helpers:summary_metric(
-       CLabels ++ lists:zip(Labels, LabelValues), Count,
-       prometheus_time:maybe_convert_to_du(DU, Sum))
-   end ||
-    LabelValues <- collect_unique_labels(MFValues)].
+  ReducedMap = lists:foldl(
+        fun([L, C, IS, FS], ResAcc) ->
+          {PrevCount, PrevSum} = maps:get(L, ResAcc, {0, 0}),
+          ResAcc#{L => {PrevCount + C, PrevSum + IS + FS}}
+        end,
+      #{},
+      MFValues),
+  ReducedMapList = lists:sort(maps:to_list(ReducedMap)),
+  lists:foldr(
+    fun({LabelValues, {Count, Sum}}, Acc) ->
+      [prometheus_model_helpers:summary_metric(
+      CLabels ++ lists:zip(Labels, LabelValues), Count,
+      prometheus_time:maybe_convert_to_du(DU, Sum)) | Acc]
+    end,
+    [],
+  ReducedMapList).
 
 %%====================================================================
 %% Private Parts
@@ -370,13 +388,6 @@ key(Registry, Name, LabelValues) ->
   X = erlang:system_info(scheduler_id),
   Rnd = X band (?WIDTH-1),
   {Registry, Name, LabelValues, Rnd}.
-
-collect_unique_labels(MFValues) ->
-  lists:usort([L || [L, _, _, _] <- MFValues]).
-
-reduce_label_values(Labels, MFValues) ->
-  {lists:sum([C || [L, C, _, _] <- MFValues, L == Labels]),
-   lists:sum([IS + FS || [L, _, IS, FS] <- MFValues, L == Labels])}.
 
 reduce_values(Values) ->
   {lists:sum([C || [C, _, _] <- Values]),

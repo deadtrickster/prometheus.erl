@@ -157,7 +157,13 @@ metrics(EnabledMetrics) ->
     fun() -> TablewiseMemoryUsage end},
    {tablewise_size, gauge,
     "Number of rows present per table",
-    fun() -> TablewiseSize end}
+    fun() -> TablewiseSize end},
+    {known_node_count, gauge,
+    "Count of known mnesia nodes",
+    fun() -> length(mnesia:system_info(db_nodes)) end},
+    {running_node_count, gauge,
+    "Count of running mnesia nodes",
+    fun() -> length(mnesia:system_info(running_db_nodes)) end}
     ].
 
 %%====================================================================

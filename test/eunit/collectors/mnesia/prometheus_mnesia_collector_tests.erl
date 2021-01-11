@@ -55,6 +55,7 @@ test_mnesia_on_collector_env_off() ->
   ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_memory_usage_bytes")),
   ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_total_node_count")),
   ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_running_node_count")),
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_node_state")),
   application:unset_env(prometheus,mnesia_collector_metrics,[]).
 
 test_mnesia_on_collector() ->
@@ -70,7 +71,10 @@ test_mnesia_on_collector() ->
   ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_restarted_transactions")),
   ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_memory_usage_bytes")),
   ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_known_node_count 1")),
-  ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_running_node_count 1")).
+  ?assertMatch({match,_}, re:run(Metrics, "erlang_mnesia_running_node_count 1")),
+  % we dont have any node state in case of a single node cluster
+  ?assertMatch(nomatch, re:run(Metrics, "erlang_mnesia_node_state")).
+
 
 test_mnesia_on_collector_global_labels() ->
   Metrics = try

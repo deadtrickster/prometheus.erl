@@ -101,6 +101,9 @@ test_summary(_) ->
 # HELP orders_summary Track orders count/total sum
 orders_summary_count 2
 orders_summary_sum 25
+orders_summary{quantile=\"0.5\"} 15
+orders_summary{quantile=\"0.9\"} 15
+orders_summary{quantile=\"0.95\"} 15
 
 ">>, prometheus_text_format:format()).
 
@@ -113,6 +116,9 @@ test_dsummary(_) ->
 # HELP dsummary qwe
 dsummary_count{host=\"123\"} 2
 dsummary_sum{host=\"123\"} 4.2
+dsummary{host=\"123\",quantile=\"0.5\"} 2.7
+dsummary{host=\"123\",quantile=\"0.9\"} 2.7
+dsummary{host=\"123\",quantile=\"0.95\"} 2.7
 
 ">>, prometheus_text_format:format()).
 

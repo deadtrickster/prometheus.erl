@@ -11,6 +11,7 @@ prometheus_format_test_() ->
    [fun test_registration/1,
     fun test_errors/1,
     fun test_observe/1,
+    fun test_observe_quantiles/1,
     fun test_observe_duration_seconds/1,
     fun test_observe_duration_milliseconds/1,
     fun test_deregister/1,
@@ -88,8 +89,21 @@ test_observe(_) ->
   Value = prometheus_summary:value(orders_summary, [electronics]),
   prometheus_summary:reset(orders_summary, [electronics]),
   RValue = prometheus_summary:value(orders_summary, [electronics]),
-  [?_assertMatch({4, Sum} when Sum > 29.1 andalso Sum < 29.3, Value),
-   ?_assertEqual({0, 0}, RValue)].
+  [?_assertMatch({4, Sum, _} when Sum > 29.1 andalso Sum < 29.3, Value),
+   ?_assertMatch({0, 0, _}, RValue)].
+
+test_observe_quantiles(_) ->
+  prometheus_summary:new([{name, orders_summary_q},
+                          {labels, [department]},
+                          {help, "Track orders quantiles"}]),
+  [prometheus_summary:observe(orders_summary_q, [electronics], N)
+   || N <- lists:seq(1, 100)],
+
+  Value = prometheus_summary:value(orders_summary_q, [electronics]),
+  prometheus_summary:reset(orders_summary_q, [electronics]),
+  RValue = prometheus_summary:value(orders_summary_q, [electronics]),
+  [?_assertMatch({100, 5050, [{0.5, 53}, {0.9, 92}, {0.95, 96}]}, Value),
+   ?_assertMatch({0, 0, []}, RValue)].
 
 test_observe_duration_seconds(_) ->
   prometheus_summary:new([{name, <<"fun_duration_seconds">>},
@@ -99,7 +113,7 @@ test_observe_duration_seconds(_) ->
                                                                       timer:sleep(1000)
                                                                   end),
 
-  {Count, Sum} = prometheus_summary:value(<<"fun_duration_seconds">>),
+  {Count, Sum, _} = prometheus_summary:value(<<"fun_duration_seconds">>),
 
   [MF] = prometheus_collector:collect_mf_to_list(prometheus_summary),
 
@@ -115,7 +129,7 @@ test_observe_duration_seconds(_) ->
   catch _:_ -> ok
   end,
 
-  {CountE, SumE} = prometheus_summary:value(<<"fun_duration_seconds">>),
+  {CountE, SumE, _} = prometheus_summary:value(<<"fun_duration_seconds">>),
 
   [?_assertEqual(1, Count),
    ?_assertEqual(1, MFCount),
@@ -132,7 +146,7 @@ test_observe_duration_milliseconds(_) ->
                                                         timer:sleep(1100)
                                                     end),
 
-  {Count, Sum} = prometheus_summary:value(fun_duration),
+  {Count, Sum, _} = prometheus_summary:value(fun_duration),
 
   try prometheus_summary:observe_duration(fun_duration, fun () ->
                                                             erlang:error({qwe})
@@ -140,7 +154,7 @@ test_observe_duration_milliseconds(_) ->
   catch _:_ -> ok
   end,
 
-  {CountE, SumE} = prometheus_summary:value(fun_duration),
+  {CountE, SumE, _} = prometheus_summary:value(fun_duration),
 
   [?_assertEqual(1, Count),
    ?_assertEqual(2, CountE),
@@ -157,7 +171,7 @@ test_deregister(_) ->
   [?_assertMatch({true, true}, prometheus_summary:deregister(summary)),
    ?_assertMatch({false, false}, prometheus_summary:deregister(summary)),
    ?_assertEqual(2, length(ets:tab2list(prometheus_summary_table))),
-   ?_assertEqual({1, 1}, prometheus_summary:value(simple_summary))
+   ?_assertMatch({1, 1, _}, prometheus_summary:value(simple_summary))
   ].
 
 test_remove(_) ->
@@ -179,8 +193,8 @@ test_remove(_) ->
   RResult3 = prometheus_summary:remove(summary, [mongodb]),
   RResult4 = prometheus_summary:remove(simple_summary),
 
-  [?_assertEqual({1, 1}, BRValue1),
-   ?_assertEqual({1, 1}, BRValue2),
+  [?_assertMatch({1, 1, _}, BRValue1),
+   ?_assertMatch({1, 1, _}, BRValue2),
    ?_assertEqual(true, RResult1),
    ?_assertEqual(true, RResult2),
    ?_assertEqual(undefined, ARValue1),
@@ -199,7 +213,7 @@ test_default_value(_) ->
                           {help, ""}]),
   SomethingValue = prometheus_summary:value(something_summary),
   [?_assertEqual(undefined, UndefinedValue),
-   ?_assertEqual({0, 0}, SomethingValue)].
+   ?_assertMatch({0, 0, _}, SomethingValue)].
 
 test_values(_) ->
   prometheus_summary:new([{name, orders_summary},
@@ -208,8 +222,8 @@ test_values(_) ->
   prometheus_summary:observe(orders_summary, [electronics], 765.5),
   prometheus_summary:observe(orders_summary, [groceries], 112.3),
 
-  [?_assertEqual([{[{"department", electronics}], 1, 765.5},
-                  {[{"department", groceries}], 1, 112.3}],
+  [?_assertMatch([{[{"department", electronics}], 1, 765.5, _},
+                  {[{"department", groceries}], 1, 112.3, _}],
                  lists:sort(prometheus_summary:values(default, orders_summary)))].
 
 test_collector1(_) ->

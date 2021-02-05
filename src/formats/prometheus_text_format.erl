@@ -110,9 +110,17 @@ emit_metric(Fd, Name, #'Metric'{label=Labels,
   emit_series(Fd, Name, Labels, Value);
 emit_metric(Fd, Name, #'Metric'{label=Labels,
                                 summary=#'Summary'{sample_count=Count,
-                                                   sample_sum=Sum}}) ->
+                                                   sample_sum=Sum,
+                                                   quantile=Quantiles}}) ->
   emit_series(Fd, [Name, "_count"], Labels, Count),
-  emit_series(Fd, [Name, "_sum"], Labels, Sum);
+  emit_series(Fd, [Name, "_sum"], Labels, Sum),
+  [
+    emit_series(
+      Fd, [Name],
+      Labels ++ [#'LabelPair'{name="quantile", value=io_lib:format("~p", [QN])}],
+      QV)
+    || #'Quantile'{quantile = QN, value = QV} <- Quantiles
+  ];
 emit_metric(Fd, Name, #'Metric'{label=Labels,
                                 histogram=#'Histogram'{sample_count=Count,
                                                        sample_sum=Sum,

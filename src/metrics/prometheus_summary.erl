@@ -56,6 +56,8 @@
 
 -include("prometheus.hrl").
 
+-include_lib("quantile_estimator/include/quantile_estimator.hrl").
+
 -behaviour(prometheus_metric).
 -behaviour(prometheus_collector).
 
@@ -67,6 +69,7 @@
 -define(ISUM_POS, 3).
 -define(FSUM_POS, 4).
 -define(COUNTER_POS, 2).
+-define(QUANTILE_POS, 5).
 -define(WIDTH, 16).
 
 %%====================================================================
@@ -134,7 +137,7 @@ deregister(Registry, Name) ->
 
 %% @private
 set_default(Registry, Name) ->
-  ets:insert_new(?TABLE, {key(Registry, Name, []), 0, 0, 0}).
+  ets:insert_new(?TABLE, {key(Registry, Name, []), 0, 0, 0, quantile()}).
 
 %% @equiv observe(default, Name, [], Value)
 observe(Name, Value) ->
@@ -154,25 +157,25 @@ observe(Name, LabelValues, Value) ->
 %% mismatch.
 %% @end
 observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
+  Key = key(Registry, Name, LabelValues),
   try
-    ets:update_counter(?TABLE, key(Registry, Name, LabelValues),
-                       [{?COUNTER_POS, 1}, {?ISUM_POS, Value}])
+    case ets:lookup(?TABLE, Key) of
+      [] -> insert_metric(Registry, Name, LabelValues, Value, fun observe/4);
+      [{Key, Count, IS, FS, Q}] ->
+        ets:insert(?TABLE, {Key, Count + 1, IS + Value, FS, quantile_add(Q, Value)})
+    end
   catch error:badarg ->
       insert_metric(Registry, Name, LabelValues, Value, fun observe/4)
   end,
   ok;
 observe(Registry, Name, LabelValues, Value) when is_number(Value) ->
   Key = key(Registry, Name, LabelValues),
-  case
-    ets:select_replace(?TABLE,
-                       [{{Key, '$1', '$2', '$3'},
-                         [],
-                         [{{{Key}, {'+', '$1', 1}, '$2', {'+', '$3', Value}}}]}]) of
-    0 ->
-      insert_metric(Registry, Name, LabelValues, Value, fun observe/4);
-    1 ->
-      ok
-  end;
+  case ets:lookup(?TABLE, Key) of
+    [] -> insert_metric(Registry, Name, LabelValues, Value, fun observe/4);
+    [{Key, Count, IS, FS, Q}] ->
+      ets:insert(?TABLE, {Key, Count + 1, IS, FS + Value, quantile_add(Q, Value)})
+  end,
+  ok;
 observe(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "observe accepts only numbers"}).
 
@@ -248,7 +251,7 @@ reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   case lists:usort([ets:update_element(?TABLE,
                                        {Registry, Name, LabelValues, Scheduler},
-                                       [{?COUNTER_POS, 0}, {?ISUM_POS, 0}, {?FSUM_POS, 0}])
+                                       [{?COUNTER_POS, 0}, {?ISUM_POS, 0}, {?FSUM_POS, 0}, {?QUANTILE_POS, quantile()}])
                     || Scheduler <- schedulers_seq()]) of
     [_, _] -> true;
     [true] -> true;
@@ -279,12 +282,12 @@ value(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   DU = prometheus_metric:mf_duration_unit(MF),
 
-  case ets:select(?TABLE, [{{{Registry, Name, LabelValues, '_'}, '$1', '$2', '$3'},
+  case ets:select(?TABLE, [{{{Registry, Name, LabelValues, '_'}, '$1', '$2', '$3', '$4'},
                             [],
                             ['$$']}]) of
     [] -> undefined;
-    Values -> {Count, Sum} = reduce_values(Values),
-              {Count,  prometheus_time:maybe_convert_to_du(DU, Sum)}
+    Values -> {Count, Sum, QE} = reduce_values(Values),
+              {Count,  prometheus_time:maybe_convert_to_du(DU, Sum), quantile_values(QE)}
   end.
 
 values(Registry, Name) ->
@@ -295,17 +298,18 @@ values(Registry, Name) ->
       Labels = prometheus_metric:mf_labels(MF),
       MFValues = load_all_values(Registry, Name),
       ReducedMap = lists:foldl(
-        fun([L, C, IS, FS], ResAcc) ->
-          {PrevCount, PrevSum} = maps:get(L, ResAcc, {0, 0}),
-          ResAcc#{L => {PrevCount + C, PrevSum + IS + FS}}
+        fun([L, C, IS, FS, QE], ResAcc) ->
+          {PrevCount, PrevSum, PrevQE} = maps:get(L, ResAcc, {0, 0, quantile()}),
+          ResAcc#{L => {PrevCount + C, PrevSum + IS + FS, quantile_merge(PrevQE, QE)}}
         end,
       #{},
       MFValues),
       ReducedMapList = lists:sort(maps:to_list(ReducedMap)),
       lists:foldr(
-        fun({LabelValues, {Count, Sum}}, Acc) ->
+        fun({LabelValues, {Count, Sum, QE}}, Acc) ->
           [{lists:zip(Labels, LabelValues), Count,
-          prometheus_time:maybe_convert_to_du(DU, Sum)} | Acc]
+          prometheus_time:maybe_convert_to_du(DU, Sum),
+          quantile_values(QE)} | Acc]
         end,
         [],
       ReducedMapList)
@@ -318,7 +322,7 @@ values(Registry, Name) ->
 %% @private
 deregister_cleanup(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry),
-  true = ets:match_delete(?TABLE, {{Registry, '_', '_', '_'}, '_', '_', '_'}),
+  true = ets:match_delete(?TABLE, {{Registry, '_', '_', '_'}, '_', '_', '_', '_'}),
   ok.
 
 %% @private
@@ -332,18 +336,19 @@ collect_mf(Registry, Callback) ->
 collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
   MFValues = load_all_values(Registry, Name),
   ReducedMap = lists:foldl(
-        fun([L, C, IS, FS], ResAcc) ->
-          {PrevCount, PrevSum} = maps:get(L, ResAcc, {0, 0}),
-          ResAcc#{L => {PrevCount + C, PrevSum + IS + FS}}
+        fun([L, C, IS, FS, QE], ResAcc) ->
+          {PrevCount, PrevSum, PrevQE} = maps:get(L, ResAcc, {0, 0, quantile()}),
+          ResAcc#{L => {PrevCount + C, PrevSum + IS + FS, quantile_merge(PrevQE, QE)}}
         end,
       #{},
       MFValues),
   ReducedMapList = lists:sort(maps:to_list(ReducedMap)),
   lists:foldr(
-    fun({LabelValues, {Count, Sum}}, Acc) ->
+    fun({LabelValues, {Count, Sum, QE}}, Acc) ->
       [prometheus_model_helpers:summary_metric(
       CLabels ++ lists:zip(Labels, LabelValues), Count,
-      prometheus_time:maybe_convert_to_du(DU, Sum)) | Acc]
+      prometheus_time:maybe_convert_to_du(DU, Sum),
+      quantile_values(QE)) | Acc]
     end,
     [],
   ReducedMapList).
@@ -353,7 +358,7 @@ collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
 %%====================================================================
 
 deregister_select(Registry, Name) ->
-  [{{{Registry, Name, '_', '_'}, '_', '_', '_'}, [], [true]}].
+  [{{{Registry, Name, '_', '_'}, '_', '_', '_', '_'}, [], [true]}].
 
 validate_summary_spec(Spec) ->
   Labels = prometheus_metric_spec:labels(Spec),
@@ -371,7 +376,8 @@ raise_error_if_quantile_label_found(Label) ->
 
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  case ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), 1, 0, Value}) of
+  Quantile = quantile(Value),
+  case ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), 1, 0, Value, Quantile}) of
     false -> %% some sneaky process already inserted
       ConflictCB(Registry, Name, LabelValues, Value);
     true ->
@@ -379,7 +385,7 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   end.
 
 load_all_values(Registry, Name) ->
-  ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2', '$3', '$4'}).
+  ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2', '$3', '$4', '$5'}).
 
 schedulers_seq() ->
   lists:seq(0, ?WIDTH-1).
@@ -390,8 +396,50 @@ key(Registry, Name, LabelValues) ->
   {Registry, Name, LabelValues, Rnd}.
 
 reduce_values(Values) ->
-  {lists:sum([C || [C, _, _] <- Values]),
-   lists:sum([IS + FS || [_, IS, FS] <- Values])}.
+  {lists:sum([C || [C, _, _, _] <- Values]),
+   lists:sum([IS + FS || [_, IS, FS, _] <- Values]),
+   fold_quantiles([Q || [_C, _IS, _FS, Q] <- Values])}.
 
 create_summary(Name, Help, Data) ->
   prometheus_model_helpers:create_mf(Name, Help, summary, ?MODULE, Data).
+
+quantile_compress_limit() -> 100.
+
+quantile() ->
+  E = quantile_estimator:f_targeted([{0.5, 0.02}, {0.9, 0.01}, {0.95, 0.005}]),
+  quantile_estimator:new(E).
+
+quantile(Val) ->
+  quantile_estimator:insert(Val, quantile()).
+
+quantile_add(Q = #quantile_estimator{inserts_since_compression = ISS}, Val) ->
+  Q1 = case ISS > quantile_compress_limit() of
+    true  -> quantile_estimator:compress(Q);
+    false -> Q
+  end,
+  quantile_estimator:insert(Val, Q1).
+
+%% Quantile estimator throws on empty stats
+quantile_values(#quantile_estimator{data = []}) ->
+  [];
+quantile_values(Q) ->
+  [{QN, quantile_estimator:quantile(QN, Q)} || QN <- [0.5, 0.9, 0.95]].
+
+fold_quantiles(QList) ->
+  lists:foldl(
+    fun
+      (Q, init) -> Q;
+      (Q1, Q2) -> quantile_merge(Q1, Q2)
+    end,
+    init,
+    QList).
+
+quantile_merge(QE1, QE2) ->
+  #quantile_estimator{samples_count = N1, data = Data1, invariant = Invariant} = QE1,
+  #quantile_estimator{samples_count = N2, data = Data2} = QE2,
+
+  quantile_estimator:compress(#quantile_estimator{
+    samples_count = N1 + N2,
+    data = Data1 ++ Data2,
+    invariant = Invariant
+  }).

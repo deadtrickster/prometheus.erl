@@ -74,10 +74,9 @@
 %%====================================================================
 
 -define(TABLE, ?PROMETHEUS_QUANTILE_SUMMARY_TABLE).
--define(ISUM_POS, 3).
--define(FSUM_POS, 4).
+-define(SUM_POS, 3).
 -define(COUNTER_POS, 2).
--define(QUANTILE_POS, 5).
+-define(QUANTILE_POS, 4).
 -define(WIDTH, 16).
 
 %%====================================================================
@@ -145,7 +144,7 @@ deregister(Registry, Name) ->
 
 %% @private
 set_default(Registry, Name) ->
-  ets:insert_new(?TABLE, {key(Registry, Name, []), 0, 0, 0, quantile()}).
+  ets:insert_new(?TABLE, {key(Registry, Name, []), 0, 0, quantile()}).
 
 %% @equiv observe(default, Name, [], Value)
 observe(Name, Value) ->
@@ -164,24 +163,12 @@ observe(Name, LabelValues, Value) ->
 %% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
 %% mismatch.
 %% @end
-observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
-  Key = key(Registry, Name, LabelValues),
-  try
-    case ets:lookup(?TABLE, Key) of
-      [] -> insert_metric(Registry, Name, LabelValues, Value, fun observe/4);
-      [{Key, Count, IS, FS, Q}] ->
-        ets:insert(?TABLE, {Key, Count + 1, IS + Value, FS, quantile_add(Q, Value)})
-    end
-  catch error:badarg ->
-      insert_metric(Registry, Name, LabelValues, Value, fun observe/4)
-  end,
-  ok;
 observe(Registry, Name, LabelValues, Value) when is_number(Value) ->
   Key = key(Registry, Name, LabelValues),
   case ets:lookup(?TABLE, Key) of
     [] -> insert_metric(Registry, Name, LabelValues, Value, fun observe/4);
-    [{Key, Count, IS, FS, Q}] ->
-      ets:insert(?TABLE, {Key, Count + 1, IS, FS + Value, quantile_add(Q, Value)})
+    [{Key, Count, S, Q}] ->
+      ets:insert(?TABLE, {Key, Count + 1, S + Value, quantile_add(Q, Value)})
   end,
   ok;
 observe(_Registry, _Name, _LabelValues, Value) ->
@@ -259,7 +246,7 @@ reset(Registry, Name, LabelValues) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   case lists:usort([ets:update_element(?TABLE,
                                        {Registry, Name, LabelValues, Scheduler},
-                                       [{?COUNTER_POS, 0}, {?ISUM_POS, 0}, {?FSUM_POS, 0}, {?QUANTILE_POS, quantile()}])
+                                       [{?COUNTER_POS, 0}, {?SUM_POS, 0}, {?QUANTILE_POS, quantile()}])
                     || Scheduler <- schedulers_seq()]) of
     [_, _] -> true;
     [true] -> true;
@@ -290,7 +277,7 @@ value(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   DU = prometheus_metric:mf_duration_unit(MF),
 
-  case ets:select(?TABLE, [{{{Registry, Name, LabelValues, '_'}, '$1', '$2', '$3', '$4'},
+  case ets:select(?TABLE, [{{{Registry, Name, LabelValues, '_'}, '$1', '$2', '$3'},
                             [],
                             ['$$']}]) of
     [] -> undefined;
@@ -306,9 +293,9 @@ values(Registry, Name) ->
       Labels = prometheus_metric:mf_labels(MF),
       MFValues = load_all_values(Registry, Name),
       ReducedMap = lists:foldl(
-        fun([L, C, IS, FS, QE], ResAcc) ->
+        fun([L, C, S, QE], ResAcc) ->
           {PrevCount, PrevSum, PrevQE} = maps:get(L, ResAcc, {0, 0, quantile()}),
-          ResAcc#{L => {PrevCount + C, PrevSum + IS + FS, quantile_merge(PrevQE, QE)}}
+          ResAcc#{L => {PrevCount + C, PrevSum + S, quantile_merge(PrevQE, QE)}}
         end,
       #{},
       MFValues),
@@ -330,7 +317,7 @@ values(Registry, Name) ->
 %% @private
 deregister_cleanup(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry),
-  true = ets:match_delete(?TABLE, {{Registry, '_', '_', '_'}, '_', '_', '_', '_'}),
+  true = ets:match_delete(?TABLE, {{Registry, '_', '_', '_'}, '_', '_', '_'}),
   ok.
 
 %% @private
@@ -344,9 +331,9 @@ collect_mf(Registry, Callback) ->
 collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
   MFValues = load_all_values(Registry, Name),
   ReducedMap = lists:foldl(
-        fun([L, C, IS, FS, QE], ResAcc) ->
+        fun([L, C, S, QE], ResAcc) ->
           {PrevCount, PrevSum, PrevQE} = maps:get(L, ResAcc, {0, 0, quantile()}),
-          ResAcc#{L => {PrevCount + C, PrevSum + IS + FS, quantile_merge(PrevQE, QE)}}
+          ResAcc#{L => {PrevCount + C, PrevSum + S, quantile_merge(PrevQE, QE)}}
         end,
       #{},
       MFValues),
@@ -366,7 +353,7 @@ collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
 %%====================================================================
 
 deregister_select(Registry, Name) ->
-  [{{{Registry, Name, '_', '_'}, '_', '_', '_', '_'}, [], [true]}].
+  [{{{Registry, Name, '_', '_'}, '_', '_', '_'}, [], [true]}].
 
 validate_summary_spec(Spec) ->
   Labels = prometheus_metric_spec:labels(Spec),
@@ -385,7 +372,7 @@ raise_error_if_quantile_label_found(Label) ->
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   Quantile = quantile(Value),
-  case ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), 1, 0, Value, Quantile}) of
+  case ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), 1, Value, Quantile}) of
     false -> %% some sneaky process already inserted
       ConflictCB(Registry, Name, LabelValues, Value);
     true ->
@@ -393,7 +380,7 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   end.
 
 load_all_values(Registry, Name) ->
-  ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2', '$3', '$4', '$5'}).
+  ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2', '$3', '$4'}).
 
 schedulers_seq() ->
   lists:seq(0, ?WIDTH-1).
@@ -404,9 +391,9 @@ key(Registry, Name, LabelValues) ->
   {Registry, Name, LabelValues, Rnd}.
 
 reduce_values(Values) ->
-  {lists:sum([C || [C, _, _, _] <- Values]),
-   lists:sum([IS + FS || [_, IS, FS, _] <- Values]),
-   fold_quantiles([Q || [_C, _IS, _FS, Q] <- Values])}.
+  {lists:sum([C || [C, _, _] <- Values]),
+   lists:sum([S || [_, S, _] <- Values]),
+   fold_quantiles([Q || [_C, _S, Q] <- Values])}.
 
 create_summary(Name, Help, Data) ->
   prometheus_model_helpers:create_mf(Name, Help, summary, ?MODULE, Data).

@@ -101,8 +101,8 @@
 %% with the same `Spec' already exists.
 %% @end
 new(Spec) ->
-  validate_summary_spec(Spec),
-  prometheus_metric:insert_new_mf(?TABLE, ?MODULE, Spec).
+  Spec1 = validate_summary_spec(Spec),
+  prometheus_metric:insert_new_mf(?TABLE, ?MODULE, Spec1).
 
 %% @doc Creates a summary using `Spec'.
 %% If a summary with the same `Spec' exists returns `false'.
@@ -144,7 +144,14 @@ deregister(Registry, Name) ->
 
 %% @private
 set_default(Registry, Name) ->
-  ets:insert_new(?TABLE, {key(Registry, Name, []), 0, 0, quantile()}).
+  Configuration = get_configuration(Registry, Name),
+  #{compress_limit := CompressLimit} = Configuration,
+  ets:insert_new(?TABLE,{
+    key(Registry, Name, []),
+    0,
+    0,
+    quantile(Configuration),
+    CompressLimit}).
 
 %% @equiv observe(default, Name, [], Value)
 observe(Name, Value) ->
@@ -167,8 +174,8 @@ observe(Registry, Name, LabelValues, Value) when is_number(Value) ->
   Key = key(Registry, Name, LabelValues),
   case ets:lookup(?TABLE, Key) of
     [] -> insert_metric(Registry, Name, LabelValues, Value, fun observe/4);
-    [{Key, Count, S, Q}] ->
-      ets:insert(?TABLE, {Key, Count + 1, S + Value, quantile_add(Q, Value)})
+    [{Key, Count, S, Q, CompressLimit}] ->
+      ets:insert(?TABLE, {Key, Count + 1, S + Value, quantile_add(Q, Value, CompressLimit), CompressLimit})
   end,
   ok;
 observe(_Registry, _Name, _LabelValues, Value) ->
@@ -243,10 +250,11 @@ reset(Name, LabelValues) ->
 %% mismatch.
 %% @end
 reset(Registry, Name, LabelValues) ->
-  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  Configuration = prometheus_metric:mf_data(MF),
   case lists:usort([ets:update_element(?TABLE,
                                        {Registry, Name, LabelValues, Scheduler},
-                                       [{?COUNTER_POS, 0}, {?SUM_POS, 0}, {?QUANTILE_POS, quantile()}])
+                                       [{?COUNTER_POS, 0}, {?SUM_POS, 0}, {?QUANTILE_POS, quantile(Configuration)}])
                     || Scheduler <- schedulers_seq()]) of
     [_, _] -> true;
     [true] -> true;
@@ -276,13 +284,14 @@ value(Name, LabelValues) ->
 value(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
   DU = prometheus_metric:mf_duration_unit(MF),
+  #{quantiles := QNs} = prometheus_metric:mf_data(MF),
 
-  case ets:select(?TABLE, [{{{Registry, Name, LabelValues, '_'}, '$1', '$2', '$3'},
+  case ets:select(?TABLE, [{{{Registry, Name, LabelValues, '_'}, '$1', '$2', '$3', '_'},
                             [],
                             ['$$']}]) of
     [] -> undefined;
     Values -> {Count, Sum, QE} = reduce_values(Values),
-              {Count,  prometheus_time:maybe_convert_to_du(DU, Sum), quantile_values(QE)}
+              {Count,  prometheus_time:maybe_convert_to_du(DU, Sum), quantile_values(QE, QNs)}
   end.
 
 values(Registry, Name) ->
@@ -291,10 +300,12 @@ values(Registry, Name) ->
     MF ->
       DU = prometheus_metric:mf_duration_unit(MF),
       Labels = prometheus_metric:mf_labels(MF),
+      #{quantiles := QNs} = Configuration = prometheus_metric:mf_data(MF),
+
       MFValues = load_all_values(Registry, Name),
       ReducedMap = lists:foldl(
         fun([L, C, S, QE], ResAcc) ->
-          {PrevCount, PrevSum, PrevQE} = maps:get(L, ResAcc, {0, 0, quantile()}),
+          {PrevCount, PrevSum, PrevQE} = maps:get(L, ResAcc, {0, 0, quantile(Configuration)}),
           ResAcc#{L => {PrevCount + C, PrevSum + S, quantile_merge(PrevQE, QE)}}
         end,
       #{},
@@ -304,7 +315,7 @@ values(Registry, Name) ->
         fun({LabelValues, {Count, Sum, QE}}, Acc) ->
           [{lists:zip(Labels, LabelValues), Count,
           prometheus_time:maybe_convert_to_du(DU, Sum),
-          quantile_values(QE)} | Acc]
+          quantile_values(QE, QNs)} | Acc]
         end,
         [],
       ReducedMapList)
@@ -317,22 +328,23 @@ values(Registry, Name) ->
 %% @private
 deregister_cleanup(Registry) ->
   prometheus_metric:deregister_mf(?TABLE, Registry),
-  true = ets:match_delete(?TABLE, {{Registry, '_', '_', '_'}, '_', '_', '_'}),
+  true = ets:match_delete(?TABLE,  {{Registry, '_', '_', '_'}, '_', '_', '_', '_'}),
   ok.
 
 %% @private
 collect_mf(Registry, Callback) ->
-  [Callback(create_summary(Name, Help, {CLabels, Labels, Registry, DU})) ||
-    [Name, {Labels, Help}, CLabels, DU, _] <- prometheus_metric:metrics(?TABLE,
+  [Callback(create_summary(Name, Help, {CLabels, Labels, Registry, DU, Data})) ||
+    [Name, {Labels, Help}, CLabels, DU, Data] <- prometheus_metric:metrics(?TABLE,
                                                                         Registry)],
   ok.
 
 %% @private
-collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
+collect_metrics(Name, {CLabels, Labels, Registry, DU, Configuration}) ->
+  #{quantiles := QNs} = Configuration, 
   MFValues = load_all_values(Registry, Name),
   ReducedMap = lists:foldl(
         fun([L, C, S, QE], ResAcc) ->
-          {PrevCount, PrevSum, PrevQE} = maps:get(L, ResAcc, {0, 0, quantile()}),
+          {PrevCount, PrevSum, PrevQE} = maps:get(L, ResAcc, {0, 0, quantile(Configuration)}),
           ResAcc#{L => {PrevCount + C, PrevSum + S, quantile_merge(PrevQE, QE)}}
         end,
       #{},
@@ -343,7 +355,7 @@ collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
       [prometheus_model_helpers:summary_metric(
       CLabels ++ lists:zip(Labels, LabelValues), Count,
       prometheus_time:maybe_convert_to_du(DU, Sum),
-      quantile_values(QE)) | Acc]
+      quantile_values(QE, QNs)) | Acc]
     end,
     [],
   ReducedMapList).
@@ -353,12 +365,20 @@ collect_metrics(Name, {CLabels, Labels, Registry, DU}) ->
 %%====================================================================
 
 deregister_select(Registry, Name) ->
-  [{{{Registry, Name, '_', '_'}, '_', '_', '_'}, [], [true]}].
+  [{{{Registry, Name, '_', '_'}, '_', '_', '_', '_'}, [], [true]}].
 
 validate_summary_spec(Spec) ->
   Labels = prometheus_metric_spec:labels(Spec),
   validate_summary_labels(Labels),
-  Spec.
+  {Invariant, QNs} = invariant_and_quantiles_from_spec(Spec),
+  CompressLimit = compress_limit_from_spec(Spec),
+  [
+    {data, 
+      #{quantiles => QNs,
+        invariant => Invariant,
+        compress_limit => CompressLimit}}
+    | Spec
+  ].
 
 validate_summary_labels(Labels) ->
   [raise_error_if_quantile_label_found(Label) || Label <- Labels].
@@ -370,9 +390,12 @@ raise_error_if_quantile_label_found(Label) ->
   Label.
 
 insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
-  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
-  Quantile = quantile(Value),
-  case ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), 1, Value, Quantile}) of
+  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
+  Configuration = prometheus_metric:mf_data(MF),
+  #{compress_limit := CompressLimit} = Configuration,
+  Quantile = quantile(Configuration, Value),
+
+  case ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), 1, Value, Quantile, CompressLimit}) of
     false -> %% some sneaky process already inserted
       ConflictCB(Registry, Name, LabelValues, Value);
     true ->
@@ -380,7 +403,11 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
   end.
 
 load_all_values(Registry, Name) ->
-  ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2', '$3', '$4'}).
+  ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2', '$3', '$4', '_'}).
+
+get_configuration(Registry, Name) ->
+  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name),
+  prometheus_metric:mf_data(MF).
 
 schedulers_seq() ->
   lists:seq(0, ?WIDTH-1).
@@ -398,27 +425,55 @@ reduce_values(Values) ->
 create_summary(Name, Help, Data) ->
   prometheus_model_helpers:create_mf(Name, Help, summary, ?MODULE, Data).
 
-quantile_compress_limit() -> 100.
+default_compress_limit() -> 100.
 
-quantile() ->
-  E = quantile_estimator:f_targeted([{0.5, 0.02}, {0.9, 0.01}, {0.95, 0.005}]),
-  quantile_estimator:new(E).
+invariant_and_quantiles_from_spec(Spec) ->
+  Targets = prometheus_metric_spec:get_value(targets, Spec, default_targets()),
+  validate_targets(Targets),
+  {QNs, _} = lists:unzip(Targets),
+  Invariant = quantile_estimator:f_targeted(Targets),
+  {Invariant, QNs}.
 
-quantile(Val) ->
-  quantile_estimator:insert(Val, quantile()).
+compress_limit_from_spec(Spec) ->
+  prometheus_metric_spec:get_value(compress_limit, Spec, default_compress_limit()).
 
-quantile_add(Q = #quantile_estimator{inserts_since_compression = ISS}, Val) ->
-  Q1 = case ISS > quantile_compress_limit() of
+validate_targets(Targets) when is_list(Targets) ->
+  lists:foreach(
+    fun
+      ({Q, _E}) when not is_float(Q) ->
+        erlang:error({invalid_targets, "target quantile value should be float"});
+      ({_Q, E}) when not is_float(E) ->
+        erlang:error({invalid_targets, "target error value should be float"});
+      ({_, _}) -> 
+        ok;
+      (_) ->
+        erlang:error({invalid_targets, "targets should be tuples of quantile and error"})
+    end,
+    Targets);
+validate_targets(_Targets) ->
+  erlang:error({invalid_targets, "targets should be a list of tuples"}).
+
+default_targets() ->
+  [{0.5, 0.02}, {0.9, 0.01}, {0.95, 0.005}].
+
+quantile(#{invariant := Invariant}) ->
+  quantile_estimator:new(Invariant).
+
+quantile(Configuration, Val) ->
+  quantile_estimator:insert(Val, quantile(Configuration)).
+
+quantile_add(Q = #quantile_estimator{inserts_since_compression = ISS}, Val, CompressLimit) ->
+  Q1 = case ISS > CompressLimit of
     true  -> quantile_estimator:compress(Q);
     false -> Q
   end,
   quantile_estimator:insert(Val, Q1).
 
 %% Quantile estimator throws on empty stats
-quantile_values(#quantile_estimator{data = []}) ->
+quantile_values(#quantile_estimator{data = []}, _QNs) ->
   [];
-quantile_values(Q) ->
-  [{QN, quantile_estimator:quantile(QN, Q)} || QN <- [0.5, 0.9, 0.95]].
+quantile_values(Q, QNs) ->
+  [{QN, quantile_estimator:quantile(QN, Q)} || QN <- QNs].
 
 fold_quantiles(QList) ->
   lists:foldl(

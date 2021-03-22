@@ -12,6 +12,7 @@ prometheus_format_test_() ->
     fun test_errors/1,
     fun test_observe/1,
     fun test_observe_quantiles/1,
+    fun test_observe_configured_quantiles/1,
     fun test_observe_duration_seconds/1,
     fun test_observe_duration_milliseconds/1,
     fun test_deregister/1,
@@ -104,6 +105,21 @@ test_observe_quantiles(_) ->
   RValue = prometheus_quantile_summary:value(orders_summary_q, [electronics]),
   [?_assertMatch({100, 5050, [{0.5, 53}, {0.9, 92}, {0.95, 96}]}, Value),
    ?_assertMatch({0, 0, []}, RValue)].
+
+test_observe_configured_quantiles(_) ->
+  prometheus_quantile_summary:new([{name, orders_summary_q_custom},
+                          {labels, [department]},
+                          {help, "Track orders quantiles"},
+                          {targets, [{0.5, 0.05}, {0.75, 0.02}]}]),
+  [prometheus_quantile_summary:observe(orders_summary_q_custom, [electronics], N)
+   || N <- lists:seq(1, 100)],
+
+  Value = prometheus_quantile_summary:value(orders_summary_q_custom, [electronics]),
+  prometheus_quantile_summary:reset(orders_summary_q_custom, [electronics]),
+  RValue = prometheus_quantile_summary:value(orders_summary_q_custom, [electronics]),
+  [?_assertMatch({100, 5050, [{0.5, 55}, {0.75, 78}]}, Value),
+   ?_assertMatch({0, 0, []}, RValue)].
+
 
 test_observe_duration_seconds(_) ->
   prometheus_quantile_summary:new([{name, <<"fun_duration_seconds">>},

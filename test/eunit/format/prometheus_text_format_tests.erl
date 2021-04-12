@@ -39,6 +39,8 @@ prometheus_format_test_() ->
     fun test_dcounter/1,
     fun test_summary/1,
     fun test_dsummary/1,
+    fun test_quantile_summary/1,
+    fun test_quantile_dsummary/1,
     fun test_histogram/1,
     fun test_dhistogram/1]}.
 
@@ -113,6 +115,36 @@ test_dsummary(_) ->
 # HELP dsummary qwe
 dsummary_count{host=\"123\"} 2
 dsummary_sum{host=\"123\"} 4.2
+
+">>, prometheus_text_format:format()).
+
+test_quantile_summary(_) ->
+  prometheus_quantile_summary:new([{name, orders_quantile_summary},
+                          {help, "Track orders count/total sum"}]),
+  prometheus_quantile_summary:observe(orders_quantile_summary,  10),
+  prometheus_quantile_summary:observe(orders_quantile_summary,  15),
+  ?_assertEqual(<<"# TYPE orders_quantile_summary summary
+# HELP orders_quantile_summary Track orders count/total sum
+orders_quantile_summary_count 2
+orders_quantile_summary_sum 25
+orders_quantile_summary{quantile=\"0.5\"} 15
+orders_quantile_summary{quantile=\"0.9\"} 15
+orders_quantile_summary{quantile=\"0.95\"} 15
+
+">>, prometheus_text_format:format()).
+
+test_quantile_dsummary(_) ->
+  prometheus_quantile_summary:new([{name, quantile_dsummary}, {labels, [host]}, {help, "qwe"}]),
+  prometheus_quantile_summary:observe(quantile_dsummary, [123], 1.5),
+  prometheus_quantile_summary:observe(quantile_dsummary, [123], 2.7),
+
+  ?_assertEqual(<<"# TYPE quantile_dsummary summary
+# HELP quantile_dsummary qwe
+quantile_dsummary_count{host=\"123\"} 2
+quantile_dsummary_sum{host=\"123\"} 4.2
+quantile_dsummary{host=\"123\",quantile=\"0.5\"} 2.7
+quantile_dsummary{host=\"123\",quantile=\"0.9\"} 2.7
+quantile_dsummary{host=\"123\",quantile=\"0.95\"} 2.7
 
 ">>, prometheus_text_format:format()).
 

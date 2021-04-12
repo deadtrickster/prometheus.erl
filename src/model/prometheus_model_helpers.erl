@@ -25,6 +25,7 @@
          summary_metric/1,
          summary_metric/2,
          summary_metric/3,
+         summary_metric/4,
          histogram_metrics/1,
          histogram_metric/1,
          histogram_metric/3,
@@ -252,23 +253,36 @@ summary_metrics(Specs) -> lists:map(fun summary_metric/1, Specs).
 %% @end
 -spec summary_metric(Summary) -> prometheus_model:'Metric'() when
     Summary :: summary().
-summary_metric({Labels, Count, Sum}) -> summary_metric(Labels, Count, Sum);
-summary_metric({Count, Sum})         -> summary_metric([], Count, Sum).
+summary_metric({Labels, Count, Sum, Quantiles}) when is_list(Quantiles) ->
+  summary_metric(Labels, Count, Sum, Quantiles);
+summary_metric({Count, Sum, Quantiles}) when is_list(Quantiles) ->
+  summary_metric([], Count, Sum, Quantiles);
+summary_metric({Labels, Count, Sum}) ->
+  summary_metric(Labels, Count, Sum);
+summary_metric({Count, Sum}) ->
+  summary_metric([], Count, Sum).
 
 %% @equiv summary_metric([], Count, Sum)
-summary_metric(Count, Sum) -> summary_metric([], Count, Sum).
+summary_metric(Count, Sum) ->
+  summary_metric([], Count, Sum).
+
+%% @equiv summary_metric([], Count, Sum, [])
+summary_metric(Labels, Count, Sum) ->
+  summary_metric(Labels, Count, Sum, []).
 
 %% @doc
 %% Creates summary metric with `Labels', `Count' and `Sum'.
 %% @end
--spec summary_metric(Labels, Count, Sum) -> prometheus_model:'Metric'() when
+-spec summary_metric(Labels, Count, Sum, Quantiles) -> prometheus_model:'Metric'() when
     Labels :: labels(),
     Count  :: non_neg_integer(),
-    Sum    :: value().
-summary_metric(Labels, Count, Sum) ->
+    Sum    :: value(),
+    Quantiles :: list().
+summary_metric(Labels, Count, Sum, Quantiles) ->
   #'Metric'{label   = label_pairs(Labels),
             summary = #'Summary'{sample_count = Count,
-                                 sample_sum   = Sum}}.
+                                 sample_sum   = Sum,
+                                 quantile     = [#'Quantile'{quantile = QN, value = QV} || {QN, QV} <- Quantiles]}}.
 
 %% @doc Equivalent to
 %% {@link histogram_metric/1. `lists:map(fun histogram_metric/1, Specs)'}.

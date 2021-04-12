@@ -83,6 +83,7 @@
          prometheus_gauge,
          prometheus_histogram,
          prometheus_mnesia_collector,
+         prometheus_quantile_summary,
          prometheus_summary,
          prometheus_vm_dist_collector,
          prometheus_vm_memory_collector,

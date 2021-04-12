@@ -1,1 +1,4 @@
-[].
+[{<<"quantile_estimator">>,
+  {git,"https://github.com/odo/quantile_estimator",
+       {ref,"eeea7c7dba2f406a41c70b0f59afcf4a6b2fc4fc"}},
+  0}].

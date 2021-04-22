@@ -366,17 +366,18 @@ values(Registry, Name) ->
       DU = prometheus_metric:mf_duration_unit(MF),
       Labels = prometheus_metric:mf_labels(MF),
       Bounds = prometheus_metric:mf_data(MF),
+
       MFValues = load_all_values(Registry, Name, Bounds),
-      [begin
-         [ISum, FSum | BCounters] = reduce_label_values(LabelValues, MFValues),
-         Bounds1 = lists:zipwith(fun(Bound, Bucket) ->
-                                     {Bound, Bucket}
-                                 end,
-                                 Bounds, BCounters),
-         {lists:zip(Labels, LabelValues),  Bounds1,
-          prometheus_time:maybe_convert_to_du(DU, ISum + FSum)}
-       end ||
-        LabelValues <- collect_unique_labels(MFValues)]
+      LabelValuesMap = reduce_label_values(MFValues),
+      maps:fold(
+        fun(LabelValues, [ISum, FSum | BCounters], L) ->
+            Bounds1 = lists:zipwith(fun(Bound, Bucket) ->
+                                        {Bound, Bucket}
+                                    end,
+                                    Bounds, BCounters),
+            [{lists:zip(Labels, LabelValues),  Bounds1,
+              prometheus_time:maybe_convert_to_du(DU, ISum + FSum)}|L]
+        end, [], LabelValuesMap)
   end.
 
 %% @equiv buckets(default, Name, [])
@@ -415,11 +416,11 @@ collect_mf(Registry, Callback) ->
 %% @private
 collect_metrics(Name, {CLabels, Labels, Registry, DU, Bounds}) ->
   MFValues = load_all_values(Registry, Name, Bounds),
-  [begin
-     Stat = reduce_label_values(LabelValues, MFValues),
-     create_histogram_metric(CLabels, Labels, DU, Bounds, LabelValues, Stat)
-   end ||
-    LabelValues <- collect_unique_labels(MFValues)].
+  LabelValuesMap = reduce_label_values(MFValues),
+  maps:fold(
+    fun(LabelValues, Stat, L) ->
+	[create_histogram_metric(CLabels, Labels, DU, Bounds, LabelValues, Stat)|L]
+    end, [], LabelValuesMap).
 
 %%====================================================================
 %% Private Parts
@@ -564,12 +565,14 @@ key(Registry, Name, LabelValues) ->
   Rnd = X band (?WIDTH-1),
   {Registry, Name, LabelValues, Rnd}.
 
-collect_unique_labels(MFValues) ->
-  lists:usort([L || [L | _] <- MFValues]).
-
-reduce_label_values(Labels, MFValues) ->
-  [lists:sum(C)
-   || C <- transpose([V || [L | V] <- MFValues, L == Labels])].
+reduce_label_values(MFValues) ->
+  lists:foldl(
+    fun([Labels | V], ResAcc) when is_map_key(Labels, ResAcc) ->
+	PrevSum = maps:get(Labels, ResAcc),
+	ResAcc#{Labels => [lists:sum(C) || C <- transpose([PrevSum, V])]};
+       ([Labels | V], ResAcc) ->
+	ResAcc#{Labels => V}
+    end, #{}, MFValues).
 
 create_histogram(Name, Help, Data) ->
   prometheus_model_helpers:create_mf(Name, Help, histogram, ?MODULE, Data).

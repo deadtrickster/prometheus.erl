@@ -146,7 +146,7 @@ deregister(Registry, Name) ->
 set_default(Registry, Name) ->
   Configuration = get_configuration(Registry, Name),
   #{compress_limit := CompressLimit} = Configuration,
-  ets:insert_new(?TABLE,{
+  ets:insert_new(?TABLE, {
     key(Registry, Name, []),
     0,
     0,
@@ -340,7 +340,7 @@ collect_mf(Registry, Callback) ->
 
 %% @private
 collect_metrics(Name, {CLabels, Labels, Registry, DU, Configuration}) ->
-  #{quantiles := QNs} = Configuration, 
+  #{quantiles := QNs} = Configuration,
   MFValues = load_all_values(Registry, Name),
   ReducedMap = lists:foldl(
         fun([L, C, S, QE], ResAcc) ->
@@ -373,7 +373,7 @@ validate_summary_spec(Spec) ->
   {Invariant, QNs} = invariant_and_quantiles_from_spec(Spec),
   CompressLimit = compress_limit_from_spec(Spec),
   [
-    {data, 
+    {data,
       #{quantiles => QNs,
         invariant => Invariant,
         compress_limit => CompressLimit}}
@@ -444,7 +444,7 @@ validate_targets(Targets) when is_list(Targets) ->
         erlang:error({invalid_targets, "target quantile value should be float"});
       ({_Q, E}) when not is_float(E) ->
         erlang:error({invalid_targets, "target error value should be float"});
-      ({_, _}) -> 
+      ({_, _}) ->
         ok;
       (_) ->
         erlang:error({invalid_targets, "targets should be tuples of quantile and error"})

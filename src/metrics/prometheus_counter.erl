@@ -288,11 +288,9 @@ values(Registry, Name) ->
     MF ->
       Labels = prometheus_metric:mf_labels(MF),
       MFValues = load_all_values(Registry, Name),
-      [begin
-         Value = reduce_label_values(LabelValues, MFValues),
-         {lists:zip(Labels, LabelValues), Value}
-       end ||
-        LabelValues <- collect_unique_labels(MFValues)]
+      LabelValues = reduce_label_values(MFValues),
+      serialize_label_values(
+        fun(VLabels, Value) -> {VLabels, Value} end, Labels, LabelValues)
   end.
 
 %%====================================================================
@@ -315,12 +313,12 @@ collect_mf(Registry, Callback) ->
 %% @private
 collect_metrics(Name, {CLabels, Labels, Registry}) ->
   MFValues = load_all_values(Registry, Name),
-  [begin
-     Value = reduce_label_values(LabelValues, MFValues),
-     prometheus_model_helpers:counter_metric(
-       CLabels ++ lists:zip(Labels, LabelValues), Value)
-   end ||
-    LabelValues <- collect_unique_labels(MFValues)].
+    LabelValues = reduce_label_values(MFValues),
+  serialize_label_values(
+    fun(VLabels, Value) ->
+        prometheus_model_helpers:counter_metric(
+          CLabels ++ VLabels, Value)
+    end, Labels, LabelValues).
 
 %%====================================================================
 %% Private Parts
@@ -350,11 +348,18 @@ key(Registry, Name, LabelValues) ->
   Rnd = X band (?WIDTH-1),
   {Registry, Name, LabelValues, Rnd}.
 
-collect_unique_labels(MFValues) ->
-  lists:usort([L || [L, _, _] <- MFValues]).
+reduce_label_values(MFValues) ->
+  lists:foldl(
+    fun([Labels, I, F], ResAcc) ->
+	PrevSum = maps:get(Labels, ResAcc, 0),
+	ResAcc#{Labels => PrevSum + I + F}
+    end, #{}, MFValues).
 
-reduce_label_values(Labels, MFValues) ->
-  lists:sum([I + F || [L, I, F] <- MFValues, L == Labels]).
+serialize_label_values(Fun, Labels, Values) ->
+  maps:fold(
+    fun(LabelValues, Value, L) ->
+	[Fun(lists:zip(Labels, LabelValues), Value)|L]
+    end, [], Values).
 
 create_counter(Name, Help, Data) ->
   prometheus_model_helpers:create_mf(Name, Help, counter, ?MODULE, Data).

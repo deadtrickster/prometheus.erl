@@ -98,23 +98,26 @@ emit_mf_metrics(Fd, #'MetricFamily'{name=Name, metric = Metrics}) ->
 
 emit_metric(Fd, Name, #'Metric'{label=Labels,
                                 counter=#'Counter'{value=Value}}) ->
-  emit_series(Fd, Name, Labels, Value);
+  emit_series(Fd, Name, labels_string(labels_stringify(Labels)), Value);
 emit_metric(Fd, Name, #'Metric'{label=Labels,
                                 gauge=#'Gauge'{value=Value}}) ->
-  emit_series(Fd, Name, Labels, Value);
+  emit_series(Fd, Name, labels_string(labels_stringify(Labels)), Value);
 emit_metric(Fd, Name, #'Metric'{label=Labels,
                                 untyped=#'Untyped'{value=Value}}) ->
-  emit_series(Fd, Name, Labels, Value);
+  emit_series(Fd, Name, labels_string(labels_stringify(Labels)), Value);
 emit_metric(Fd, Name, #'Metric'{label=Labels,
                                 summary=#'Summary'{sample_count=Count,
                                                    sample_sum=Sum,
                                                    quantile=Quantiles}}) ->
-  emit_series(Fd, [Name, "_count"], Labels, Count),
-  emit_series(Fd, [Name, "_sum"], Labels, Sum),
+  StringLabels = labels_stringify(Labels),
+  LString = labels_string(StringLabels),
+  emit_series(Fd, [Name, "_count"], LString, Count),
+  emit_series(Fd, [Name, "_sum"], LString, Sum),
   [
     emit_series(
       Fd, [Name],
-      Labels ++ [#'LabelPair'{name="quantile", value=io_lib:format("~p", [QN])}],
+      labels_string(StringLabels ++
+                      labels_stringify([#'LabelPair'{name="quantile", value=io_lib:format("~p", [QN])}])),
       QV)
     || #'Quantile'{quantile = QN, value = QV} <- Quantiles
   ];
@@ -122,15 +125,18 @@ emit_metric(Fd, Name, #'Metric'{label=Labels,
                                 histogram=#'Histogram'{sample_count=Count,
                                                        sample_sum=Sum,
                                                        bucket=Buckets}}) ->
-  [emit_histogram_bucket(Fd, Name, Labels, Bucket) || Bucket <- Buckets],
-  emit_series(Fd, [Name, "_count"], Labels, Count),
-  emit_series(Fd, [Name, "_sum"], Labels, Sum).
+  StringLabels = labels_stringify(Labels),
+  LString = labels_string(StringLabels),
+  [emit_histogram_bucket(Fd, Name, StringLabels, Bucket) || Bucket <- Buckets],
+  emit_series(Fd, [Name, "_count"], LString, Count),
+  emit_series(Fd, [Name, "_sum"], LString, Sum).
 
-emit_histogram_bucket(Fd, Name, Labels, #'Bucket'{cumulative_count=BCount,
+emit_histogram_bucket(Fd, Name, StringLabels, #'Bucket'{cumulative_count=BCount,
                                                   upper_bound=BBound}) ->
   BLValue = bound_to_label_value(BBound),
   emit_series(Fd, [Name, "_bucket"],
-              Labels ++ [#'LabelPair'{name="le", value=BLValue}], BCount).
+              labels_string(StringLabels ++
+                              labels_stringify([#'LabelPair'{name="le", value=BLValue}])), BCount).
 
 string_type('COUNTER') ->
   "counter";
@@ -143,21 +149,21 @@ string_type('HISTOGRAM') ->
 string_type('UNTYPED') ->
   "untyped".
 
-labels_string([])     -> "";
-labels_string(Labels) ->
+labels_stringify(Labels) ->
   Fun = fun (#'LabelPair'{name=Name, value=Value}) ->
             [Name, "=\"", escape_label_value(Value), "\""]
         end,
-  ["{", join(",", lists:map(Fun, Labels)), "}"].
+  lists:map(Fun, Labels).
 
-emit_series(Fd, Name, Labels, undefined) ->
-  LString = labels_string(Labels),
+labels_string([])     -> "";
+labels_string(Labels) ->
+  ["{", join(",", Labels), "}"].
+
+emit_series(Fd, Name, LString, undefined) ->
   file:write(Fd, [Name, LString, " NaN\n"]);
-emit_series(Fd, Name, Labels, Value) when is_integer(Value) ->
-  LString = labels_string(Labels),
+emit_series(Fd, Name, LString, Value) when is_integer(Value) ->
   file:write(Fd, [Name, LString, " ", integer_to_list(Value) , "\n"]);
-emit_series(Fd, Name, Labels, Value) ->
-  LString = labels_string(Labels),
+emit_series(Fd, Name, LString, Value) ->
   file:write(Fd, [Name, LString, " ", io_lib:format("~p", [Value]) , "\n"]).
 
 %% @private

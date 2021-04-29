@@ -40,9 +40,6 @@
 %% Macros
 %%====================================================================
 
--define(ESCAPE_LVALUE(Value),
-        sub(sub(sub(Value, "\\", "\\\\\\\\"), "\n", "\\\\n"), "\"", "\\\\\"")).
-
 %%====================================================================
 %% Format API
 %%====================================================================
@@ -156,33 +153,54 @@ labels_string(Labels) ->
 emit_series(Fd, Name, Labels, undefined) ->
   LString = labels_string(Labels),
   file:write(Fd, [Name, LString, " NaN\n"]);
+emit_series(Fd, Name, Labels, Value) when is_integer(Value) ->
+  LString = labels_string(Labels),
+  file:write(Fd, [Name, LString, " ", integer_to_list(Value) , "\n"]);
 emit_series(Fd, Name, Labels, Value) ->
   LString = labels_string(Labels),
   file:write(Fd, [Name, LString, " ", io_lib:format("~p", [Value]) , "\n"]).
 
 %% @private
 escape_metric_help(Help) ->
-  sub(sub(Help, "\\", "\\\\\\\\"), "\n", "\\\\n").
+  escape_string(fun escape_help_char/1, Help).
 
-bound_to_label_value(Bound) when is_number(Bound) ->
-  io_lib:format("~p", [Bound]);
+%% @private
+escape_help_char($\\ = X) ->
+  <<X, X>>;
+escape_help_char($\n) ->
+  <<$\\, $n>>;
+escape_help_char(X) ->
+  <<X>>.
+
+bound_to_label_value(Bound) when is_integer(Bound) ->
+  integer_to_list(Bound);
+bound_to_label_value(Bound) when is_float(Bound) ->
+  float_to_list(Bound);
 bound_to_label_value(infinity) ->
   "+Inf".
 
--spec escape_label_value(binary() | iolist() | undefined) -> string().
+-spec escape_label_value(binary() | iolist() | undefined) -> binary().
 %% @private
-escape_label_value(LValue) when is_list(LValue)->
-  ?ESCAPE_LVALUE(LValue);
-escape_label_value(LValue) when is_binary(LValue) ->
-  ?ESCAPE_LVALUE(LValue);
+escape_label_value(LValue) when is_list(LValue); is_binary(LValue) ->
+  escape_string(fun escape_label_char/1, LValue);
 escape_label_value(Value) ->
   erlang:error({wtf, Value}).
 
+%% @private
+escape_label_char($\\ = X) ->
+  <<X, X>>;
+escape_label_char($\n) ->
+  <<$\\, $n>>;
+escape_label_char($" = X) ->
+  <<$\\, X>>;
+escape_label_char(X) ->
+  <<X>>.
 
--spec sub(iodata(), string(), string()) -> string().
-sub(Str, Old, New) ->
-  RegExp = "\\Q" ++ Old ++ "\\E",
-  re:replace(Str, RegExp, New, [global, {return, list}]).
+%% @private
+escape_string(Fun, Str) when is_binary(Str) ->
+  << <<(Fun(X))/binary>> || <<X:8>> <= Str >>;
+escape_string(Fun, Str) ->
+  escape_string(Fun, iolist_to_binary(Str)).
 
 %%
 %% %CopyrightBegin%

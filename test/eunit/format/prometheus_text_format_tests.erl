@@ -21,11 +21,11 @@ create_untyped(Name, Help) ->
   prometheus_model_helpers:create_mf(Name, Help, untyped, ?MODULE, undefined).
 
 escape_metric_help_test() ->
-  ?assertEqual("qwe\\\\qwe\\nqwe",
+  ?assertEqual(<<"qwe\\\\qwe\\nqwe">>,
                prometheus_text_format:escape_metric_help("qwe\\qwe\nqwe")).
 
 escape_label_value_test()->
-  ?assertEqual("qwe\\\\qwe\\nq\\\"we\\\"qwe",
+  ?assertEqual(<<"qwe\\\\qwe\\nq\\\"we\\\"qwe">>,
                prometheus_text_format:escape_label_value("qwe\\qwe\nq\"we\"qwe")).
 
 prometheus_format_test_() ->

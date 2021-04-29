@@ -42,7 +42,7 @@ test_no_distribution(_) ->
 
 prometheus_dist_on_test_() ->
   {setup,
-   fun() -> os:cmd("epmd -daemon"),
+   fun() -> os:cmd("erl -sname test"),
             {ok, _} = net_kernel:start([prometheus_dist_collector, shortnames]),
             ct_slave:start(prometheus_dist_collector_peer) end,
    fun(_) -> ct_slave:stop(prometheus_dist_collector_peer),

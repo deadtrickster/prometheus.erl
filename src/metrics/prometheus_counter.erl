@@ -351,14 +351,14 @@ key(Registry, Name, LabelValues) ->
 reduce_label_values(MFValues) ->
   lists:foldl(
     fun([Labels, I, F], ResAcc) ->
-	PrevSum = maps:get(Labels, ResAcc, 0),
-	ResAcc#{Labels => PrevSum + I + F}
+        PrevSum = maps:get(Labels, ResAcc, 0),
+        ResAcc#{Labels => PrevSum + I + F}
     end, #{}, MFValues).
 
 serialize_label_values(Fun, Labels, Values) ->
   maps:fold(
     fun(LabelValues, Value, L) ->
-	[Fun(lists:zip(Labels, LabelValues), Value)|L]
+        [Fun(lists:zip(Labels, LabelValues), Value)|L]
     end, [], Values).
 
 create_counter(Name, Help, Data) ->

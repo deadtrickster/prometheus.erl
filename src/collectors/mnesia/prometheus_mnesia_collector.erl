@@ -124,7 +124,8 @@ metrics(EnabledMetrics) ->
   MemoryUsage = get_memory_usage(),
   TablewiseMemoryUsage = get_tablewise_memory_usage(),
   TablewiseSize = get_tablewise_size(),
-
+  Nodes = mnesia:system_info(db_nodes),
+  Running = mnesia:system_info(running_db_nodes),
   [{held_locks, gauge,
     "Number of held locks.",
     fun() -> ets:info(mnesia_held_locks, size) end},
@@ -157,7 +158,17 @@ metrics(EnabledMetrics) ->
     fun() -> TablewiseMemoryUsage end},
    {tablewise_size, gauge,
     "Number of rows present per table",
-    fun() -> TablewiseSize end}
+    fun() -> TablewiseSize end},
+    {known_node_count, gauge,
+    "Count of known mnesia nodes",
+    fun() -> length(Nodes) end},
+    {running_node_count, gauge,
+    "Count of running mnesia nodes",
+    fun() -> length(Running) end},
+    {node_state,  
+      gauge, "Mnesia connection state."
+             "The state is represented as a numerical value where not_connected = 0, connected = 1", 
+      fun() -> get_node_state_metrics(Nodes, Running) end}
     ].
 
 %%====================================================================
@@ -214,3 +225,15 @@ get_tablewise_size() ->
       [{[{table, Tab}], mnesia:table_info(Tab, size)} | Acc]
     end,
   lists:foldl(Calculator, [], mnesia:system_info(tables)).
+
+get_node_state_metrics(Nodes, Running) -> 
+  LocalNode = node(),
+  lists:filtermap(fun(Node) -> 
+    Labels = [{peer, Node}],
+    case lists:member(Node, Running) of 
+      _ when LocalNode =:= Node -> false;
+      true -> 
+         {true, {Labels, 1}};
+      false -> {true, {Labels, 0}}
+    end
+  end, Nodes).

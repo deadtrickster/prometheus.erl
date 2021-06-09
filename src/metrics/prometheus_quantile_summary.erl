@@ -69,6 +69,10 @@
 -behaviour(prometheus_metric).
 -behaviour(prometheus_collector).
 
+%% see https://github.com/deadtrickster/prometheus.erl/issues/127
+-dialyzer({nowarn_function, quantile_merge/2}).
+-dialyzer({no_return, [values/2, collect_metrics/2]}).
+
 %%====================================================================
 %% Macros
 %%====================================================================

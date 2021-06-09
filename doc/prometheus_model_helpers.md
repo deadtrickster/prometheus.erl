@@ -196,7 +196,7 @@ Creates <code>prometheus_model:</code>LabelPair'()' from {Name, Value} tuple.</t
 <a href="#label_pair-1"><code>lists:map(fun label_pair/1, Labels)</code></a>.</td></tr><tr><td valign="top"><a href="#metric_name-1">metric_name/1</a></td><td>
 If <code>Name</code> is a list, looks for atoms and converts them to binaries.</td></tr><tr><td valign="top"><a href="#summary_metric-1">summary_metric/1</a></td><td>
 Equivalent to
-<a href="#summary_metric-3"><tt>summary_metric(Labels, Count, Sum)</tt></a>.</td></tr><tr><td valign="top"><a href="#summary_metric-2">summary_metric/2</a></td><td>Equivalent to <a href="#summary_metric-3"><tt>summary_metric([], Count, Sum)</tt></a>.</td></tr><tr><td valign="top"><a href="#summary_metric-3">summary_metric/3</a></td><td>
+<a href="#summary_metric-3"><tt>summary_metric(Labels, Count, Sum)</tt></a>.</td></tr><tr><td valign="top"><a href="#summary_metric-2">summary_metric/2</a></td><td>Equivalent to <a href="#summary_metric-3"><tt>summary_metric([], Count, Sum)</tt></a>.</td></tr><tr><td valign="top"><a href="#summary_metric-3">summary_metric/3</a></td><td>Equivalent to <a href="#summary_metric-4"><tt>summary_metric([], Count, Sum, [])</tt></a>.</td></tr><tr><td valign="top"><a href="#summary_metric-4">summary_metric/4</a></td><td>
 Creates summary metric with <code>Labels</code>, <code>Count</code> and <code>Sum</code>.</td></tr><tr><td valign="top"><a href="#summary_metrics-1">summary_metrics/1</a></td><td>Equivalent to
 <a href="#summary_metric-1"><code>lists:map(fun summary_metric/1, Specs)</code></a>.</td></tr><tr><td valign="top"><a href="#untyped_metric-1">untyped_metric/1</a></td><td>
 Equivalent to
@@ -440,11 +440,19 @@ Equivalent to [`summary_metric([], Count, Sum)`](#summary_metric-3).
 
 ### summary_metric/3 ###
 
+`summary_metric(Labels, Count, Sum) -> any()`
+
+Equivalent to [`summary_metric([], Count, Sum, [])`](#summary_metric-4).
+
+<a name="summary_metric-4"></a>
+
+### summary_metric/4 ###
+
 <pre><code>
-summary_metric(Labels, Count, Sum) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
+summary_metric(Labels, Count, Sum, Quantiles) -&gt; <a href="prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
-<ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Count = non_neg_integer()</code></li><li><code>Sum = <a href="#type-value">value()</a></code></li></ul>
+<ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Count = non_neg_integer()</code></li><li><code>Sum = <a href="#type-value">value()</a></code></li><li><code>Quantiles = list()</code></li></ul>
 
 Creates summary metric with `Labels`, `Count` and `Sum`.
 

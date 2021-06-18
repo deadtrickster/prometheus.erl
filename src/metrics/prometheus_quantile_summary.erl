@@ -295,7 +295,9 @@ value(Registry, Name, LabelValues) ->
                             ['$$']}]) of
     [] -> undefined;
     Values -> {Count, Sum, QE} = reduce_values(Values),
-              {Count,  prometheus_time:maybe_convert_to_du(DU, Sum), quantile_values(QE, QNs)}
+              {Count,
+               prometheus_time:maybe_convert_to_du(DU, Sum),
+               [maybe_convert_qvalue_to_du(DU, QV) || QV <- quantile_values(QE, QNs)]}
   end.
 
 values(Registry, Name) ->
@@ -319,7 +321,7 @@ values(Registry, Name) ->
         fun({LabelValues, {Count, Sum, QE}}, Acc) ->
           [{lists:zip(Labels, LabelValues), Count,
           prometheus_time:maybe_convert_to_du(DU, Sum),
-          quantile_values(QE, QNs)} | Acc]
+          [maybe_convert_qvalue_to_du(DU, QV) || QV <- quantile_values(QE, QNs)]} | Acc]
         end,
         [],
       ReducedMapList)
@@ -497,3 +499,6 @@ quantile_merge(QE1, QE2) ->
     data = Data1 ++ Data2,
     invariant = Invariant
   }).
+
+maybe_convert_qvalue_to_du(DU, {Q, V}) ->
+    {Q, prometheus_time:maybe_convert_to_du(DU, V)}.

@@ -69,10 +69,6 @@
 -behaviour(prometheus_metric).
 -behaviour(prometheus_collector).
 
-%% see https://github.com/deadtrickster/prometheus.erl/issues/127
--dialyzer({nowarn_function, quantile_merge/2}).
--dialyzer({no_return, [values/2, collect_metrics/2]}).
-
 %%====================================================================
 %% Macros
 %%====================================================================
@@ -493,6 +489,10 @@ quantile_merge(QE1, QE2) ->
   #quantile_estimator{samples_count = N2, data = Data2} = QE2,
 
   quantile_estimator:compress(#quantile_estimator{
+    %% Both these fields will be replaced by compression
+    data_count = 0,
+    inserts_since_compression = 0,
+
     samples_count = N1 + N2,
     data = Data1 ++ Data2,
     invariant = Invariant

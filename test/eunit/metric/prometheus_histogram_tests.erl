@@ -16,6 +16,7 @@ prometheus_format_test_() ->
     fun test_observe_duration_milliseconds/1,
     fun test_deregister/1,
     fun test_remove/1,
+    fun test_match_remove/1,
     fun test_default_value/1,
     fun test_values/1,
     fun test_collector1/1,
@@ -80,6 +81,10 @@ test_errors(_) ->
                  prometheus_histogram:remove(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_histogram:remove(db_query_duration, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_histogram:match_remove(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_histogram:match_remove(db_query_duration, [repo, db], [])),
 
    %% histogram specific errors
    ?_assertError({no_buckets, []},
@@ -286,6 +291,41 @@ test_remove(_) ->
    ?_assertEqual(undefined, ARValue2),
    ?_assertEqual(false, RResult3),
    ?_assertEqual(false, RResult4)].
+
+test_match_remove(_) ->
+  prometheus_histogram:new([{name, histogram},
+                            {buckets, [5, 10]},
+                            {labels, [pool]},
+                            {help, ""}]),
+  prometheus_histogram:new([{name, simple_histogram},
+                            {buckets, [5, 10]},
+                            {help, ""}]),
+
+  prometheus_histogram:observe(histogram, [mongodb], 1),
+  prometheus_histogram:observe(simple_histogram, 1),
+  prometheus_histogram:observe(histogram, [mongodb], 6),
+  prometheus_histogram:observe(simple_histogram, 6),
+
+  BRValue1 = prometheus_histogram:value(histogram, [mongodb]),
+  BRValue2 = prometheus_histogram:value(simple_histogram),
+
+  RResult1 = prometheus_histogram:match_remove(histogram, ['$1'], [{'=:=', '$1', mongodb}]),
+  RResult2 = prometheus_histogram:match_remove(simple_histogram),
+
+  ARValue1 = prometheus_histogram:value(histogram, [mongodb]),
+  ARValue2 = prometheus_histogram:value(simple_histogram),
+
+  RResult3 = prometheus_histogram:match_remove(histogram, ['$1'], [{'=:=', '$1', mongodb}]),
+  RResult4 = prometheus_histogram:match_remove(simple_histogram),
+
+  [?_assertEqual({[1, 1, 0], 7}, BRValue1),
+   ?_assertEqual({[1, 1, 0], 7}, BRValue2),
+   ?_assertEqual(1, RResult1),
+   ?_assertEqual(1, RResult2),
+   ?_assertEqual(undefined, ARValue1),
+   ?_assertEqual(undefined, ARValue2),
+   ?_assertEqual(0, RResult3),
+   ?_assertEqual(0, RResult4)].
 
 test_default_value(_) ->
   prometheus_histogram:new([{name, duration_histogram},

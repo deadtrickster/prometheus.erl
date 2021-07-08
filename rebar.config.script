@@ -1,14 +1,17 @@
-TravisConfig = case os:getenv("TRAVIS") of
-  "true" ->
-    JobId   = os:getenv("TRAVIS_JOB_ID"),
-    lists:keystore(coveralls_service_job_id, 1, CONFIG, {coveralls_service_job_id, JobId});
-  _ ->
-    CONFIG
-end,
-
-case erlang:function_exported(rebar3, main, 1) of
-    true -> % rebar3
-        lists:keystore(plugins, 1, TravisConfig, {plugins, [{rebar3_archive_plugin, "0.0.1"}]});
-    false -> % rebar 2.x or older
-        lists:keystore(proto_opts, 1, TravisConfig, {proto_opts, [{src_dirs, []}]})
+%% -*- erlang -*-
+case {os:getenv("GITHUB_ACTIONS"), os:getenv("GITHUB_TOKEN")} of
+    {"true", Token} when is_list(Token) ->
+        CONFIG1 = [{coveralls_repo_token, Token},
+        {coveralls_service_job_id, os:getenv("GITHUB_RUN_ID")},
+        {coveralls_commit_sha, os:getenv("GITHUB_SHA")},
+        {coveralls_flag_name, os:getenv("COVERALLS_FLAG_NAME")} | CONFIG],
+        case os:getenv("GITHUB_EVENT_NAME") =:= "pull_request"
+            andalso string:tokens(os:getenv("GITHUB_REF"), "/") of
+            [_, "pull", PRNO, _] ->
+                [{coveralls_service_pull_request, PRNO} | CONFIG1];
+            _ ->
+                CONFIG1
+        end;
+    _ ->
+        CONFIG
 end.

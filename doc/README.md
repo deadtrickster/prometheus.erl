@@ -8,7 +8,7 @@ __Version:__ 4.8.1
 
 [![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)](https://hex.pm/packages/prometheus)
 [![Hex.pm](https://img.shields.io/hexpm/dt/prometheus.svg?maxAge=2592000)](https://hex.pm/packages/prometheus)
-[![Build Status](https://travis-ci.org/deadtrickster/prometheus.erl.svg?branch=version-3)](https://travis-ci.org/deadtrickster/prometheus.erl)
+[![Build Status](https://img.shields.io/github/workflow/status/deadtrickster/prometheus.erl/CI?style=flat)](https://github.com/deadtrickster/prometheus.erl/actions/workflows/main.yml)
 [![Coverage Status](https://coveralls.io/repos/github/deadtrickster/prometheus.erl/badge.svg?branch=master)](https://coveralls.io/github/deadtrickster/prometheus.erl?branch=master)
 
 [Prometheus.io](https://prometheus.io) monitoring system and time series database client in Erlang.

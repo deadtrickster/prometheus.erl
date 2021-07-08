@@ -1,0 +1,46 @@
+name: CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: CI
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        otp: [21.3, 22.3, 23.0.4, 23.2.7.0, 24.0]
+    container:
+      image: erlang:${{ matrix.otp }}-alpine
+    steps:
+    - name: Prepare
+      run: |
+           apk update
+           apk --no-cache upgrade
+           apk --no-cache add gcc git libc-dev libc-utils libgcc linux-headers make bash
+    - uses: actions/checkout@v2
+    - name: Build
+      run: rebar3 compile
+    - name: Run tests
+      run: |
+           ./elvis rock --config elvis.config
+           rebar3 xref
+           rebar3 dialyzer
+           rebar3 eunit
+    - name: Coveralls
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        COVERALLS_FLAG_NAME: ${{ matrix.otp }}
+      run: DEBUG=1 rebar3 as test coveralls send
+
+  finish:
+    needs: test
+    runs-on: ubuntu-20.04
+    if: always()
+    steps:
+    - name: Coveralls Finished
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+           curl -v -k https://coveralls.io/webhook \
+                --header "Content-Type: application/json" \
+                --data "{\"repo_name\":\"$GITHUB_REPOSITORY\",\"repo_token\":\"$GITHUB_TOKEN\",\"payload\":{\"build_num\":$GITHUB_RUN_ID,\"status\":\"done\"}}"

@@ -495,7 +495,5 @@ quantile_merge(QE1, QE2) ->
 
     samples_count = N1 + N2,
     data = Data1 ++ Data2,
-    invariant = Invariant,
-    data_count = 0,
-    inserts_since_compression = 0
+    invariant = Invariant
   }).

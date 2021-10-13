@@ -11,15 +11,15 @@
 
 metric_name_test() ->
   %% test ?METRIC_NAME macro here too
-  ?assertMatch("rabbitmq_memory_ets_bytes",
+  ?assertMatch(<<"rabbitmq_memory_ets_bytes">>,
                prometheus_model_helpers:metric_name("rabbitmq_memory_ets_bytes")),
   ?assertMatch(<<"rabbitmq_memory_ets_bytes">>,
                prometheus_model_helpers:metric_name(<<"rabbitmq_memory_ets_bytes">>)),
   ?assertMatch(<<"rabbitmq_memory_ets_bytes">>,
                prometheus_model_helpers:metric_name(rabbitmq_memory_ets_bytes)),
-  ?assertMatch(["rabbitmq_", <<"memory_ets_bytes">>],
+  ?assertMatch(<<"rabbitmq_memory_ets_bytes">>,
                prometheus_model_helpers:metric_name(?METRIC_NAME(memory_ets_bytes))),
-  ?assertMatch(["rabbitmq_", ["memory_", <<"ets">>, "_bytes"]],
+  ?assertMatch(<<"rabbitmq_memory_ets_bytes">>,
                prometheus_model_helpers:metric_name(
                  ?METRIC_NAME(["memory_", ets, "_bytes"]))).
 

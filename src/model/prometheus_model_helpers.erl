@@ -76,21 +76,23 @@
 %% If `Name' is a list, looks for atoms and converts them to binaries.
 %% Why iolists do not support atoms?
 %% @end
--spec metric_name(Name) -> iolist() when
+-spec metric_name(Name) -> binary() when
     Name :: atom() | binary() | list(char() | iolist() | binary() | atom()).
 metric_name(Name) ->
   case Name of
     _ when is_atom(Name) ->
       atom_to_binary(Name, utf8);
     _ when is_list(Name) ->
-      [
-       case is_atom(P) of
-         true -> atom_to_binary(P, utf8);
-         _ -> P
-       end
-       || P <- Name];
-    _ ->
-      Name
+          lists:foldl(fun
+                        (A, Acc) when is_atom(A) ->
+                          <<Acc/binary, (atom_to_binary(A, utf8))/binary>>;
+                        (C, Acc) when is_integer(C) ->
+                          <<Acc/binary, C:8>>;
+                        (Str, Acc) ->
+                          <<Acc/binary, (iolist_to_binary(Str))/binary>>
+                      end, <<>>, Name);
+    _ when is_binary(Name) ->
+          Name
   end.
 
 %% @doc

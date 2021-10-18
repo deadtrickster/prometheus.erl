@@ -50,7 +50,8 @@
 -type label_name() :: term().
 -type label_value() :: term().
 -type label() :: {label_name(), label_value()}.
--type labels() :: [label()].
+-type pre_rendered_labels() :: binary().
+-type labels() :: [label()] | pre_rendered_labels().
 -type value() :: float() | integer() | undefined | infinity.
 -type prometheus_boolean() :: boolean() | number() | list() | undefined.
 -type gauge() :: value() | {value()} | {labels(), value()}.
@@ -328,6 +329,18 @@ histogram_metric(Labels, Buckets, Count, Sum) ->
 %% @doc Equivalent to
 %% {@link label_pair/1. `lists:map(fun label_pair/1, Labels)'}.
 %% @end
+%%
+%% NB `is_binary' clause here is for a special optimization for text
+%% format only: client code can pre-generate final labels string,
+%% e.g. when it knows when character escaping is not needed. This
+%% avoids direct performance cost of character escaping, and also
+%% reduces garabage collection pressure, as intermediate lists of
+%% tuples/records are not created at all. This optimization is used by
+%% RabbitMQ prometheus plugin (which calls `create_mf/5', and it ends
+%% here).
+%% WARNING Works only for text format, protobuf format export will
+%% fail with an error.
+label_pairs(B) when is_binary(B) -> B;
 label_pairs(Labels) -> lists:map(fun label_pair/1, Labels).
 
 %% @doc

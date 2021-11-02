@@ -163,8 +163,12 @@ string_type('UNTYPED') ->
 %% binary() in spec means 0 or more already rendered labels (name,
 %% escaped value), joined with "," in between
 -spec render_labels(binary() | [prometheus_model:'LabelPair'() | binary()]) -> binary().
+-dialyzer({no_match, render_labels/1}).
 render_labels([]) ->
   <<>>;
+%% This clause is the reason for `-dialyzer` attr. It's an
+%% optimization, but it slightly violates the types automatically
+%% generated from protobufs.
 render_labels(B) when is_binary(B) ->
   B;
 render_labels([<<>>|Labels]) ->

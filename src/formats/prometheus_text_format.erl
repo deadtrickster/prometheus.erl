@@ -119,11 +119,14 @@ render_metric(Name, #'Metric'{label=Labels,
   Bytes1 = render_series([Name, "_count"], LString, Count),
   Bytes2 = <<Bytes1/binary, (render_series([Name, "_sum"], LString, Sum))/binary>>,
   Bytes3 = lists:foldl(fun (#'Quantile'{quantile = QN, value = QV}, Blob) ->
-                               Val = render_series(
-                                       [Name],
-                                       render_labels([LString, #'LabelPair'{name="quantile", value=io_lib:format("~p", [QN])}]),
-                                       QV),
-                               <<Blob/binary, Val/binary>>
+                           Val = render_series(
+                                   [Name],
+                                   render_labels(
+                                     [LString,
+                                      #'LabelPair'{name="quantile",
+                                                   value=io_lib:format("~p", [QN])}]),
+                                   QV),
+                           <<Blob/binary, Val/binary>>
                        end, Bytes2, Quantiles),
   Bytes3;
 render_metric(Name, #'Metric'{label=Labels,
@@ -157,8 +160,9 @@ string_type('HISTOGRAM') ->
 string_type('UNTYPED') ->
   "untyped".
 
-%% binary() in spec means 0 or more already rendered labels (name, escaped value), joined with "," in between
--spec render_labels(binary() | [#'LabelPair'{} | binary()]) -> binary().
+%% binary() in spec means 0 or more already rendered labels (name,
+%% escaped value), joined with "," in between
+-spec render_labels(binary() | [prometheus_model:'LabelPair'() | binary()]) -> binary().
 render_labels([]) ->
   <<>>;
 render_labels(B) when is_binary(B) ->
@@ -175,7 +179,7 @@ render_labels([FirstLabel|Labels]) ->
                     end, Start, Labels),
     <<B/binary>>.
 
--spec render_label_pair(#'LabelPair'{} | binary()) -> binary().
+-spec render_label_pair(prometheus_model:'LabelPair'() | binary()) -> binary().
 render_label_pair(B) when is_binary(B) ->
   B;
 render_label_pair(#'LabelPair'{name=Name, value=Value}) ->
@@ -189,9 +193,15 @@ add_brackets(LString) ->
 render_series(Name, LString, undefined) ->
   <<(iolist_to_binary(Name))/binary, (add_brackets(LString))/binary, " NaN\n">>;
 render_series(Name, LString, Value) when is_integer(Value) ->
-  <<(iolist_to_binary(Name))/binary, (add_brackets(LString))/binary, " ", (integer_to_binary(Value))/binary , "\n">>;
+  <<(iolist_to_binary(Name))/binary,
+    (add_brackets(LString))/binary,
+    " ",
+    (integer_to_binary(Value))/binary , "\n">>;
 render_series(Name, LString, Value) ->
-  <<(iolist_to_binary(Name))/binary, (add_brackets(LString))/binary, " ", (iolist_to_binary(io_lib:format("~p", [Value])))/binary , "\n">>.
+  <<(iolist_to_binary(Name))/binary,
+    (add_brackets(LString))/binary,
+    " ",
+    (iolist_to_binary(io_lib:format("~p", [Value])))/binary , "\n">>.
 
 %% @private
 escape_metric_help(Help) ->

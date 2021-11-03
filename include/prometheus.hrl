@@ -19,4 +19,4 @@
         error_logger:warning_msg(Old " is deprecated and will soon be removed. "
                                  "Please use " New " instead.~n")).
 
--define(METRIC_NAME(A), [?METRIC_NAME_PREFIX, prometheus_model_helpers:metric_name(A)]).
+-define(METRIC_NAME(A), <<?METRIC_NAME_PREFIX, (prometheus_model_helpers:metric_name(A))/binary>>).

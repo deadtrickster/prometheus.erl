@@ -31,10 +31,10 @@
         ]).
 -endif.
 
--include("prometheus.hrl").
 -include("prometheus_model.hrl").
 
 -behaviour(prometheus_format).
+-compile({inline, [add_brackets/1, render_label_pair/1]}).
 
 %%====================================================================
 %% Macros
@@ -94,49 +94,60 @@ emit_mf_prologue(Fd, #'MetricFamily'{name=Name, help=Help, type=Type}) ->
 
 %% @private
 emit_mf_metrics(Fd, #'MetricFamily'{name=Name, metric = Metrics}) ->
-  [emit_metric(Fd, Name, Metric) || Metric <- Metrics].
+    %% file:write/2 is an expensive operation, as it goes through a port driver.
+    %% Instead a large chunk of bytes is being collected here, in a
+    %% way that triggers binary append optimization in ERTS.
+    Bytes = lists:foldl(fun (Metric, Blob) ->
+                            <<Blob/binary, (render_metric(Name, Metric))/binary>>
+                        end, <<>>, Metrics),
+    file:write(Fd, Bytes).
 
-emit_metric(Fd, Name, #'Metric'{label=Labels,
+render_metric(Name, #'Metric'{label=Labels,
                                 counter=#'Counter'{value=Value}}) ->
-  emit_series(Fd, Name, labels_string(labels_stringify(Labels)), Value);
-emit_metric(Fd, Name, #'Metric'{label=Labels,
+  render_series(Name, render_labels(Labels), Value);
+render_metric(Name, #'Metric'{label=Labels,
                                 gauge=#'Gauge'{value=Value}}) ->
-  emit_series(Fd, Name, labels_string(labels_stringify(Labels)), Value);
-emit_metric(Fd, Name, #'Metric'{label=Labels,
+  render_series(Name, render_labels(Labels), Value);
+render_metric(Name, #'Metric'{label=Labels,
                                 untyped=#'Untyped'{value=Value}}) ->
-  emit_series(Fd, Name, labels_string(labels_stringify(Labels)), Value);
-emit_metric(Fd, Name, #'Metric'{label=Labels,
+  render_series(Name, render_labels(Labels), Value);
+render_metric(Name, #'Metric'{label=Labels,
                                 summary=#'Summary'{sample_count=Count,
                                                    sample_sum=Sum,
                                                    quantile=Quantiles}}) ->
-  StringLabels = labels_stringify(Labels),
-  LString = labels_string(StringLabels),
-  emit_series(Fd, [Name, "_count"], LString, Count),
-  emit_series(Fd, [Name, "_sum"], LString, Sum),
-  [
-    emit_series(
-      Fd, [Name],
-      labels_string(StringLabels ++
-                      labels_stringify([#'LabelPair'{name="quantile", value=io_lib:format("~p", [QN])}])),
-      QV)
-    || #'Quantile'{quantile = QN, value = QV} <- Quantiles
-  ];
-emit_metric(Fd, Name, #'Metric'{label=Labels,
+  LString = render_labels(Labels),
+  Bytes1 = render_series([Name, "_count"], LString, Count),
+  Bytes2 = <<Bytes1/binary, (render_series([Name, "_sum"], LString, Sum))/binary>>,
+  Bytes3 = lists:foldl(fun (#'Quantile'{quantile = QN, value = QV}, Blob) ->
+                           Val = render_series(
+                                   [Name],
+                                   render_labels(
+                                     [LString,
+                                      #'LabelPair'{name="quantile",
+                                                   value=io_lib:format("~p", [QN])}]),
+                                   QV),
+                           <<Blob/binary, Val/binary>>
+                       end, Bytes2, Quantiles),
+  Bytes3;
+render_metric(Name, #'Metric'{label=Labels,
                                 histogram=#'Histogram'{sample_count=Count,
                                                        sample_sum=Sum,
                                                        bucket=Buckets}}) ->
-  StringLabels = labels_stringify(Labels),
-  LString = labels_string(StringLabels),
-  [emit_histogram_bucket(Fd, Name, StringLabels, Bucket) || Bucket <- Buckets],
-  emit_series(Fd, [Name, "_count"], LString, Count),
-  emit_series(Fd, [Name, "_sum"], LString, Sum).
+  %% StringLabels = labels_stringify(Labels),
+  LString = render_labels(Labels),
+  Bytes1 = lists:foldl(fun (Bucket, Blob) ->
+                               <<Blob/binary, (emit_histogram_bucket(Name, LString, Bucket))/binary>>
+                       end, << >>, Buckets),
+  Bytes2 = <<Bytes1/binary, (render_series([Name, "_count"], LString, Count))/binary>>,
+  Bytes3 = <<Bytes2/binary, (render_series([Name, "_sum"], LString, Sum))/binary>>,
+  Bytes3.
 
-emit_histogram_bucket(Fd, Name, StringLabels, #'Bucket'{cumulative_count=BCount,
-                                                  upper_bound=BBound}) ->
+emit_histogram_bucket(Name, LString, #'Bucket'{cumulative_count=BCount,
+                                               upper_bound=BBound}) ->
   BLValue = bound_to_label_value(BBound),
-  emit_series(Fd, [Name, "_bucket"],
-              labels_string(StringLabels ++
-                              labels_stringify([#'LabelPair'{name="le", value=BLValue}])), BCount).
+  render_series([Name, "_bucket"],
+              render_labels([LString, #'LabelPair'{name="le", value=BLValue}]),
+              BCount).
 
 string_type('COUNTER') ->
   "counter";
@@ -149,22 +160,52 @@ string_type('HISTOGRAM') ->
 string_type('UNTYPED') ->
   "untyped".
 
-labels_stringify(Labels) ->
-  Fun = fun (#'LabelPair'{name=Name, value=Value}) ->
-            [Name, "=\"", escape_label_value(Value), "\""]
-        end,
-  lists:map(Fun, Labels).
+%% binary() in spec means 0 or more already rendered labels (name,
+%% escaped value), joined with "," in between
+-spec render_labels(binary() | [prometheus_model:'LabelPair'() | binary()]) -> binary().
+-dialyzer({no_match, render_labels/1}).
+render_labels([]) ->
+  <<>>;
+%% This clause is the reason for `-dialyzer` attr. It's an
+%% optimization, but it slightly violates the types automatically
+%% generated from protobufs.
+render_labels(B) when is_binary(B) ->
+  B;
+render_labels([<<>>|Labels]) ->
+  render_labels(Labels);
+render_labels([FirstLabel|Labels]) ->
+    Start = << (render_label_pair(FirstLabel))/binary >>,
+    B = lists:foldl(fun
+                      (<<>>, Acc) ->
+                        Acc;
+                      (Label, Acc) ->
+                        <<Acc/binary, ",", (render_label_pair(Label))/binary>>
+                    end, Start, Labels),
+    <<B/binary>>.
 
-labels_string([])     -> "";
-labels_string(Labels) ->
-  ["{", join(",", Labels), "}"].
+-spec render_label_pair(prometheus_model:'LabelPair'() | binary()) -> binary().
+render_label_pair(B) when is_binary(B) ->
+  B;
+render_label_pair(#'LabelPair'{name=Name, value=Value}) ->
+  << (iolist_to_binary(Name))/binary, "=\"", (escape_label_value(Value))/binary, "\"" >>.
 
-emit_series(Fd, Name, LString, undefined) ->
-  file:write(Fd, [Name, LString, " NaN\n"]);
-emit_series(Fd, Name, LString, Value) when is_integer(Value) ->
-  file:write(Fd, [Name, LString, " ", integer_to_list(Value) , "\n"]);
-emit_series(Fd, Name, LString, Value) ->
-  file:write(Fd, [Name, LString, " ", io_lib:format("~p", [Value]) , "\n"]).
+add_brackets(<<>>) ->
+  <<>>;
+add_brackets(LString) ->
+  <<"{", LString/binary, "}">>.
+
+render_series(Name, LString, undefined) ->
+  <<(iolist_to_binary(Name))/binary, (add_brackets(LString))/binary, " NaN\n">>;
+render_series(Name, LString, Value) when is_integer(Value) ->
+  <<(iolist_to_binary(Name))/binary,
+    (add_brackets(LString))/binary,
+    " ",
+    (integer_to_binary(Value))/binary , "\n">>;
+render_series(Name, LString, Value) ->
+  <<(iolist_to_binary(Name))/binary,
+    (add_brackets(LString))/binary,
+    " ",
+    (iolist_to_binary(io_lib:format("~p", [Value])))/binary , "\n">>.
 
 %% @private
 escape_metric_help(Help) ->
@@ -207,33 +248,3 @@ escape_string(Fun, Str) when is_binary(Str) ->
   << <<(Fun(X))/binary>> || <<X:8>> <= Str >>;
 escape_string(Fun, Str) ->
   escape_string(Fun, iolist_to_binary(Str)).
-
-%%
-%% %CopyrightBegin%
-%%
-%% Copyright Ericsson AB 1996-2016. All Rights Reserved.
-%%
-%% Licensed under the Apache License, Version 2.0 (the "License");
-%% you may not use this file except in compliance with the License.
-%% You may obtain a copy of the License at
-%%
-%%     http://www.apache.org/licenses/LICENSE-2.0
-%%
-%% Unless required by applicable law or agreed to in writing, software
-%% distributed under the License is distributed on an "AS IS" BASIS,
-%% WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-%% See the License for the specific language governing permissions and
-%% limitations under the License.
-%%
-%% %CopyrightEnd%
-%%
--spec join(Sep, List1) -> List2 when
-      Sep :: T,
-      List1 :: [T],
-      List2 :: [T],
-    T :: term().
-
-join(Sep, [H|T]) -> [H|join_prepend(Sep, T)].
-
-join_prepend(_Sep, []) -> [];
-join_prepend(Sep, [H|T]) -> [Sep, H|join_prepend(Sep, T)].

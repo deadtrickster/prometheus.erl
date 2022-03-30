@@ -196,7 +196,7 @@ metric_enabled(Name, Metrics) ->
 get_memory_usage() ->
   WordSize = erlang:system_info(wordsize),
   Calculator = fun(Tab, Sum) ->
-                 mnesia:table_info(Tab, memory) + Sum
+                 table_info(Tab, memory) + Sum
                end,
   lists:foldl(Calculator, 0, mnesia:system_info(tables)) * WordSize.
 
@@ -204,13 +204,23 @@ get_tablewise_memory_usage() ->
   WordSize = erlang:system_info(wordsize),
   Calculator =
     fun(Tab, Acc) ->
-      [{[{table, Tab}], mnesia:table_info(Tab, memory) * WordSize} | Acc]
+      [{[{table, Tab}], table_info(Tab, memory) * WordSize} | Acc]
     end,
   lists:foldl(Calculator, [], mnesia:system_info(tables)).
 
 get_tablewise_size() ->
   Calculator =
     fun(Tab, Acc) ->
-      [{[{table, Tab}], mnesia:table_info(Tab, size)} | Acc]
+      [{[{table, Tab}], table_info(Tab, size)} | Acc]
     end,
   lists:foldl(Calculator, [], mnesia:system_info(tables)).
+
+%% mnesia:table_info/2 may return 'undefined' when the table should
+%% be loaded on the local node but hasn't been loaded yet.
+%%
+%% https://github.com/erlang/otp/issues/5830
+table_info(Tab, Item) ->
+    case mnesia:table_info(Tab, Item) of
+        undefined -> 0;
+        Val -> Val
+    end.

@@ -31,7 +31,7 @@ CCount is a number of coordinator transactions.</td></tr></table>
 table_disk_size(Table) -&gt; Size
 </code></pre>
 
-<ul class="definitions"><li><code>Table = <a href="http://www.erlang.org/edoc/doc/kernel/doc/file.html#type-name_all">file:name_all()</a></code></li><li><code>Size = non_neg_integer()</code></li></ul>
+<ul class="definitions"><li><code>Table = <a href="kernel/doc/file.md#type-name_all">file:name_all()</a></code></li><li><code>Size = non_neg_integer()</code></li></ul>
 
 Equivalent to [`table_disk_size(mnesia:system_info(directory), Table)`](#table_disk_size-2).
 
@@ -43,7 +43,7 @@ Equivalent to [`table_disk_size(mnesia:system_info(directory), Table)`](#table_d
 table_disk_size(Dir, Table) -&gt; Size
 </code></pre>
 
-<ul class="definitions"><li><code>Dir = <a href="http://www.erlang.org/edoc/doc/kernel/doc/file.html#type-name_all">file:name_all()</a></code></li><li><code>Table = <a href="http://www.erlang.org/edoc/doc/kernel/doc/file.html#type-name_all">file:name_all()</a></code></li><li><code>Size = non_neg_integer()</code></li></ul>
+<ul class="definitions"><li><code>Dir = <a href="kernel/doc/file.md#type-name_all">file:name_all()</a></code></li><li><code>Table = <a href="kernel/doc/file.md#type-name_all">file:name_all()</a></code></li><li><code>Size = non_neg_integer()</code></li></ul>
 
 Returns sum of all mnesia files for the given `Table` in bytes.
 Mnesia can create different files for each table:

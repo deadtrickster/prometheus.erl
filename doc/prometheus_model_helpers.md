@@ -24,7 +24,7 @@ Probably will be used with [`prometheus_collector`](prometheus_collector.md).
 
 
 <pre><code>
-buckets() = [{<a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_buckets.html#type-bucket_bound">prometheus_buckets:bucket_bound()</a>, non_neg_integer()}, ...]
+buckets() = [{<a href="prometheus/doc/prometheus_buckets.md#type-bucket_bound">prometheus_buckets:bucket_bound()</a>, non_neg_integer()}, ...]
 </code></pre>
 
 
@@ -224,7 +224,7 @@ Creates untyped metric with <code>Labels</code> and <code>Value</code>.</td></tr
 ### boolean_metric/1 ###
 
 <pre><code>
-boolean_metric(Boolean) -&gt; <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a>
+boolean_metric(Boolean) -&gt; <a href="prometheus/doc/prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
 <ul class="definitions"><li><code>Boolean = <a href="#type-pbool">pbool()</a></code></li></ul>
@@ -237,7 +237,7 @@ Equivalent to
 ### boolean_metric/2 ###
 
 <pre><code>
-boolean_metric(Labels, Value) -&gt; <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a>
+boolean_metric(Labels, Value) -&gt; <a href="prometheus/doc/prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
 <ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Value = <a href="#type-prometheus_boolean">prometheus_boolean()</a></code></li></ul>
@@ -258,7 +258,7 @@ Equivalent to
 ### counter_metric/1 ###
 
 <pre><code>
-counter_metric(Spec) -&gt; <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a>
+counter_metric(Spec) -&gt; <a href="prometheus/doc/prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
 <ul class="definitions"><li><code>Spec = <a href="#type-counter">counter()</a></code></li></ul>
@@ -271,7 +271,7 @@ Equivalent to
 ### counter_metric/2 ###
 
 <pre><code>
-counter_metric(Labels, Value) -&gt; <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a>
+counter_metric(Labels, Value) -&gt; <a href="prometheus/doc/prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
 <ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Value = <a href="#type-value">value()</a></code></li></ul>
@@ -295,7 +295,7 @@ Equivalent to
 create_mf(Name, Help, Type, Metrics) -&gt; MetricFamily
 </code></pre>
 
-<ul class="definitions"><li><code>Name = <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_metric.html#type-name">prometheus_metric:name()</a></code></li><li><code>Help = <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_metric.html#type-help">prometheus_metric:help()</a></code></li><li><code>Type = atom()</code></li><li><code>Metrics = [<a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a>] | <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a> | <a href="#type-metrics">metrics()</a></code></li><li><code>MetricFamily = <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-MetricFamily">prometheus_model:'MetricFamily'()</a></code></li></ul>
+<ul class="definitions"><li><code>Name = <a href="prometheus/doc/prometheus_metric.md#type-name">prometheus_metric:name()</a></code></li><li><code>Help = <a href="prometheus/doc/prometheus_metric.md#type-help">prometheus_metric:help()</a></code></li><li><code>Type = atom()</code></li><li><code>Metrics = [<a href="prometheus/doc/prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>] | <a href="prometheus/doc/prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a> | <a href="#type-metrics">metrics()</a></code></li><li><code>MetricFamily = <a href="prometheus/doc/prometheus_model.md#type-MetricFamily">prometheus_model:'MetricFamily'()</a></code></li></ul>
 
 Create Metric Family of `Type`, `Name` and `Help`.
 `Collector:collect_metrics/2` callback will be called and expected to
@@ -309,7 +309,7 @@ return individual metrics list.
 create_mf(Name, Help, Type, Collector, CollectorData) -&gt; MetricFamily
 </code></pre>
 
-<ul class="definitions"><li><code>Name = <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_metric.html#type-name">prometheus_metric:name()</a></code></li><li><code>Help = <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_metric.html#type-help">prometheus_metric:help()</a></code></li><li><code>Type = atom()</code></li><li><code>Collector = <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_collector.html#type-collector">prometheus_collector:collector()</a></code></li><li><code>CollectorData = <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_collector.html#type-data">prometheus_collector:data()</a></code></li><li><code>MetricFamily = <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-MetricFamily">prometheus_model:'MetricFamily'()</a></code></li></ul>
+<ul class="definitions"><li><code>Name = <a href="prometheus/doc/prometheus_metric.md#type-name">prometheus_metric:name()</a></code></li><li><code>Help = <a href="prometheus/doc/prometheus_metric.md#type-help">prometheus_metric:help()</a></code></li><li><code>Type = atom()</code></li><li><code>Collector = <a href="prometheus/doc/prometheus_collector.md#type-collector">prometheus_collector:collector()</a></code></li><li><code>CollectorData = <a href="prometheus/doc/prometheus_collector.md#type-data">prometheus_collector:data()</a></code></li><li><code>MetricFamily = <a href="prometheus/doc/prometheus_model.md#type-MetricFamily">prometheus_model:'MetricFamily'()</a></code></li></ul>
 
 Create Metric Family of `Type`, `Name` and `Help`.
 `Collector:collect_metrics/2` callback will be called and expected to
@@ -320,7 +320,7 @@ return individual metrics list.
 ### gauge_metric/1 ###
 
 <pre><code>
-gauge_metric(Gauge) -&gt; <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a>
+gauge_metric(Gauge) -&gt; <a href="prometheus/doc/prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
 <ul class="definitions"><li><code>Gauge = <a href="#type-gauge">gauge()</a></code></li></ul>
@@ -333,7 +333,7 @@ Equivalent to
 ### gauge_metric/2 ###
 
 <pre><code>
-gauge_metric(Labels, Value) -&gt; <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a>
+gauge_metric(Labels, Value) -&gt; <a href="prometheus/doc/prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
 <ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Value = <a href="#type-value">value()</a></code></li></ul>
@@ -354,7 +354,7 @@ Equivalent to
 ### histogram_metric/1 ###
 
 <pre><code>
-histogram_metric(Histogram) -&gt; <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a>
+histogram_metric(Histogram) -&gt; <a href="prometheus/doc/prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
 <ul class="definitions"><li><code>Histogram = <a href="#type-histogram">histogram()</a></code></li></ul>
@@ -379,7 +379,7 @@ Equivalent to [`histogram_metric([], Buckets, Count, Sum)`](#histogram_metric-4)
 histogram_metric(Labels, Buckets, Count, Sum) -&gt; Metric
 </code></pre>
 
-<ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Buckets = [{Bound, Count}]</code></li><li><code>Bound = <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_buckets.html#type-bucket_bound">prometheus_buckets:bucket_bound()</a></code></li><li><code>Count = non_neg_integer()</code></li><li><code>Sum = <a href="#type-value">value()</a></code></li><li><code>Metric = <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a></code></li></ul>
+<ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Buckets = [{Bound, Count}]</code></li><li><code>Bound = <a href="prometheus/doc/prometheus_buckets.md#type-bucket_bound">prometheus_buckets:bucket_bound()</a></code></li><li><code>Count = non_neg_integer()</code></li><li><code>Sum = <a href="#type-value">value()</a></code></li><li><code>Metric = <a href="prometheus/doc/prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a></code></li></ul>
 
 Creates histogram metric with `Labels`, `Buckets`, `Count` and `Sum`.
 
@@ -397,7 +397,7 @@ Equivalent to
 ### label_pair/1 ###
 
 <pre><code>
-label_pair(X1::<a href="#type-label">label()</a>) -&gt; <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-LabelPair">prometheus_model:'LabelPair'()</a>
+label_pair(X1::<a href="#type-label">label()</a>) -&gt; <a href="prometheus/doc/prometheus_model.md#type-LabelPair">prometheus_model:'LabelPair'()</a>
 </code></pre>
 <br />
 
@@ -430,7 +430,7 @@ Why iolists do not support atoms?
 ### summary_metric/1 ###
 
 <pre><code>
-summary_metric(Summary) -&gt; <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a>
+summary_metric(Summary) -&gt; <a href="prometheus/doc/prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
 <ul class="definitions"><li><code>Summary = <a href="#type-summary">summary()</a></code></li></ul>
@@ -459,7 +459,7 @@ Equivalent to [`summary_metric([], Count, Sum, [])`](#summary_metric-4).
 ### summary_metric/4 ###
 
 <pre><code>
-summary_metric(Labels, Count, Sum, Quantiles) -&gt; <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a>
+summary_metric(Labels, Count, Sum, Quantiles) -&gt; <a href="prometheus/doc/prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
 <ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Count = non_neg_integer()</code></li><li><code>Sum = <a href="#type-value">value()</a></code></li><li><code>Quantiles = list()</code></li></ul>
@@ -480,7 +480,7 @@ Equivalent to
 ### untyped_metric/1 ###
 
 <pre><code>
-untyped_metric(Untyped) -&gt; <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a>
+untyped_metric(Untyped) -&gt; <a href="prometheus/doc/prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
 <ul class="definitions"><li><code>Untyped = <a href="#type-untyped">untyped()</a></code></li></ul>
@@ -493,7 +493,7 @@ Equivalent to
 ### untyped_metric/2 ###
 
 <pre><code>
-untyped_metric(Labels, Value) -&gt; <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-Metric">prometheus_model:'Metric'()</a>
+untyped_metric(Labels, Value) -&gt; <a href="prometheus/doc/prometheus_model.md#type-Metric">prometheus_model:'Metric'()</a>
 </code></pre>
 
 <ul class="definitions"><li><code>Labels = <a href="#type-labels">labels()</a></code></li><li><code>Value = <a href="#type-value">value()</a></code></li></ul>

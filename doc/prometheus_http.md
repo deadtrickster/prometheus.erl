@@ -19,7 +19,7 @@ HTTP instrumentation helpers.
 
 
 <pre><code>
-status_class() = <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model_helpers.html#type-label_value">prometheus_model_helpers:label_value()</a>
+status_class() = <a href="prometheus/doc/prometheus_model_helpers.md#type-label_value">prometheus_model_helpers:label_value()</a>
 </code></pre>
 
 
@@ -51,7 +51,7 @@ Returns status class for the http status code <code>SCode</code>.</td></tr></tab
 ### microseconds_duration_buckets/0 ###
 
 <pre><code>
-microseconds_duration_buckets() -&gt; <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_buckets.html#type-buckets">prometheus_buckets:buckets()</a>
+microseconds_duration_buckets() -&gt; <a href="prometheus/doc/prometheus_buckets.md#type-buckets">prometheus_buckets:buckets()</a>
 </code></pre>
 <br />
 

@@ -54,7 +54,7 @@ Formats `default` registry using protocol buffer format.
 ### format/1 ###
 
 <pre><code>
-format(Registry::<a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_registry.html#type-registry">prometheus_registry:registry()</a>) -&gt; binary()
+format(Registry::<a href="prometheus/doc/prometheus_registry.md#type-registry">prometheus_registry:registry()</a>) -&gt; binary()
 </code></pre>
 <br />
 

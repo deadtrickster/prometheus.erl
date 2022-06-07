@@ -39,7 +39,7 @@ To create a counter use either [`new/1`](#new-1) or [`declare/1`](#declare-1),
 the difference is that [`new/1`](#new-1) will raise
 {:mf_already_exists, {Registry, Name}, Message} error if counter with
 the same `Registry`, `Name` and `Labels` combination already exists.
-Both accept `Spec` [proplist](http://erlang.org/doc/man/proplists.html)
+Both accept `Spec` [proplist](http://www.erlang.org/doc/man/proplists.html)
 with the same set of keys:
 
 - `Registry` - optional, default is `default`;

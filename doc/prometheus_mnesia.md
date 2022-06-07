@@ -57,7 +57,7 @@ Mnesia can create different files for each table:
 More on Mnesia files can be found in
 [
 Mnesia System Information chapter
-](http://erlang.org/doc/apps/mnesia/Mnesia_chap7.md) of Mnesia User's Guide
+](http://www.erlang.org/doc/apps/mnesia/Mnesia_chap7.html) of Mnesia User's Guide
 
 <a name="tm_info-0"></a>
 

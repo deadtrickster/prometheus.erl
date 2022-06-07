@@ -7,7 +7,7 @@ Collects information about memory dynamically allocated
 by the Erlang emulator using
 [
 erlang:memory/0
-](http://erlang.org/doc/man/erlang.md#memory-0), also provides basic (D)ETS statistics.
+](http://www.erlang.org/doc/man/erlang.html#memory-0), also provides basic (D)ETS statistics.
 
 __Behaviours:__ [`prometheus_collector`](prometheus_collector.md).
 

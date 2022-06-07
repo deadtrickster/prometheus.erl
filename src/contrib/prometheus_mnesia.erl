@@ -35,7 +35,7 @@ table_disk_size(Table) ->
 %% - .LOGTMP - disc copies log
 %%
 %% More on Mnesia files can be found in
-%% <a href="http://erlang.org/doc/apps/mnesia/Mnesia_chap7.html">
+%% <a href="http://www.erlang.org/doc/apps/mnesia/Mnesia_chap7.html">
 %%   Mnesia System Information chapter
 %% </a> of Mnesia User's Guide
 %% @end

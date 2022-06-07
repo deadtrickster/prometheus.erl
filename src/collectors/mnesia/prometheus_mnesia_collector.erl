@@ -1,6 +1,6 @@
 %% @doc
 %% Collects Mnesia metrics mainly using
-%% <a href="http://erlang.org/doc/man/mnesia.html#system_info-1">
+%% <a href="http://www.erlang.org/doc/man/mnesia.html#system_info-1">
 %%   mnesia:system_info/1
 %% </a>.
 %%

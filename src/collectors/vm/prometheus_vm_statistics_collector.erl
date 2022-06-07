@@ -1,6 +1,6 @@
 %% @doc
 %% Collects Erlang VM metrics using
-%% <a href="http://erlang.org/doc/man/erlang.html#statistics-1">
+%% <a href="http://www.erlang.org/doc/man/erlang.html#statistics-1">
 %%   erlang:statistics/1
 %% </a>.
 %%
@@ -78,7 +78,7 @@
 %% `vm_statistics_collector_metrics' key of `prometheus' app environment.
 %%
 %% Options are the same as Item parameter values for
-%% <a href="http://erlang.org/doc/man/erlang.html#statistics-1">
+%% <a href="http://www.erlang.org/doc/man/erlang.html#statistics-1">
 %%   erlang:statistics/1
 %% </a>:
 %% <ul>

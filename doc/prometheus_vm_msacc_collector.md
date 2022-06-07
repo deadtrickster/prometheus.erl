@@ -6,7 +6,7 @@
 Collects microstate accounting metrics using
 [
 erlang:statistics(microstate_accounting)
-](http://erlang.org/doc/man/erlang.md#statistics_microstate_accounting).
+](http://www.erlang.org/doc/man/erlang.html#statistics_microstate_accounting).
 
 __Behaviours:__ [`prometheus_collector`](prometheus_collector.md).
 
@@ -104,7 +104,7 @@ Metrics exported by this collector can be configured via
 Options are the same as MSAcc_Thread_State return type from
 [
 erlang:statistics(microstate_accounting)
-](http://erlang.org/doc/man/erlang.md#statistics_microstate_accounting) with `_seconds_total` as the suffix:
+](http://www.erlang.org/doc/man/erlang.html#statistics_microstate_accounting) with `_seconds_total` as the suffix:
 
 * `aux_seconds_total` for `erlang_vm_msacc_aux_seconds_total`.
 

@@ -1,6 +1,6 @@
 %% @doc
 %% Collects microstate accounting metrics using
-%% <a href="http://erlang.org/doc/man/erlang.html#statistics_microstate_accounting">
+%% <a href="http://www.erlang.org/doc/man/erlang.html#statistics_microstate_accounting">
 %%   erlang:statistics(microstate_accounting)
 %% </a>.
 %%
@@ -106,7 +106,7 @@
 %% `vm_msacc_collector_metrics' key of `prometheus' app environment.
 %%
 %% Options are the same as MSAcc_Thread_State return type from
-%% <a href="http://erlang.org/doc/man/erlang.html#statistics_microstate_accounting">
+%% <a href="http://www.erlang.org/doc/man/erlang.html#statistics_microstate_accounting">
 %%   erlang:statistics(microstate_accounting)
 %% </a> with `_seconds_total' as the suffix:
 %% <ul>

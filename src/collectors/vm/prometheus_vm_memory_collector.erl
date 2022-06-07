@@ -1,7 +1,7 @@
 %% @doc
 %% Collects information about memory dynamically allocated
 %% by the Erlang emulator using
-%% <a href="http://erlang.org/doc/man/erlang.html#memory-0">
+%% <a href="http://www.erlang.org/doc/man/erlang.html#memory-0">
 %%   erlang:memory/0
 %% </a>, also provides basic (D)ETS statistics.
 %%

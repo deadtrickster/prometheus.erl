@@ -6,7 +6,7 @@
 Collects Erlang VM metrics using
 [
 erlang:system_info/1
-](http://erlang.org/doc/man/erlang.md#system_info-1).
+](http://www.erlang.org/doc/man/erlang.html#system_info-1).
 
 __Behaviours:__ [`prometheus_collector`](prometheus_collector.md).
 
@@ -116,7 +116,7 @@ Metrics exported by this collector can be configured via
 Options are the same as Item parameter values for
 [
 erlang:system_info/1
-](http://erlang.org/doc/man/erlang.md#system_info-1):
+](http://www.erlang.org/doc/man/erlang.html#system_info-1):
 
 * `ets_limit` for `erlang_vm_ets_limit`.
 

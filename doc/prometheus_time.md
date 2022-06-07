@@ -17,7 +17,7 @@ so called native time units. Native time units are meaningless
 and have to be converted to seconds (or other units)
 using `erlang:convert_time_unit`.
 However as `erlang:convert_time_unit` documentation
-[warns](http://erlang.org/doc/man/erlang.html#convert_time_unit-3):
+[warns](http://www.erlang.org/doc/man/erlang.html#convert_time_unit-3):
 
 ```
   You may lose accuracy and precision when converting between  time units.

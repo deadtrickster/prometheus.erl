@@ -174,7 +174,7 @@ API can be grouped like this:
 All metrics created via `new/1` or `declare/1`. The difference is that `new/1` actually wants metric to be
 new and raises `{mf_already_exists, {Registry, Name}, Message}` error if it isn't.
 
-Both `new/1` and `declare/1` accept options as [proplist](http://erlang.org/doc/man/proplists.html).
+Both `new/1` and `declare/1` accept options as [proplist](http://www.erlang.org/doc/man/proplists.html).
 Common options are:
 
 - name - metric name, can be an atom or a string (required);

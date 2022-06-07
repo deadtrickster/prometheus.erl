@@ -80,7 +80,7 @@ Example (simplified `prometheus_vm_memory_collector`):
 
 
 <pre><code>
-collect_mf_callback() = fun((<a href="prometheus_model.md#type-MetricFamily">prometheus_model:'MetricFamily'()</a>) -&gt; any())
+collect_mf_callback() = fun((<a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-MetricFamily">prometheus_model:'MetricFamily'()</a>) -&gt; any())
 </code></pre>
 
 
@@ -123,7 +123,7 @@ data() = any()
 collect_mf(Registry, Collector, Callback) -&gt; ok
 </code></pre>
 
-<ul class="definitions"><li><code>Registry = <a href="prometheus_registry.md#type-registry">prometheus_registry:registry()</a></code></li><li><code>Collector = <a href="#type-collector">collector()</a></code></li><li><code>Callback = <a href="#type-collect_mf_callback">collect_mf_callback()</a></code></li></ul>
+<ul class="definitions"><li><code>Registry = <a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_registry.html#type-registry">prometheus_registry:registry()</a></code></li><li><code>Collector = <a href="#type-collector">collector()</a></code></li><li><code>Callback = <a href="#type-collect_mf_callback">collect_mf_callback()</a></code></li></ul>
 
 Calls `Callback` for each MetricFamily of this collector.
 

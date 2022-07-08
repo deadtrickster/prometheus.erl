@@ -102,7 +102,7 @@ deregister_cleanup(_) -> ok.
     _Registry :: prometheus_registry:registry(),
     Callback :: prometheus_collector:callback().
 collect_mf(_Registry, Callback) ->
-  case is_started(mnesia) of
+  case mnesia_running() of
     true ->
       EnabledMetrics = enabled_metrics(),
       Metrics = metrics(EnabledMetrics),
@@ -181,11 +181,9 @@ catch_all(DataFun) ->
     catch _:_ -> undefined
     end.
 
-is_started(App) ->
-  case [V || {A,_,V} <- application:which_applications(), A == App] of
-    [] -> false;
-    [_] -> true
-  end.
+mnesia_running() ->
+  erlang:function_exported(mnesia, system_info, 1) andalso
+    mnesia:system_info(is_running) == yes.
 
 enabled_metrics() ->
   application:get_env(prometheus, mnesia_collector_metrics, all).

@@ -52,7 +52,7 @@
 %%     Total reductions count.
 %%   </li>
 %%   <li>
-%%     `erlang_vm_statistics_run_queues_length_total'<br/>
+%%     `erlang_vm_statistics_run_queues_length'<br/>
 %%     Type: gauge.<br/>
 %%     The total length of all normal run-queues. That is, the number of
 %%     processes and ports that are ready to run on all available normal
@@ -99,7 +99,7 @@
 %%     `reductions' for `erlang_vm_statistics_reductions_total';
 %%   </li>
 %%   <li>
-%%     `run_queue' for `erlang_vm_statistics_run_queues_length_total';
+%%     `run_queue' for `erlang_vm_statistics_run_queues_length';
 %%   </li>
 %%   <li>
 %%     `runtime' for `erlang_vm_statistics_runtime_milliseconds';
@@ -193,7 +193,7 @@ metrics() ->
    {reductions_total, counter,
     "Total reductions.",
     ReductionsTotal},
-   {run_queues_length_total, gauge, %% TODO: 4.x remove _total
+   {run_queues_length, gauge, %% TODO: 4.x remove _total
     "Length of normal run-queues.",
     RunQueuesLength},
    {runtime_milliseconds, counter,

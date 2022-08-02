@@ -80,7 +80,7 @@ rebar3 edoc
 git add mix.exs src/prometheus.app.src
 git add README.md
 git add doc
-git commit -m "Bump to v${new_version}"
+git commit -m "Bump to v${new_version}" --no-verify
 
 TAG_MESSAGE=${1:-"New version: v${new_version}"}
 

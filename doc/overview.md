@@ -1,6 +1,6 @@
 @copyright 2016,2017 Ilya Khaprov <<i.khaprov@gmail.com>>.
 @title Prometheus.io client for Erlang
-@version 4.8.2
+@version 4.9.0
 
 @doc
 [![Hex.pm](https://img.shields.io/hexpm/v/prometheus.svg?maxAge=2592000?style=plastic)](https://hex.pm/packages/prometheus)

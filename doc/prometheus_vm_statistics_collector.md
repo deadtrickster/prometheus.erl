@@ -54,7 +54,7 @@ The total number of bytes reclaimed by GC since the system started.
 Type: counter.<br />
 Total reductions count.
 
-* `erlang_vm_statistics_run_queues_length_total`<br />
+* `erlang_vm_statistics_run_queues_length`<br />
 Type: gauge.<br />
 The total length of all normal run-queues. That is, the number of
 processes and ports that are ready to run on all available normal
@@ -94,7 +94,7 @@ for `erlang_vm_statistics_garbage_collection_number_of_gcs`,
 
 * `reductions` for `erlang_vm_statistics_reductions_total`;
 
-* `run_queue` for `erlang_vm_statistics_run_queues_length_total`;
+* `run_queue` for `erlang_vm_statistics_run_queues_length`;
 
 * `runtime` for `erlang_vm_statistics_runtime_milliseconds`;
 

@@ -404,24 +404,28 @@ dist_info({Node, Info}, AllPorts) ->
     end.
 
 dist_info(Node, AllPorts, DistPid, NodeState, SockName) ->
-    [DistPort] = [
-        P
-    || {P, I} <- AllPorts,
-        I =/= undefined,
-        proplists:get_value(name, I) =:= "tcp_inet",
-        inet:peername(P) =:= {ok, SockName}
-    ],
-    {ok, InetStats} = inet:getstat(DistPort),
-    Map = case erlang:port_info(DistPort, connected) of
-        {_, DistPid} -> #{};
-        {_, ConnectedPid} -> dist_tls_info(ConnectedPid)
-    end,
-    {Node, Map#{
-        inet_stats => InetStats,
-        dist_port  => DistPort,
-        dist_pid   => DistPid,
-        node_state => NodeState
-    }}.
+    case [P || {P, I} <- AllPorts,
+               I =/= undefined,
+               proplists:get_value(name, I) =:= "tcp_inet",
+               inet:peername(P) =:= {ok, SockName}] of
+        [] ->
+            {Node, #{
+                     dist_pid   => DistPid,
+                     node_state => NodeState
+                    }};
+        [DistPort] ->
+            {ok, InetStats} = inet:getstat(DistPort),
+            Map = case erlang:port_info(DistPort, connected) of
+                      {_, DistPid} -> #{};
+                      {_, ConnectedPid} -> dist_tls_info(ConnectedPid)
+                  end,
+            {Node, Map#{
+                     inet_stats => InetStats,
+                     dist_port  => DistPort,
+                     dist_pid   => DistPid,
+                     node_state => NodeState
+                    }}
+    end.
 
 dist_tls_info(MaybeTlsConnPid) ->
     {_, CDict} = process_info(MaybeTlsConnPid, dictionary),

@@ -142,16 +142,17 @@ enabled_collectors() ->
     Collector :: collector(),
     Callback  :: collect_mf_callback().
 collect_mf(Registry, Collector, Callback0) ->
-  Callback = case application:get_env(prometheus, global_labels) of
-    undefined ->
-      Callback0;
-    {ok, Labels0} ->
-      Labels = prometheus_model_helpers:label_pairs(Labels0),
-      fun (MF=#'MetricFamily'{metric=Metrics0}) ->
-          Metrics = [M#'Metric'{label=Labels ++ ML}
-            || M=#'Metric'{label=ML} <- Metrics0],
-          Callback0(MF#'MetricFamily'{metric=Metrics})
-      end
+  GlobalLabels0 = application:get_env(prometheus, global_labels, []),
+  GlobalLabels = prometheus_model_helpers:label_pairs(GlobalLabels0),
+  GlobalLabelsPrerendered = prometheus_text_format:render_labels(GlobalLabels),
+  Callback = fun (MF=#'MetricFamily'{metric=Metrics0}) ->
+      Metrics = [case ML of
+                     <<>> -> M#'Metric'{label = GlobalLabelsPrerendered};
+                     <<_>> -> M#'Metric'{label = <<GlobalLabelsPrerendered/binary, ",", ML/binary>>};
+                     _ -> M#'Metric'{label = GlobalLabels ++ ML}
+                 end
+        || M=#'Metric'{label=ML} <- Metrics0],
+      Callback0(MF#'MetricFamily'{metric=Metrics})
   end,
   ok = Collector:collect_mf(Registry, Callback).
 

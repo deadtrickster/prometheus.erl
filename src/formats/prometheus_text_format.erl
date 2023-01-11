@@ -21,7 +21,8 @@
 -module(prometheus_text_format).
 -export([content_type/0,
          format/0,
-         format/1]).
+         format/1,
+         render_labels/1]).
 
 -ifdef(TEST).
 -export([escape_metric_help/1,

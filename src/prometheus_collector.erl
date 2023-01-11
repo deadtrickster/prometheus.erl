@@ -136,6 +136,29 @@ enabled_collectors() ->
       {ok, Collectors} -> catch_default_collectors(Collectors)
     end).
 
+%% pre-rendering optimization for the text format violates type constraints, but we still want it. So here is the
+%% separate function with relevant dialyzer check disabled.
+-dialyzer({no_match, global_labels_callback_wrapper/2}).
+-spec global_labels_callback_wrapper([], Callback) -> Callback when
+    Callback  :: collect_mf_callback().
+global_labels_callback_wrapper(GlobalLabels0, Callback) ->
+  GlobalLabels = prometheus_model_helpers:label_pairs(GlobalLabels0),
+  GlobalLabelsPrerendered = prometheus_text_format:render_labels(GlobalLabels),
+  fun (MF=#'MetricFamily'{metric=Metrics0}) ->
+      Metrics =
+        [case ML of
+           %% empty binary singals to us that an app knows what it's doing,
+           %% so we can optimize for the text format
+           <<>> -> M#'Metric'{label = GlobalLabelsPrerendered};
+
+           <<_/binary>> when GlobalLabelsPrerendered =:= <<>> -> M;
+           <<_/binary>> -> M#'Metric'{label = <<GlobalLabelsPrerendered/binary, ",", ML/binary>>};
+           _ -> M#'Metric'{label = GlobalLabels ++ ML}
+         end
+         || M=#'Metric'{label=ML} <- Metrics0],
+      Callback(MF#'MetricFamily'{metric=Metrics})
+  end.
+
 %% @doc Calls `Callback' for each MetricFamily of this collector.
 -spec collect_mf(Registry, Collector, Callback) -> ok when
     Registry  :: prometheus_registry:registry(),
@@ -143,16 +166,10 @@ enabled_collectors() ->
     Callback  :: collect_mf_callback().
 collect_mf(Registry, Collector, Callback0) ->
   Callback = case application:get_env(prometheus, global_labels) of
-    undefined ->
-      Callback0;
-    {ok, Labels0} ->
-      Labels = prometheus_model_helpers:label_pairs(Labels0),
-      fun (MF=#'MetricFamily'{metric=Metrics0}) ->
-          Metrics = [M#'Metric'{label=Labels ++ ML}
-            || M=#'Metric'{label=ML} <- Metrics0],
-          Callback0(MF#'MetricFamily'{metric=Metrics})
-      end
-  end,
+               undefined -> Callback0;
+               {ok, []} -> Callback0;
+               {ok, GlobalLabels} -> global_labels_callback_wrapper(GlobalLabels, Callback0)
+             end,
   ok = Collector:collect_mf(Registry, Callback).
 
 %%====================================================================

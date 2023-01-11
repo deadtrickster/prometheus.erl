@@ -40,13 +40,35 @@ test_no_distribution(_) ->
   ].
 
 
+-if(?OTP_RELEASE >= 25).
+start_test_peer() ->
+    {ok, Peer, _Node} = peer:start(#{name => prometheus_dist_collector_peer, wait_boot => 5000}),
+    Peer.
+
+stop_test_peer(Peer) ->
+    peer:stop(Peer).
+
+-else.
+start_test_peer() ->
+    ct_slave:start(prometheus_dist_collector_peer),
+    undefined.
+
+stop_test_peer(_) ->
+    ct_slave:stop(prometheus_dist_collector_peer).
+
+-endif.
+
+
+
+
 prometheus_dist_on_test_() ->
   {setup,
    fun() -> os:cmd("erl -sname test"),
             {ok, _} = net_kernel:start([prometheus_dist_collector, shortnames]),
-            ct_slave:start(prometheus_dist_collector_peer) end,
-   fun(_) -> ct_slave:stop(prometheus_dist_collector_peer),
-             ok = net_kernel:stop() end,
+            start_test_peer()
+   end,
+   fun(Peer) -> stop_test_peer(Peer),
+                ok = net_kernel:stop() end,
    {foreach,
     fun prometheus_eunit_common:start/0,
     fun prometheus_eunit_common:stop/1,

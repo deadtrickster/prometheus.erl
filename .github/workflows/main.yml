@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        otp: [21.3, 22.3, 23.0.4, 23.2.7.0, 24.0]
+        otp: [21.3, 22.3, 23.0.4, 23.2.7.0, 24.0, 25.2]
     container:
       image: erlang:${{ matrix.otp }}-alpine
     steps:
@@ -16,13 +16,21 @@ jobs:
       run: |
            apk update
            apk --no-cache upgrade
-           apk --no-cache add gcc git libc-dev libc-utils libgcc linux-headers make bash
+           apk --no-cache add gcc git libc-dev libc-utils libgcc linux-headers make bash curl tar
     - uses: actions/checkout@v2
+    - name: Install elvis
+      run: |
+        mkdir -p _build/elvis-build
+        cd _build/elvis-build
+        curl -L -o elvis.tar.gz https://github.com/inaka/elvis/archive/refs/tags/1.1.0.tar.gz
+        tar -x --strip-components=1 -z -f elvis.tar.gz
+        rebar3 escriptize
+        cp -v _build/default/bin/elvis ..
     - name: Build
       run: rebar3 compile
     - name: Run tests
       run: |
-           ./elvis rock --config elvis.config
+           ./_build/elvis rock --config elvis.config
            rebar3 xref
            rebar3 dialyzer
            rebar3 eunit

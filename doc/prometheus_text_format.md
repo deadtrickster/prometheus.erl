@@ -39,7 +39,7 @@ Example output:
 <table width="100%" border="1" cellspacing="0" cellpadding="2" summary="function index"><tr><td valign="top"><a href="#content_type-0">content_type/0</a></td><td>
 Returns content type of the latest [text format](http://bit.ly/2cxSuJP).</td></tr><tr><td valign="top"><a href="#format-0">format/0</a></td><td>
 Formats <code>default</code> registry using the latest text format.</td></tr><tr><td valign="top"><a href="#format-1">format/1</a></td><td>
-Formats <code>Registry</code> using the latest text format.</td></tr></table>
+Formats <code>Registry</code> using the latest text format.</td></tr><tr><td valign="top"><a href="#render_labels-1">render_labels/1</a></td><td></td></tr></table>
 
 
 <a name="functions"></a>
@@ -80,4 +80,13 @@ format(Registry::<a href="http://www.erlang.org/edoc/doc/prometheus/doc/promethe
 <br />
 
 Formats `Registry` using the latest text format.
+
+<a name="render_labels-1"></a>
+
+### render_labels/1 ###
+
+<pre><code>
+render_labels(B::binary() | [<a href="http://www.erlang.org/edoc/doc/prometheus/doc/prometheus_model.html#type-LabelPair">prometheus_model:'LabelPair'()</a> | binary()]) -&gt; binary()
+</code></pre>
+<br />
 

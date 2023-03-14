@@ -355,8 +355,12 @@ value(Registry, Name, LabelValues) ->
   RawValues = [ets:lookup(?TABLE, {Registry, Name, LabelValues, Scheduler})
                || Scheduler <- schedulers_seq()],
   case lists:flatten(RawValues) of
-    [] -> undefined;
-    Values -> {reduce_buckets_counters(Values), reduce_sum(MF, Values)}
+    [] ->
+      undefined;
+    Values ->
+      BucketCounters = reduce_buckets_counters(Values),
+      BucketKeys = prometheus_metric:mf_data(MF),
+      {lists:zip(BucketKeys,BucketCounters), lists:sum(BucketCounters), reduce_sum(MF, Values)}
   end.
 
 values(Registry, Name) ->

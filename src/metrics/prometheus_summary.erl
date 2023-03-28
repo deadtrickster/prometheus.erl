@@ -47,7 +47,9 @@
          value/1,
          value/2,
          value/3,
-         values/2]).
+         values/2,
+         values/3
+        ]).
 
 %%% collector
 -export([deregister_cleanup/1,
@@ -288,12 +290,15 @@ value(Registry, Name, LabelValues) ->
   end.
 
 values(Registry, Name) ->
+  values(Registry, Name, []).
+
+values(Registry, Name, LabelFilterValues) ->
   case prometheus_metric:check_mf_exists(?TABLE, Registry, Name) of
     false -> [];
     MF ->
       DU = prometheus_metric:mf_duration_unit(MF),
       Labels = prometheus_metric:mf_labels(MF),
-      MFValues = load_all_values(Registry, Name),
+      MFValues = load_all_values(Registry, Name, LabelFilterValues),
       ReducedMap = lists:foldl(
         fun([L, C, IS, FS], ResAcc) ->
           {PrevCount, PrevSum} = maps:get(L, ResAcc, {0, 0}),
@@ -380,6 +385,17 @@ insert_metric(Registry, Name, LabelValues, Value, ConflictCB) ->
 
 load_all_values(Registry, Name) ->
   ets:match(?TABLE, {{Registry, Name, '$1', '_'}, '$2', '$3', '$4'}).
+
+load_all_values(Registry, Name, []) ->
+  load_all_values(Registry, Name);
+load_all_values(Registry, Name, LabelValues=[PrimaryLabelValue|_]) ->
+  Results = ets:select(?TABLE, [{{{Registry, Name, '$1', '_'}, '$2', '$3', '$4'},[{'==',PrimaryLabelValue,{hd,'$1'}}],[['$1','$2','$3','$4']]}]),
+  filter_values(LabelValues,Results).
+
+filter_values([_PrimaryLabel],Values) ->
+  Values;
+filter_values(LabelValues,Values) ->
+  lists:filter(fun([Labels|_]) -> lists:prefix(LabelValues,Labels) end,Values).
 
 schedulers_seq() ->
   lists:seq(0, ?WIDTH-1).

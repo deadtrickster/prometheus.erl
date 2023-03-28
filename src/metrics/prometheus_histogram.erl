@@ -58,8 +58,9 @@
          buckets/1,
          buckets/2,
          buckets/3,
-         values/2]
-       ).
+         values/2,
+         values/3
+        ]).
 
 %%% collector
 -export([deregister_cleanup/1,
@@ -366,7 +367,13 @@ value(Registry, Name, LabelValues) ->
 values(Registry, Name) ->
   case prometheus_metric:check_mf_exists(?TABLE, Registry, Name) of
     false -> [];
-    MF -> mf_values(Registry, Name, MF)
+    MF -> mf_values(Registry, Name, MF, [])
+  end.
+
+values(Registry, Name, LabelFilterValues) ->
+  case prometheus_metric:check_mf_exists(?TABLE, Registry, Name) of
+    false -> [];
+    MF -> mf_values(Registry, Name, MF, LabelFilterValues)
   end.
 
 %% @equiv buckets(default, Name, [])
@@ -532,6 +539,20 @@ load_all_values(Registry, Name, Bounds) ->
 
   ets:match(?TABLE, list_to_tuple(QuerySpec)).
 
+load_all_values(Registry, Name, Bounds, []) ->
+  load_all_values(Registry, Name, Bounds);
+load_all_values(Registry, Name, Bounds, LabelValues=[PrimaryLabelValue|_]) ->
+  BoundPlaceholders = gen_query_bound_placeholders(Bounds),
+  QuerySpec = [{Registry, Name, '$1', '_'}, '_', '$2', '$3'] ++ BoundPlaceholders,
+
+  Results = ets:select(?TABLE, [{list_to_tuple(QuerySpec),[{'==',PrimaryLabelValue,{hd,'$1'}}],[['$1','$2','$3']++BoundPlaceholders]}]),
+  filter_values(LabelValues,Results).
+
+filter_values([_PrimaryLabel],Values) ->
+  Values;
+filter_values(LabelValues,Values) ->
+  lists:filter(fun([Labels|_]) -> lists:prefix(LabelValues,Labels) end,Values).
+
 deregister_select(Registry, Name, Buckets) ->
   BoundCounters = lists:duplicate(length(Buckets), '_'),
   MetricSpec = [{Registry, Name, '_', '_'}, '_', '_', '_'] ++ BoundCounters,
@@ -563,12 +584,12 @@ reduce_label_values(MFValues) ->
         ResAcc#{Labels => V}
     end, #{}, MFValues).
 
-mf_values(Registry, Name, MF) ->
+mf_values(Registry, Name, MF, LabelFilterValues) ->
   DU = prometheus_metric:mf_duration_unit(MF),
   Labels = prometheus_metric:mf_labels(MF),
   Bounds = prometheus_metric:mf_data(MF),
 
-  MFValues = load_all_values(Registry, Name, Bounds),
+  MFValues = load_all_values(Registry, Name, Bounds, LabelFilterValues),
   LabelValuesMap = reduce_label_values(MFValues),
   maps:fold(
     fun(LabelValues, [ISum, FSum | BCounters], L) ->

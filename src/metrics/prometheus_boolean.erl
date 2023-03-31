@@ -33,6 +33,7 @@
          deregister/1,
          deregister/2,
          set_default/2,
+         set_default/3,
          set/2,
          set/3,
          set/4,
@@ -126,7 +127,9 @@ deregister(Registry, Name) ->
 
 %% @private
 set_default(Registry, Name) ->
-  set(Registry, Name, [], undefined).
+  set_default(Registry, Name, []).
+set_default(Registry, Name, LabelValues) when is_list(LabelValues) ->
+  set(Registry, Name, LabelValues, undefined).
 
 %% @equiv set(default, Name, [], Value)
 set(Name, Value) ->

@@ -39,6 +39,7 @@
          deregister/1,
          deregister/2,
          set_default/2,
+         set_default/3,
          observe/2,
          observe/3,
          observe/4,
@@ -173,7 +174,9 @@ deregister(Registry, Name) ->
 
 %% @private
 set_default(Registry, Name) ->
-  insert_placeholders(Registry, Name, []).
+  set_default(Registry, Name, []).
+set_default(Registry, Name, LabelValues) when is_list(LabelValues) ->
+  insert_placeholders(Registry, Name, LabelValues).
 
 %% @equiv observe(default, Name, [], Value)
 observe(Name, Value) ->
@@ -359,9 +362,7 @@ value(Registry, Name, LabelValues) ->
     [] ->
       undefined;
     Values ->
-      BucketCounters = reduce_buckets_counters(Values),
-      BucketKeys = prometheus_metric:mf_data(MF),
-      {lists:zip(BucketKeys,BucketCounters), lists:sum(BucketCounters), reduce_sum(MF, Values)}
+      {reduce_buckets_counters(Values), reduce_sum(MF, Values)}
   end.
 
 values(Registry, Name) ->

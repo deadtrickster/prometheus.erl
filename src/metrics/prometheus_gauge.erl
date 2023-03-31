@@ -45,6 +45,7 @@
          deregister/1,
          deregister/2,
          set_default/2,
+         set_default/3,
          set/2,
          set/3,
          set/4,
@@ -159,7 +160,9 @@ deregister(Registry, Name) ->
 
 %% @private
 set_default(Registry, Name) ->
-  ets:insert_new(?TABLE, {{Registry, Name, []}, 0, 0}).
+  set_default(Registry, Name, []).
+set_default(Registry, Name, LabelValues) when is_list(LabelValues) ->
+  ets:insert_new(?TABLE, {{Registry, Name, LabelValues}, 0, 0}).
 
 %% @equiv set(default, Name, [], Value)
 set(Name, Value) ->

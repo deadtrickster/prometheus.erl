@@ -32,6 +32,7 @@
          deregister/1,
          deregister/2,
          set_default/2,
+         set_default/3,
          observe/2,
          observe/3,
          observe/4,
@@ -136,7 +137,9 @@ deregister(Registry, Name) ->
 
 %% @private
 set_default(Registry, Name) ->
-  ets:insert_new(?TABLE, {key(Registry, Name, []), 0, 0, 0}).
+  set_default(Registry, Name, []).
+set_default(Registry, Name, LabelValues) when is_list(LabelValues) ->
+  ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), 0, 0, 0}).
 
 %% @equiv observe(default, Name, [], Value)
 observe(Name, Value) ->

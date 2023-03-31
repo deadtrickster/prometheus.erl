@@ -58,6 +58,7 @@
          deregister/1,
          deregister/2,
          set_default/2,
+         set_default/3,
          inc/1,
          inc/2,
          inc/3,
@@ -153,7 +154,9 @@ deregister(Registry, Name) ->
 
 %% @private
 set_default(Registry, Name) ->
-  ets:insert_new(?TABLE, {key(Registry, Name, []), 0, 0}).
+  set_default(Registry, Name, []).
+set_default(Registry, Name, LabelValues) when is_list(LabelValues) ->
+  ets:insert_new(?TABLE, {key(Registry, Name, LabelValues), 0, 0}).
 
 %% @equiv inc(default, Name, [], 1)
 inc(Name) ->

@@ -40,6 +40,7 @@
          deregister/1,
          deregister/2,
          set_default/2,
+         set_default/3,
          observe/2,
          observe/3,
          observe/4,
@@ -144,10 +145,12 @@ deregister(Registry, Name) ->
 
 %% @private
 set_default(Registry, Name) ->
+  set_default(Registry, Name, []).
+set_default(Registry, Name, LabelValues) when is_list(LabelValues) ->
   Configuration = get_configuration(Registry, Name),
   #{compress_limit := CompressLimit} = Configuration,
   ets:insert_new(?TABLE, {
-    key(Registry, Name, []),
+    key(Registry, Name, LabelValues),
     0,
     0,
     quantile(Configuration),

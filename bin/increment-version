@@ -32,7 +32,7 @@ if [ $UNSTAGED_COUNT -ne "0" ]; then
     exit 1
 fi
 
-version="$(erl -noshell -s init stop -eval "{ok, [{_,_,Props}]} = file:consult(\"src/prometheus.app.src\"), io:format(\"~s\", [proplists:get_value(vsn, Props)])")"
+version="$(erl -noshell -s init halt -eval "{ok, [{_,_,Props}]} = file:consult(\"src/prometheus.app.src\"), io:format(\"~s\", [proplists:get_value(vsn, Props)])")"
 
 echo "Old version: ${version}"
 

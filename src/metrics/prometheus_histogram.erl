@@ -42,6 +42,9 @@
          observe/2,
          observe/3,
          observe/4,
+         observe_n/3,
+         observe_n/4,
+         observe_n/5,
          pobserve/6,
          observe_duration/2,
          observe_duration/3,
@@ -192,17 +195,7 @@ observe(Name, LabelValues, Value) ->
 %% mismatch.
 %% @end
 observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
-  Key = key(Registry, Name, LabelValues),
-  case ets:lookup(?TABLE, Key) of
-    [Metric] ->
-      BucketPosition = calculate_histogram_bucket_position(Metric, Value),
-      ets:update_counter(?TABLE, Key,
-                         [{?ISUM_POS, Value},
-                          {?BUCKETS_START + BucketPosition, 1}]);
-    [] ->
-      insert_metric(Registry, Name, LabelValues, Value, fun observe/4)
-  end,
-  ok;
+  observe_n(Registry, Name, LabelValues, Value, 1);
 observe(Registry, Name, LabelValues, Value) when is_number(Value) ->
   Key = key(Registry, Name, LabelValues),
   case ets:lookup(?TABLE, Key) of
@@ -216,6 +209,25 @@ observe(Registry, Name, LabelValues, Value) when is_number(Value) ->
   end;
 observe(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "observe accepts only numbers"}).
+
+observe_n(Name, Value, Count) when is_integer(Value), is_integer(Count) ->
+  observe_n(default, Name, [], Value, Count).
+
+observe_n(Name, LabelValues, Value, Count) when is_integer(Value), is_integer(Count) ->
+  observe_n(default, Name, LabelValues, Value, Count).
+
+observe_n(Registry, Name, LabelValues, Value, Count) when is_integer(Value), is_integer(Count) ->
+  Key = key(Registry, Name, LabelValues),
+  case ets:lookup(?TABLE, Key) of
+    [Metric] ->
+      BucketPosition = calculate_histogram_bucket_position(Metric, Value),
+      ets:update_counter(?TABLE, Key,
+                         [{?ISUM_POS, Value},
+                          {?BUCKETS_START + BucketPosition, Count}]);
+    [] ->
+      insert_metric(Registry, Name, LabelValues, Value, Count, fun observe_n/5)
+  end,
+  ok.
 
 %% @private
 pobserve(Registry, Name, LabelValues, Buckets, BucketPos, Value) when is_integer(Value) ->
@@ -430,6 +442,10 @@ raise_error_if_le_label_found(Label) ->
 insert_metric(Registry, Name, LabelValues, Value, CB) ->
   insert_placeholders(Registry, Name, LabelValues),
   CB(Registry, Name, LabelValues, Value).
+
+insert_metric(Registry, Name, LabelValues, Value, Count, CB) ->
+  insert_placeholders(Registry, Name, LabelValues),
+  CB(Registry, Name, LabelValues, Value, Count).
 
 fobserve_impl(Key, Metric, Value) ->
   Buckets = metric_buckets(Metric),

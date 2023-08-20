@@ -29,6 +29,13 @@
 %%                                [Method], Time).
 %%
 %% </pre>
+%%
+%% The `prometheus_histogram:observe_n/3,4,5' adds limited support for the
+%% weighted histograms. It accepts the extra argument "Weight" which is limited
+%% to integer numbers to fit existing bucket counters data type. It may be, for
+%% example, the number of time ticks when the recent value was observed,
+%% allowing for better accuracy when measurements are irregular.
+%%
 %% @end
 
 -module(prometheus_histogram).
@@ -187,47 +194,58 @@ observe(Name, LabelValues, Value) ->
 
 %% @doc Observes the given `Value'.
 %%
-%% Raises `{invalid_value, Value, Message}' if `Value'
-%% isn't an integer.<br/>
+%% Raises `{invalid_value, Value, Message}' if `Value' isn't a number.<br/>
 %% Raises `{unknown_metric, Registry, Name}' error if histogram with named
 %% `Name' can't be found in `Registry'.<br/>
 %% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
 %% mismatch.
 %% @end
-observe(Registry, Name, LabelValues, Value) when is_integer(Value) ->
-  observe_n(Registry, Name, LabelValues, Value, 1);
 observe(Registry, Name, LabelValues, Value) when is_number(Value) ->
-  Key = key(Registry, Name, LabelValues),
-  case ets:lookup(?TABLE, Key) of
-    [Metric] ->
-      fobserve_impl(Key, Metric, Value);
-    [] ->
-      insert_metric(Registry, Name, LabelValues, Value,
-                    fun(_, _, _, _) ->
-                        observe(Registry, Name, LabelValues, Value)
-                    end)
-  end;
+  observe_n(Registry, Name, LabelValues, Value, 1);
 observe(_Registry, _Name, _LabelValues, Value) ->
   erlang:error({invalid_value, Value, "observe accepts only numbers"}).
 
-observe_n(Name, Value, Count) when is_integer(Value), is_integer(Count) ->
-  observe_n(default, Name, [], Value, Count).
+%% @equiv observe_n(default, Name, [], Value, Weight)
+observe_n(Name, Value, Weight) ->
+  observe_n(default, Name, [], Value, Weight).
 
-observe_n(Name, LabelValues, Value, Count) when is_integer(Value), is_integer(Count) ->
-  observe_n(default, Name, LabelValues, Value, Count).
+%% @equiv observe_n(default, Name, LabelValues, Value, Weight)
+observe_n(Name, LabelValues, Value, Weight) ->
+  observe_n(default, Name, LabelValues, Value, Weight).
 
-observe_n(Registry, Name, LabelValues, Value, Count) when is_integer(Value), is_integer(Count) ->
+%% @doc Observes the given `Value' with weight `Weight'.
+%%
+%% Raises `{invalid_value, Value, Message}' if `Value' isn't a number.<br/>
+%% Raises `{invalid_weight, Weight, Message}' if `Weight' isn't integer.<br/>
+%% Raises `{unknown_metric, Registry, Name}' error if histogram with named
+%% `Name' can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% @end
+observe_n(Registry, Name, LabelValues, Value, Weight) when is_integer(Value), is_integer(Weight) ->
   Key = key(Registry, Name, LabelValues),
   case ets:lookup(?TABLE, Key) of
     [Metric] ->
       BucketPosition = calculate_histogram_bucket_position(Metric, Value),
       ets:update_counter(?TABLE, Key,
-                         [{?ISUM_POS, Value},
-                          {?BUCKETS_START + BucketPosition, Count}]);
+                         [{?ISUM_POS, Value * Weight},
+                          {?BUCKETS_START + BucketPosition, Weight}]);
     [] ->
-      insert_metric(Registry, Name, LabelValues, Value, Count, fun observe_n/5)
+      insert_metric(Registry, Name, LabelValues, Value, Weight, fun observe_n/5)
   end,
-  ok.
+  ok;
+observe_n(Registry, Name, LabelValues, Value, Weight) when is_number(Value), is_integer(Weight) ->
+  Key = key(Registry, Name, LabelValues),
+  case ets:lookup(?TABLE, Key) of
+    [Metric] ->
+      fobserve_impl(Key, Metric, Value, Weight);
+    [] ->
+      insert_metric(Registry, Name, LabelValues, Value, Weight, fun observe_n/5)
+  end;
+observe_n(_Registry, _Name, _LabelValues, Value, Weight) when is_number(Value) ->
+  erlang:error({invalid_weight, Weight, "observe_n accepts only integer weights"});
+observe_n(_Registry, _Name, _LabelValues, Value, _Weight) ->
+  erlang:error({invalid_value, Value, "observe_n accepts only number values"}).
 
 %% @private
 pobserve(Registry, Name, LabelValues, Buckets, BucketPos, Value) when is_integer(Value) ->
@@ -246,11 +264,11 @@ pobserve(Registry, Name, LabelValues, Buckets, BucketPos, Value) when is_integer
 pobserve(Registry, Name, LabelValues, Buckets, BucketPos, Value) when is_number(Value) ->
   Key = key(Registry, Name, LabelValues),
   case
-    fobserve_impl(Key, Buckets, BucketPos, Value) of
+    fobserve_impl(Key, Buckets, BucketPos, Value, 1) of
     0 ->
       insert_metric(Registry, Name, LabelValues, Value,
                     fun(_, _, _, _) ->
-                        fobserve_impl(Key, Buckets, BucketPos, Value)
+                        fobserve_impl(Key, Buckets, BucketPos, Value, 1)
                     end);
     1 ->
       ok
@@ -443,17 +461,17 @@ insert_metric(Registry, Name, LabelValues, Value, CB) ->
   insert_placeholders(Registry, Name, LabelValues),
   CB(Registry, Name, LabelValues, Value).
 
-insert_metric(Registry, Name, LabelValues, Value, Count, CB) ->
+insert_metric(Registry, Name, LabelValues, Value, Weight, CB) ->
   insert_placeholders(Registry, Name, LabelValues),
-  CB(Registry, Name, LabelValues, Value, Count).
+  CB(Registry, Name, LabelValues, Value, Weight).
 
-fobserve_impl(Key, Metric, Value) ->
+fobserve_impl(Key, Metric, Value, Weight) ->
   Buckets = metric_buckets(Metric),
   BucketPos = calculate_histogram_bucket_position(Metric, Value),
-  fobserve_impl(Key, Buckets, BucketPos, Value).
+  fobserve_impl(Key, Buckets, BucketPos, Value, Weight).
 
-fobserve_impl(Key, Buckets, BucketPos, Value) ->
-  ets:select_replace(?TABLE, generate_select_replace(Key, Buckets, BucketPos, Value)).
+fobserve_impl(Key, Buckets, BucketPos, Value, Weight) ->
+  ets:select_replace(?TABLE, generate_select_replace(Key, Buckets, BucketPos, Value, Weight)).
 
 insert_placeholders(Registry, Name, LabelValues) ->
   MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LabelValues),
@@ -472,13 +490,13 @@ calculate_histogram_bucket_position(Metric, Value) ->
   Buckets = metric_buckets(Metric),
   prometheus_buckets:position(Buckets, Value).
 
-generate_select_replace(Key, Bounds, BucketPos, Value) ->
+generate_select_replace(Key, Bounds, BucketPos, Value, Weight) ->
   BoundPlaceholders = gen_query_bound_placeholders(Bounds),
   HistMatch = list_to_tuple([Key, '$2', '$3', '$4'] ++ BoundPlaceholders),
   BucketUpdate = lists:sublist(BoundPlaceholders, BucketPos)
-    ++ [{'+', gen_query_placeholder(?BUCKETS_START + BucketPos), 1}]
+    ++ [{'+', gen_query_placeholder(?BUCKETS_START + BucketPos), Weight}]
     ++ lists:nthtail(BucketPos + 1, BoundPlaceholders),
-  HistUpdate = list_to_tuple([{Key}, '$2', '$3', {'+', '$4', Value}] ++ BucketUpdate),
+  HistUpdate = list_to_tuple([{Key}, '$2', '$3', {'+', '$4', Value * Weight}] ++ BucketUpdate),
   [{HistMatch,
     [],
     [{HistUpdate}]}].

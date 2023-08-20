@@ -12,6 +12,7 @@ prometheus_format_test_() ->
     fun test_errors/1,
     fun test_buckets/1,
     fun test_observe/1,
+    fun test_observe_n/0,
     fun test_observe_duration_seconds/1,
     fun test_observe_duration_milliseconds/1,
     fun test_deregister/1,
@@ -56,8 +57,12 @@ test_errors(_) ->
    %% mf/arity errors
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_histogram:observe(unknown_metric, 1)),
+   ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_histogram:observe_n(unknown_metric, 1, 1)),
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_histogram:observe(db_query_duration, [repo, db], 1)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_histogram:observe_n(db_query_duration, [repo, db], 1, 1)),
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_histogram:observe_duration(unknown_metric, fun() -> 1 end)),
    ?_assertError({invalid_metric_arity, 2, 1},
@@ -100,6 +105,10 @@ test_errors(_) ->
                                            {buckets, [1, 3, 2]}])),
    ?_assertError({invalid_value, "qwe", "observe accepts only numbers"},
                  prometheus_histogram:observe(request_duration, "qwe")),
+   ?_assertError({invalid_value, "qwe", "observe_n accepts only number values"},
+                 prometheus_histogram:observe_n(request_duration, "qwe", 3)),
+   ?_assertError({invalid_weight, "qwe", "observe_n accepts only integer weights"},
+                 prometheus_histogram:observe_n(request_duration, 300, "qwe")),
    ?_assertError({invalid_value, "qwe", "observe_duration accepts only functions"},
                  prometheus_histogram:observe_duration(pool_size, "qwe"))
   ].
@@ -166,6 +175,21 @@ test_observe(_) ->
   [?_assertMatch({[3, 4, 2, 2, 3, 1], Sum}
                  when Sum > 6974.5 andalso Sum < 6974.55, Value),
    ?_assertEqual({[0, 0, 0, 0, 0, 0], 0}, RValue)].
+
+test_observe_n() ->
+  prometheus_histogram:new([{name, temp}, {help, "temp"}, {buckets, [10, 20, 30, 40, 50]}]),
+  ?assertEqual({[0, 0, 0, 0, 0, 0], 0}, prometheus_histogram:value(temp)),
+
+  prometheus_histogram:observe_n(temp, 5.5, 2), Sum1 = 5.5 * 2,
+  ?assertEqual({[2, 0, 0, 0, 0, 0], Sum1}, prometheus_histogram:value(temp)),
+
+  prometheus_histogram:observe(temp, 15.5), Sum2 = Sum1 + 15.5,
+  ?assertEqual({[2, 1, 0, 0, 0, 0], Sum2}, prometheus_histogram:value(temp)),
+
+  prometheus_histogram:observe(temp, 1), Sum3 = Sum2 + 1,
+  ?assertEqual({[3, 1, 0, 0, 0, 0], Sum3}, prometheus_histogram:value(temp)),
+
+  ok.
 
 test_observe_duration_seconds(_) ->
   prometheus_histogram:new([{name, fun_duration_seconds},

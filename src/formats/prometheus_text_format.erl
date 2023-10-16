@@ -77,7 +77,8 @@ format(Registry) ->
   ok = file:close(Fd),
   Str.
 
--spec escape_label_value(binary() | iolist() | undefined) -> binary().
+-spec escape_label_value(binary() | iolist()) -> binary()
+                      ; (undefined) -> no_return().
 %% @doc
 %% Escapes the backslash (\), double-quote ("), and line feed (\n) characters
 %% @end

@@ -77,15 +77,21 @@ format(Registry) ->
   ok = file:close(Fd),
   Str.
 
--spec escape_label_value(binary() | iolist()) -> binary()
-                      ; (undefined) -> no_return().
+-spec escape_label_value(binary() | iolist()) -> binary().
 %% @doc
 %% Escapes the backslash (\), double-quote ("), and line feed (\n) characters
 %% @end
-escape_label_value(LValue) when is_list(LValue); is_binary(LValue) ->
-  escape_string(fun escape_label_char/1, LValue);
+escape_label_value(LValue) when is_binary(LValue) ->
+  case has_special_char(LValue) of
+    true ->
+      escape_string(fun escape_label_char/1, LValue);
+    false ->
+      LValue
+  end;
+escape_label_value(LValue) when is_list(LValue) ->
+  escape_label_value(iolist_to_binary(LValue));
 escape_label_value(Value) ->
-  erlang:error({wtf, Value}).
+  erlang:error({invalid_value, Value}).
 
 %%====================================================================
 %% Private Parts
@@ -247,6 +253,18 @@ escape_label_char($" = X) ->
   <<$\\, X>>;
 escape_label_char(X) ->
   <<X>>.
+
+%% @perivate
+-spec has_special_char(binary()) -> boolean().
+has_special_char(<<C:8, _/bitstring>>)
+  when C =:= $\\;
+       C =:= $\n;
+       C =:= $" ->
+  true;
+has_special_char(<<_:8, Rest/bitstring>>) ->
+  has_special_char(Rest);
+has_special_char(<<>>) ->
+    false.
 
 %% @private
 escape_string(Fun, Str) when is_binary(Str) ->

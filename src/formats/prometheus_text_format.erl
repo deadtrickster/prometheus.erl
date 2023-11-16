@@ -22,11 +22,12 @@
 -export([content_type/0,
          format/0,
          format/1,
-         render_labels/1]).
+         render_labels/1,
+         escape_label_value/1
+        ]).
 
 -ifdef(TEST).
 -export([escape_metric_help/1,
-         escape_label_value/1,
          emit_mf_prologue/2,
          emit_mf_metrics/2
         ]).
@@ -75,6 +76,16 @@ format(Registry) ->
   {ok, Str} = file:pread(Fd, 0, Size),
   ok = file:close(Fd),
   Str.
+
+-spec escape_label_value(binary() | iolist()) -> binary()
+                      ; (undefined) -> no_return().
+%% @doc
+%% Escapes the backslash (\), double-quote ("), and line feed (\n) characters
+%% @end
+escape_label_value(LValue) when is_list(LValue); is_binary(LValue) ->
+  escape_string(fun escape_label_char/1, LValue);
+escape_label_value(Value) ->
+  erlang:error({wtf, Value}).
 
 %%====================================================================
 %% Private Parts
@@ -226,13 +237,6 @@ bound_to_label_value(Bound) when is_float(Bound) ->
   float_to_list(Bound);
 bound_to_label_value(infinity) ->
   "+Inf".
-
--spec escape_label_value(binary() | iolist() | undefined) -> binary().
-%% @private
-escape_label_value(LValue) when is_list(LValue); is_binary(LValue) ->
-  escape_string(fun escape_label_char/1, LValue);
-escape_label_value(Value) ->
-  erlang:error({wtf, Value}).
 
 %% @private
 escape_label_char($\\ = X) ->

@@ -28,6 +28,10 @@ escape_label_value_test()->
   ?assertEqual(<<"qwe\\\\qwe\\nq\\\"we\\\"qwe">>,
                prometheus_text_format:escape_label_value("qwe\\qwe\nq\"we\"qwe")).
 
+escape_label_value_no_special_char_test() ->
+    LabelBin = <<"qweqweqwe">>,
+    ?assert(erts_debug:same(LabelBin, prometheus_text_format:escape_label_value(LabelBin))).
+
 prometheus_format_test_() ->
   {foreach,
    fun prometheus_eunit_common:start/0,

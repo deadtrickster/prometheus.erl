@@ -107,7 +107,7 @@ test_errors(_) ->
                  prometheus_histogram:observe(request_duration, "qwe")),
    ?_assertError({invalid_value, "qwe", "observe_n accepts only number values"},
                  prometheus_histogram:observe_n(request_duration, "qwe", 3)),
-   ?_assertError({invalid_weight, "qwe", "observe_n accepts only integer weights"},
+   ?_assertError({invalid_count, "qwe", "observe_n accepts only integer counts"},
                  prometheus_histogram:observe_n(request_duration, 300, "qwe")),
    ?_assertError({invalid_value, "qwe", "observe_duration accepts only functions"},
                  prometheus_histogram:observe_duration(pool_size, "qwe"))

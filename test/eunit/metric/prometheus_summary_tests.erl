@@ -15,6 +15,7 @@ prometheus_format_test_() ->
     fun test_observe_duration_milliseconds/1,
     fun test_deregister/1,
     fun test_remove/1,
+    fun test_match_remove/1,
     fun test_default_value/1,
     fun test_values/1,
     fun test_collector1/1,
@@ -69,6 +70,10 @@ test_errors(_) ->
                  prometheus_summary:remove(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1},
                  prometheus_summary:remove(db_query_duration, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_summary:match_remove(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_summary:match_remove(db_query_duration, [repo, db], [])),
    %% summary specific errors
    ?_assertError({invalid_value, "qwe", "observe accepts only numbers"},
                  prometheus_summary:observe(orders_summary, "qwe")),
@@ -187,6 +192,34 @@ test_remove(_) ->
    ?_assertEqual(undefined, ARValue2),
    ?_assertEqual(false, RResult3),
    ?_assertEqual(false, RResult4)].
+
+test_match_remove(_) ->
+  prometheus_summary:new([{name, summary}, {labels, [pool]}, {help, ""}]),
+  prometheus_summary:new([{name, simple_summary}, {help, ""}]),
+
+  prometheus_summary:observe(summary, [mongodb], 1),
+  prometheus_summary:observe(simple_summary, 1),
+
+  BRValue1 = prometheus_summary:value(summary, [mongodb]),
+  BRValue2 = prometheus_summary:value(simple_summary),
+
+  RResult1 = prometheus_summary:match_remove(summary, ['$1'], [{'=:=', '$1', mongodb}]),
+  RResult2 = prometheus_summary:match_remove(simple_summary),
+
+  ARValue1 = prometheus_summary:value(summary, [mongodb]),
+  ARValue2 = prometheus_summary:value(simple_summary),
+
+  RResult3 = prometheus_summary:match_remove(summary, ['$1'], [{'=:=', '$1', mongodb}]),
+  RResult4 = prometheus_summary:match_remove(simple_summary),
+
+  [?_assertEqual({1, 1}, BRValue1),
+   ?_assertEqual({1, 1}, BRValue2),
+   ?_assertEqual(1, RResult1),
+   ?_assertEqual(1, RResult2),
+   ?_assertEqual(undefined, ARValue1),
+   ?_assertEqual(undefined, ARValue2),
+   ?_assertEqual(0, RResult3),
+   ?_assertEqual(0, RResult4)].
 
 test_default_value(_) ->
   prometheus_summary:new([{name, orders_summary},

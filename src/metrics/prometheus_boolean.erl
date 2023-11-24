@@ -42,6 +42,9 @@
          remove/1,
          remove/2,
          remove/3,
+         match_remove/1,
+         match_remove/3,
+         match_remove/4,
          reset/1,
          reset/2,
          reset/3,
@@ -208,6 +211,27 @@ remove(Name, LabelValues) ->
 remove(Registry, Name, LabelValues) ->
   prometheus_metric:remove_labels(?TABLE, Registry, Name, LabelValues).
 
+%% @equiv match_remove(default, Name, [], [])
+match_remove(Name) ->
+  match_remove(default, Name, [], []).
+
+%% @equiv match_remove(default, Name, LMatchHead, LMatchCond)
+match_remove(Name, LMatchHead, LMatchCond) ->
+  match_remove(default, Name, LMatchHead, LMatchCond).
+
+%% @doc Remove the value of the boolean matched by `Registry', `Name',
+%% `LMatchHead' and `LMatchCond'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if boolean with name `Name'
+%% can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% Returns the number of removed entries.
+%% @end
+match_remove(Registry, Name, LMatchHead, LMatchCond) ->
+  prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LMatchHead),
+  ets:select_delete(?TABLE, delete_match_spec(Registry, Name, LMatchHead, LMatchCond)).
+
 %% @equiv reset(default, Name, [])
 reset(Name) ->
   reset(default, Name, []).
@@ -295,7 +319,10 @@ collect_metrics(Name, {CLabels, Labels, Registry}) ->
 %%====================================================================
 
 deregister_select(Registry, Name) ->
-  [{{{Registry, Name, '_'}, '_'}, [], [true]}].
+  delete_match_spec(Registry, Name, '_', []).
+
+delete_match_spec(Registry, Name, LMatchHead, LMatchCond) ->
+  [{{{Registry, Name, LMatchHead}, '_'}, LMatchCond, [true]}].
 
 set_(Registry, Name, LabelValues, Value) ->
   case ets:update_element(?TABLE, {Registry, Name, LabelValues},

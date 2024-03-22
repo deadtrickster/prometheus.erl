@@ -22,11 +22,12 @@
 -export([content_type/0,
          format/0,
          format/1,
-         render_labels/1]).
+         render_labels/1,
+         escape_label_value/1
+        ]).
 
 -ifdef(TEST).
 -export([escape_metric_help/1,
-         escape_label_value/1,
          emit_mf_prologue/2,
          emit_mf_metrics/2
         ]).
@@ -75,6 +76,22 @@ format(Registry) ->
   {ok, Str} = file:pread(Fd, 0, Size),
   ok = file:close(Fd),
   Str.
+
+-spec escape_label_value(binary() | iolist()) -> binary().
+%% @doc
+%% Escapes the backslash (\), double-quote ("), and line feed (\n) characters
+%% @end
+escape_label_value(LValue) when is_binary(LValue) ->
+  case has_special_char(LValue) of
+    true ->
+      escape_string(fun escape_label_char/1, LValue);
+    false ->
+      LValue
+  end;
+escape_label_value(LValue) when is_list(LValue) ->
+  escape_label_value(iolist_to_binary(LValue));
+escape_label_value(Value) ->
+  erlang:error({invalid_value, Value}).
 
 %%====================================================================
 %% Private Parts
@@ -227,13 +244,6 @@ bound_to_label_value(Bound) when is_float(Bound) ->
 bound_to_label_value(infinity) ->
   "+Inf".
 
--spec escape_label_value(binary() | iolist() | undefined) -> binary().
-%% @private
-escape_label_value(LValue) when is_list(LValue); is_binary(LValue) ->
-  escape_string(fun escape_label_char/1, LValue);
-escape_label_value(Value) ->
-  erlang:error({wtf, Value}).
-
 %% @private
 escape_label_char($\\ = X) ->
   <<X, X>>;
@@ -243,6 +253,18 @@ escape_label_char($" = X) ->
   <<$\\, X>>;
 escape_label_char(X) ->
   <<X>>.
+
+%% @perivate
+-spec has_special_char(binary()) -> boolean().
+has_special_char(<<C:8, _/bitstring>>)
+  when C =:= $\\;
+       C =:= $\n;
+       C =:= $" ->
+  true;
+has_special_char(<<_:8, Rest/bitstring>>) ->
+  has_special_char(Rest);
+has_special_char(<<>>) ->
+    false.
 
 %% @private
 escape_string(Fun, Str) when is_binary(Str) ->

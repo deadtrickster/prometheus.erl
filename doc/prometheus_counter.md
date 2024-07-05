@@ -92,7 +92,7 @@ and <code>LabelValues</code>.</td></tr><tr><td valign="top"><a href="#values-2">
 Creates a counter using `Spec`, if a counter with the same `Spec` exists
 returns `false`.
 
-Raises `{missing_metric_spec_key, Key, Spec}` error if required `Soec` key
+Raises `{missing_metric_spec_key, Key, Spec}` error if required `Spec` key
 is missing.<br />
 Raises `{invalid_metric_name, Name, Message}` error if metric `Name`
 is invalid.<br />
@@ -176,7 +176,7 @@ mismatch.
 
 Creates a counter using `Spec`.
 
-Raises `{missing_metric_spec_key, Key, Spec}` error if required `Soec` key
+Raises `{missing_metric_spec_key, Key, Spec}` error if required `Spec` key
 is missing.<br />
 Raises `{invalid_metric_name, Name, Message}` error if metric `Name`
 is invalid.<br />

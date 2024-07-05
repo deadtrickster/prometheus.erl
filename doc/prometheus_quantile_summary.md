@@ -66,7 +66,7 @@ and <code>LabelValues</code>.</td></tr><tr><td valign="top"><a href="#values-2">
 Creates a summary using `Spec`.
 If a summary with the same `Spec` exists returns `false`.
 
-Raises `{missing_metric_spec_key, Key, Spec}` error if required `Soec` key
+Raises `{missing_metric_spec_key, Key, Spec}` error if required `Spec` key
 is missing.<br />
 Raises `{invalid_metric_name, Name, Message}` error if metric `Name`
 is invalid.<br />
@@ -109,7 +109,7 @@ Otherwise returns `{false, _}`.
 
 Creates a summary using `Spec`.
 
-Raises `{missing_metric_spec_key, Key, Spec}` error if required `Soec` key
+Raises `{missing_metric_spec_key, Key, Spec}` error if required `Spec` key
 is missing.<br />
 Raises `{invalid_metric_name, Name, Message}` error if metric `Name`
 is invalid.<br />

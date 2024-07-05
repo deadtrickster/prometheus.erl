@@ -122,7 +122,7 @@ Equivalent to [`inc(Registry, Name, LabelValues, -1 * Value)`](#inc-4).
 Creates a gauge using `Spec`.
 If a gauge with the same `Spec` exists returns `false`.
 
-Raises `{missing_metric_spec_key, Key, Spec}` error if required `Soec` key
+Raises `{missing_metric_spec_key, Key, Spec}` error if required `Spec` key
 is missing.<br />
 Raises `{invalid_metric_name, Name, Message}` error if metric `Name`
 is invalid.<br />
@@ -208,7 +208,7 @@ mismatch.
 
 Creates a gauge using `Spec`.
 
-Raises `{missing_metric_spec_key, Key, Spec}` error if required `Soec` key
+Raises `{missing_metric_spec_key, Key, Spec}` error if required `Spec` key
 is missing.<br />
 Raises `{invalid_metric_name, Name, Message}` error if metric `Name`
 is invalid.<br />

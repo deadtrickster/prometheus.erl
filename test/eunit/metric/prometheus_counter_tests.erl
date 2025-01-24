@@ -13,6 +13,7 @@ prometheus_format_test_() ->
     fun test_inc/1,
     fun test_deregister/1,
     fun test_remove/1,
+    fun test_match_remove/1,
     fun test_default_value/1,
     fun test_values/1,
     fun test_collector1/1,
@@ -62,7 +63,11 @@ test_errors(_) ->
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_counter:remove(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1},
-                 prometheus_counter:remove(db_query_duration, [repo, db]))
+                 prometheus_counter:remove(db_query_duration, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_counter:match_remove(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_counter:match_remove(db_query_duration, [repo, db], []))
   ].
 
 test_inc(_) ->
@@ -122,6 +127,36 @@ test_remove(_) ->
    ?_assertEqual(undefined, ARValue2),
    ?_assertEqual(false, RResult3),
    ?_assertEqual(false, RResult4)].
+
+test_match_remove(_) ->
+  prometheus_counter:new([{name, http_requests_total},
+                          {labels, [method]},
+                          {help, "Http request count"}]),
+  prometheus_counter:new([{name, simple_counter}, {help, ""}]),
+
+  prometheus_counter:inc(http_requests_total, [get]),
+  prometheus_counter:inc(simple_counter),
+
+  BRValue1 = prometheus_counter:value(http_requests_total, [get]),
+  BRValue2 = prometheus_counter:value(simple_counter),
+
+  RResult1 = prometheus_counter:match_remove(http_requests_total, ['$1'], [{'=:=', '$1', get}]),
+  RResult2 = prometheus_counter:match_remove(simple_counter),
+
+  ARValue1 = prometheus_counter:value(http_requests_total, [get]),
+  ARValue2 = prometheus_counter:value(simple_counter),
+
+  RResult3 = prometheus_counter:match_remove(http_requests_total, ['$1'], [{'=:=', '$1', get}]),
+  RResult4 = prometheus_counter:match_remove(simple_counter),
+
+  [?_assertEqual(1, BRValue1),
+   ?_assertEqual(1, BRValue2),
+   ?_assertEqual(1, RResult1),
+   ?_assertEqual(1, RResult2),
+   ?_assertEqual(undefined, ARValue1),
+   ?_assertEqual(undefined, ARValue2),
+   ?_assertEqual(0, RResult3),
+   ?_assertEqual(0, RResult4)].
 
 test_default_value(_) ->
   prometheus_counter:new([{name, http_requests_total},

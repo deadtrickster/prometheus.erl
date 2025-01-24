@@ -19,6 +19,7 @@ prometheus_format_test_() ->
     fun test_set_duration_milliseconds/1,
     fun test_deregister/1,
     fun test_remove/1,
+    fun test_match_remove/1,
     fun test_default_value/1,
     fun test_values/1,
     fun test_collector1/1,
@@ -90,7 +91,11 @@ test_errors(_) ->
    ?_assertError({unknown_metric, default, unknown_metric},
                  prometheus_gauge:remove(unknown_metric)),
    ?_assertError({invalid_metric_arity, 2, 1},
-                 prometheus_gauge:remove(with_label, [repo, db]))
+                 prometheus_gauge:remove(with_label, [repo, db])),
+   ?_assertError({unknown_metric, default, unknown_metric},
+                 prometheus_gauge:match_remove(unknown_metric)),
+   ?_assertError({invalid_metric_arity, 2, 1},
+                 prometheus_gauge:match_remove(with_label, [repo, db], []))
   ].
 
 test_set(_) ->
@@ -264,6 +269,36 @@ test_remove(_) ->
    ?_assertEqual(undefined, ARValue2),
    ?_assertEqual(false, RResult3),
    ?_assertEqual(false, RResult4)].
+
+test_match_remove(_) ->
+  prometheus_gauge:new([{name, pool_size},
+                        {labels, [pool]},
+                        {help, "pool size"}]),
+  prometheus_gauge:new([{name, simple_gauge}, {help, ""}]),
+
+  prometheus_gauge:inc(pool_size, [mongodb]),
+  prometheus_gauge:inc(simple_gauge),
+
+  BRValue1 = prometheus_gauge:value(pool_size, [mongodb]),
+  BRValue2 = prometheus_gauge:value(simple_gauge),
+
+  RResult1 = prometheus_gauge:match_remove(pool_size, ['$1'], [{'=:=', '$1', mongodb}]),
+  RResult2 = prometheus_gauge:match_remove(simple_gauge),
+
+  ARValue1 = prometheus_gauge:value(pool_size, [mongodb]),
+  ARValue2 = prometheus_gauge:value(simple_gauge),
+
+  RResult3 = prometheus_gauge:match_remove(pool_size, ['$1'], [{'=:=', '$1', mongodb}]),
+  RResult4 = prometheus_gauge:match_remove(simple_gauge),
+
+  [?_assertEqual(1, BRValue1),
+   ?_assertEqual(1, BRValue2),
+   ?_assertEqual(1, RResult1),
+   ?_assertEqual(1, RResult2),
+   ?_assertEqual(undefined, ARValue1),
+   ?_assertEqual(undefined, ARValue2),
+   ?_assertEqual(0, RResult3),
+   ?_assertEqual(0, RResult4)].
 
 test_default_value(_) ->
   prometheus_gauge:new([{name, pool_size},

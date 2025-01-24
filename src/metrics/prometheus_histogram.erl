@@ -60,6 +60,9 @@
          remove/1,
          remove/2,
          remove/3,
+         match_remove/1,
+         match_remove/3,
+         match_remove/4,
          reset/1,
          reset/2,
          reset/3,
@@ -330,6 +333,28 @@ remove(Registry, Name, LabelValues) ->
     _ -> true
   end.
 
+%% @equiv match_remove(default, Name, [], [])
+match_remove(Name) ->
+  match_remove(default, Name, [], []).
+
+%% @equiv match_remove(default, Name, LMatchHead, LMatchCond)
+match_remove(Name, LMatchHead, LMatchCond) ->
+  match_remove(default, Name, LMatchHead, LMatchCond).
+
+%% @doc Remove the value of the histogram matched by `Registry', `Name',
+%% `LMatchHead' and `LMatchCond'.
+%%
+%% Raises `{unknown_metric, Registry, Name}' error if histogram with name
+%% `Name' can't be found in `Registry'.<br/>
+%% Raises `{invalid_metric_arity, Present, Expected}' error if labels count
+%% mismatch.
+%% Returns the number of removed entries.
+%% @end
+match_remove(Registry, Name, LMatchHead, LMatchCond) ->
+  MF = prometheus_metric:check_mf_exists(?TABLE, Registry, Name, LMatchHead),
+  Buckets = prometheus_metric:mf_data(MF),
+  ets:select_delete(?TABLE, delete_match_spec(Registry, Name, LMatchHead, LMatchCond, Buckets)).
+
 %% @equiv reset(default, Name, [])
 reset(Name) ->
   reset(default, Name, []).
@@ -564,9 +589,12 @@ load_all_values(Registry, Name, Bounds) ->
   ets:match(?TABLE, list_to_tuple(QuerySpec)).
 
 deregister_select(Registry, Name, Buckets) ->
+  delete_match_spec(Registry, Name, '_', [], Buckets).
+
+delete_match_spec(Registry, Name, LMatchHead, LMatchCond, Buckets) ->
   BoundCounters = lists:duplicate(length(Buckets), '_'),
-  MetricSpec = [{Registry, Name, '_', '_'}, '_', '_', '_'] ++ BoundCounters,
-  [{list_to_tuple(MetricSpec), [], [true]}].
+  MetricSpec = [{Registry, Name, LMatchHead, '_'}, '_', '_', '_'] ++ BoundCounters,
+  [{list_to_tuple(MetricSpec), LMatchCond, [true]}].
 
 delete_metrics(Registry, Buckets) ->
   BoundCounters = lists:duplicate(length(Buckets), '_'),
